@@ -1,0 +1,16 @@
+// lib/domain/entities/course.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+part 'course.freezed.dart';
+
+@freezed
+class Course with _$Course {
+  const factory Course({
+    required String id,
+    required String name,
+    String? description,
+    String? section,
+    String? room,
+    String? ownerId,
+    @Default('ACTIVE') String courseState,
+  }) = _Course;
+}
