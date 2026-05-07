@@ -1,7 +1,11 @@
+// lib/presentation/views/dashboard/dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/dashboard_viewmodel.dart';
+import 'widgets/course_list.dart';
+import 'widgets/deadline_widget.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -20,20 +24,25 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: const Center(
-        child: ShadCard(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.construction_rounded, size: 48),
-                SizedBox(height: 16),
-                Text('ダッシュボード'),
-                Text('（Phase 2 で実装予定）'),
-              ],
+      body: RefreshIndicator(
+        onRefresh: () =>
+            ref.read(dashboardViewModelProvider.notifier).refresh(),
+        child: CustomScrollView(
+          slivers: [
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            const SliverToBoxAdapter(child: DeadlineWidget()),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text('コース',
+                    style: ShadTheme.of(context).textTheme.h4),
+              ),
             ),
-          ),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            const SliverToBoxAdapter(child: CourseList()),
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+          ],
         ),
       ),
     );
