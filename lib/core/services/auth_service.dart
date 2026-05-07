@@ -16,11 +16,17 @@ class AuthService {
     await GoogleSignIn.instance.initialize();
   }
 
-  /// サイレントサインインを試みる。失敗時は null を返す（例外を投げない）。
+  /// サイレントサインインを試みる。失敗・タイムアウト時は null を返す。
+  /// Android では Credential Manager UI が裏で待機し続ける場合があるため
+  /// 3秒でタイムアウトして未サインイン扱いにする。
   Future<GoogleSignInAccount?> attemptSilentSignIn() async {
     try {
-      return await GoogleSignIn.instance.attemptLightweightAuthentication() ??
-          Future.value(null);
+      final future = GoogleSignIn.instance.attemptLightweightAuthentication();
+      if (future == null) return null;
+      return await future.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => null,
+      );
     } catch (_) {
       return null;
     }
