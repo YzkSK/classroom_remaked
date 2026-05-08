@@ -1632,6 +1632,675 @@ class HiddenItemsCompanion extends UpdateCompanion<HiddenItemRow> {
   }
 }
 
+class $UserPreferencesTable extends UserPreferences
+    with TableInfo<$UserPreferencesTable, UserPreferenceRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserPreferencesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [key, value];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'user_preferences';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UserPreferenceRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {key};
+  @override
+  UserPreferenceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserPreferenceRow(
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      )!,
+    );
+  }
+
+  @override
+  $UserPreferencesTable createAlias(String alias) {
+    return $UserPreferencesTable(attachedDatabase, alias);
+  }
+}
+
+class UserPreferenceRow extends DataClass
+    implements Insertable<UserPreferenceRow> {
+  final String key;
+  final String value;
+  const UserPreferenceRow({required this.key, required this.value});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key'] = Variable<String>(key);
+    map['value'] = Variable<String>(value);
+    return map;
+  }
+
+  UserPreferencesCompanion toCompanion(bool nullToAbsent) {
+    return UserPreferencesCompanion(key: Value(key), value: Value(value));
+  }
+
+  factory UserPreferenceRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserPreferenceRow(
+      key: serializer.fromJson<String>(json['key']),
+      value: serializer.fromJson<String>(json['value']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'key': serializer.toJson<String>(key),
+      'value': serializer.toJson<String>(value),
+    };
+  }
+
+  UserPreferenceRow copyWith({String? key, String? value}) =>
+      UserPreferenceRow(key: key ?? this.key, value: value ?? this.value);
+  UserPreferenceRow copyWithCompanion(UserPreferencesCompanion data) {
+    return UserPreferenceRow(
+      key: data.key.present ? data.key.value : this.key,
+      value: data.value.present ? data.value.value : this.value,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserPreferenceRow(')
+          ..write('key: $key, ')
+          ..write('value: $value')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(key, value);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserPreferenceRow &&
+          other.key == this.key &&
+          other.value == this.value);
+}
+
+class UserPreferencesCompanion extends UpdateCompanion<UserPreferenceRow> {
+  final Value<String> key;
+  final Value<String> value;
+  final Value<int> rowid;
+  const UserPreferencesCompanion({
+    this.key = const Value.absent(),
+    this.value = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UserPreferencesCompanion.insert({
+    required String key,
+    required String value,
+    this.rowid = const Value.absent(),
+  }) : key = Value(key),
+       value = Value(value);
+  static Insertable<UserPreferenceRow> custom({
+    Expression<String>? key,
+    Expression<String>? value,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (key != null) 'key': key,
+      if (value != null) 'value': value,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UserPreferencesCompanion copyWith({
+    Value<String>? key,
+    Value<String>? value,
+    Value<int>? rowid,
+  }) {
+    return UserPreferencesCompanion(
+      key: key ?? this.key,
+      value: value ?? this.value,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserPreferencesCompanion(')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $NotificationLogsTable extends NotificationLogs
+    with TableInfo<$NotificationLogsTable, NotificationLogRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $NotificationLogsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _assignmentIdMeta = const VerificationMeta(
+    'assignmentId',
+  );
+  @override
+  late final GeneratedColumn<String> assignmentId = GeneratedColumn<String>(
+    'assignment_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notifiedAtMeta = const VerificationMeta(
+    'notifiedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> notifiedAt = GeneratedColumn<DateTime>(
+    'notified_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [assignmentId, notifiedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'notification_logs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<NotificationLogRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('assignment_id')) {
+      context.handle(
+        _assignmentIdMeta,
+        assignmentId.isAcceptableOrUnknown(
+          data['assignment_id']!,
+          _assignmentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_assignmentIdMeta);
+    }
+    if (data.containsKey('notified_at')) {
+      context.handle(
+        _notifiedAtMeta,
+        notifiedAt.isAcceptableOrUnknown(data['notified_at']!, _notifiedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_notifiedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {assignmentId};
+  @override
+  NotificationLogRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return NotificationLogRow(
+      assignmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}assignment_id'],
+      )!,
+      notifiedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}notified_at'],
+      )!,
+    );
+  }
+
+  @override
+  $NotificationLogsTable createAlias(String alias) {
+    return $NotificationLogsTable(attachedDatabase, alias);
+  }
+}
+
+class NotificationLogRow extends DataClass
+    implements Insertable<NotificationLogRow> {
+  final String assignmentId;
+  final DateTime notifiedAt;
+  const NotificationLogRow({
+    required this.assignmentId,
+    required this.notifiedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['assignment_id'] = Variable<String>(assignmentId);
+    map['notified_at'] = Variable<DateTime>(notifiedAt);
+    return map;
+  }
+
+  NotificationLogsCompanion toCompanion(bool nullToAbsent) {
+    return NotificationLogsCompanion(
+      assignmentId: Value(assignmentId),
+      notifiedAt: Value(notifiedAt),
+    );
+  }
+
+  factory NotificationLogRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return NotificationLogRow(
+      assignmentId: serializer.fromJson<String>(json['assignmentId']),
+      notifiedAt: serializer.fromJson<DateTime>(json['notifiedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'assignmentId': serializer.toJson<String>(assignmentId),
+      'notifiedAt': serializer.toJson<DateTime>(notifiedAt),
+    };
+  }
+
+  NotificationLogRow copyWith({String? assignmentId, DateTime? notifiedAt}) =>
+      NotificationLogRow(
+        assignmentId: assignmentId ?? this.assignmentId,
+        notifiedAt: notifiedAt ?? this.notifiedAt,
+      );
+  NotificationLogRow copyWithCompanion(NotificationLogsCompanion data) {
+    return NotificationLogRow(
+      assignmentId: data.assignmentId.present
+          ? data.assignmentId.value
+          : this.assignmentId,
+      notifiedAt: data.notifiedAt.present
+          ? data.notifiedAt.value
+          : this.notifiedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NotificationLogRow(')
+          ..write('assignmentId: $assignmentId, ')
+          ..write('notifiedAt: $notifiedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(assignmentId, notifiedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is NotificationLogRow &&
+          other.assignmentId == this.assignmentId &&
+          other.notifiedAt == this.notifiedAt);
+}
+
+class NotificationLogsCompanion extends UpdateCompanion<NotificationLogRow> {
+  final Value<String> assignmentId;
+  final Value<DateTime> notifiedAt;
+  final Value<int> rowid;
+  const NotificationLogsCompanion({
+    this.assignmentId = const Value.absent(),
+    this.notifiedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  NotificationLogsCompanion.insert({
+    required String assignmentId,
+    required DateTime notifiedAt,
+    this.rowid = const Value.absent(),
+  }) : assignmentId = Value(assignmentId),
+       notifiedAt = Value(notifiedAt);
+  static Insertable<NotificationLogRow> custom({
+    Expression<String>? assignmentId,
+    Expression<DateTime>? notifiedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (assignmentId != null) 'assignment_id': assignmentId,
+      if (notifiedAt != null) 'notified_at': notifiedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  NotificationLogsCompanion copyWith({
+    Value<String>? assignmentId,
+    Value<DateTime>? notifiedAt,
+    Value<int>? rowid,
+  }) {
+    return NotificationLogsCompanion(
+      assignmentId: assignmentId ?? this.assignmentId,
+      notifiedAt: notifiedAt ?? this.notifiedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (assignmentId.present) {
+      map['assignment_id'] = Variable<String>(assignmentId.value);
+    }
+    if (notifiedAt.present) {
+      map['notified_at'] = Variable<DateTime>(notifiedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NotificationLogsCompanion(')
+          ..write('assignmentId: $assignmentId, ')
+          ..write('notifiedAt: $notifiedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SnoozedItemsTable extends SnoozedItems
+    with TableInfo<$SnoozedItemsTable, SnoozedItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SnoozedItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _assignmentIdMeta = const VerificationMeta(
+    'assignmentId',
+  );
+  @override
+  late final GeneratedColumn<String> assignmentId = GeneratedColumn<String>(
+    'assignment_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _snoozedUntilMeta = const VerificationMeta(
+    'snoozedUntil',
+  );
+  @override
+  late final GeneratedColumn<DateTime> snoozedUntil = GeneratedColumn<DateTime>(
+    'snoozed_until',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [assignmentId, snoozedUntil];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'snoozed_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SnoozedItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('assignment_id')) {
+      context.handle(
+        _assignmentIdMeta,
+        assignmentId.isAcceptableOrUnknown(
+          data['assignment_id']!,
+          _assignmentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_assignmentIdMeta);
+    }
+    if (data.containsKey('snoozed_until')) {
+      context.handle(
+        _snoozedUntilMeta,
+        snoozedUntil.isAcceptableOrUnknown(
+          data['snoozed_until']!,
+          _snoozedUntilMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_snoozedUntilMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {assignmentId};
+  @override
+  SnoozedItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SnoozedItemRow(
+      assignmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}assignment_id'],
+      )!,
+      snoozedUntil: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}snoozed_until'],
+      )!,
+    );
+  }
+
+  @override
+  $SnoozedItemsTable createAlias(String alias) {
+    return $SnoozedItemsTable(attachedDatabase, alias);
+  }
+}
+
+class SnoozedItemRow extends DataClass implements Insertable<SnoozedItemRow> {
+  final String assignmentId;
+  final DateTime snoozedUntil;
+  const SnoozedItemRow({
+    required this.assignmentId,
+    required this.snoozedUntil,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['assignment_id'] = Variable<String>(assignmentId);
+    map['snoozed_until'] = Variable<DateTime>(snoozedUntil);
+    return map;
+  }
+
+  SnoozedItemsCompanion toCompanion(bool nullToAbsent) {
+    return SnoozedItemsCompanion(
+      assignmentId: Value(assignmentId),
+      snoozedUntil: Value(snoozedUntil),
+    );
+  }
+
+  factory SnoozedItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SnoozedItemRow(
+      assignmentId: serializer.fromJson<String>(json['assignmentId']),
+      snoozedUntil: serializer.fromJson<DateTime>(json['snoozedUntil']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'assignmentId': serializer.toJson<String>(assignmentId),
+      'snoozedUntil': serializer.toJson<DateTime>(snoozedUntil),
+    };
+  }
+
+  SnoozedItemRow copyWith({String? assignmentId, DateTime? snoozedUntil}) =>
+      SnoozedItemRow(
+        assignmentId: assignmentId ?? this.assignmentId,
+        snoozedUntil: snoozedUntil ?? this.snoozedUntil,
+      );
+  SnoozedItemRow copyWithCompanion(SnoozedItemsCompanion data) {
+    return SnoozedItemRow(
+      assignmentId: data.assignmentId.present
+          ? data.assignmentId.value
+          : this.assignmentId,
+      snoozedUntil: data.snoozedUntil.present
+          ? data.snoozedUntil.value
+          : this.snoozedUntil,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SnoozedItemRow(')
+          ..write('assignmentId: $assignmentId, ')
+          ..write('snoozedUntil: $snoozedUntil')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(assignmentId, snoozedUntil);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SnoozedItemRow &&
+          other.assignmentId == this.assignmentId &&
+          other.snoozedUntil == this.snoozedUntil);
+}
+
+class SnoozedItemsCompanion extends UpdateCompanion<SnoozedItemRow> {
+  final Value<String> assignmentId;
+  final Value<DateTime> snoozedUntil;
+  final Value<int> rowid;
+  const SnoozedItemsCompanion({
+    this.assignmentId = const Value.absent(),
+    this.snoozedUntil = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SnoozedItemsCompanion.insert({
+    required String assignmentId,
+    required DateTime snoozedUntil,
+    this.rowid = const Value.absent(),
+  }) : assignmentId = Value(assignmentId),
+       snoozedUntil = Value(snoozedUntil);
+  static Insertable<SnoozedItemRow> custom({
+    Expression<String>? assignmentId,
+    Expression<DateTime>? snoozedUntil,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (assignmentId != null) 'assignment_id': assignmentId,
+      if (snoozedUntil != null) 'snoozed_until': snoozedUntil,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SnoozedItemsCompanion copyWith({
+    Value<String>? assignmentId,
+    Value<DateTime>? snoozedUntil,
+    Value<int>? rowid,
+  }) {
+    return SnoozedItemsCompanion(
+      assignmentId: assignmentId ?? this.assignmentId,
+      snoozedUntil: snoozedUntil ?? this.snoozedUntil,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (assignmentId.present) {
+      map['assignment_id'] = Variable<String>(assignmentId.value);
+    }
+    if (snoozedUntil.present) {
+      map['snoozed_until'] = Variable<DateTime>(snoozedUntil.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SnoozedItemsCompanion(')
+          ..write('assignmentId: $assignmentId, ')
+          ..write('snoozedUntil: $snoozedUntil, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1640,6 +2309,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CourseOrdersTable courseOrders = $CourseOrdersTable(this);
   late final $SyncStatesTable syncStates = $SyncStatesTable(this);
   late final $HiddenItemsTable hiddenItems = $HiddenItemsTable(this);
+  late final $UserPreferencesTable userPreferences = $UserPreferencesTable(
+    this,
+  );
+  late final $NotificationLogsTable notificationLogs = $NotificationLogsTable(
+    this,
+  );
+  late final $SnoozedItemsTable snoozedItems = $SnoozedItemsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1650,6 +2326,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     courseOrders,
     syncStates,
     hiddenItems,
+    userPreferences,
+    notificationLogs,
+    snoozedItems,
   ];
 }
 
@@ -2577,6 +3256,459 @@ typedef $$HiddenItemsTableProcessedTableManager =
       HiddenItemRow,
       PrefetchHooks Function()
     >;
+typedef $$UserPreferencesTableCreateCompanionBuilder =
+    UserPreferencesCompanion Function({
+      required String key,
+      required String value,
+      Value<int> rowid,
+    });
+typedef $$UserPreferencesTableUpdateCompanionBuilder =
+    UserPreferencesCompanion Function({
+      Value<String> key,
+      Value<String> value,
+      Value<int> rowid,
+    });
+
+class $$UserPreferencesTableFilterComposer
+    extends Composer<_$AppDatabase, $UserPreferencesTable> {
+  $$UserPreferencesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UserPreferencesTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserPreferencesTable> {
+  $$UserPreferencesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UserPreferencesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserPreferencesTable> {
+  $$UserPreferencesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+}
+
+class $$UserPreferencesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UserPreferencesTable,
+          UserPreferenceRow,
+          $$UserPreferencesTableFilterComposer,
+          $$UserPreferencesTableOrderingComposer,
+          $$UserPreferencesTableAnnotationComposer,
+          $$UserPreferencesTableCreateCompanionBuilder,
+          $$UserPreferencesTableUpdateCompanionBuilder,
+          (
+            UserPreferenceRow,
+            BaseReferences<
+              _$AppDatabase,
+              $UserPreferencesTable,
+              UserPreferenceRow
+            >,
+          ),
+          UserPreferenceRow,
+          PrefetchHooks Function()
+        > {
+  $$UserPreferencesTableTableManager(
+    _$AppDatabase db,
+    $UserPreferencesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserPreferencesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserPreferencesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserPreferencesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> key = const Value.absent(),
+                Value<String> value = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UserPreferencesCompanion(
+                key: key,
+                value: value,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String key,
+                required String value,
+                Value<int> rowid = const Value.absent(),
+              }) => UserPreferencesCompanion.insert(
+                key: key,
+                value: value,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UserPreferencesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UserPreferencesTable,
+      UserPreferenceRow,
+      $$UserPreferencesTableFilterComposer,
+      $$UserPreferencesTableOrderingComposer,
+      $$UserPreferencesTableAnnotationComposer,
+      $$UserPreferencesTableCreateCompanionBuilder,
+      $$UserPreferencesTableUpdateCompanionBuilder,
+      (
+        UserPreferenceRow,
+        BaseReferences<_$AppDatabase, $UserPreferencesTable, UserPreferenceRow>,
+      ),
+      UserPreferenceRow,
+      PrefetchHooks Function()
+    >;
+typedef $$NotificationLogsTableCreateCompanionBuilder =
+    NotificationLogsCompanion Function({
+      required String assignmentId,
+      required DateTime notifiedAt,
+      Value<int> rowid,
+    });
+typedef $$NotificationLogsTableUpdateCompanionBuilder =
+    NotificationLogsCompanion Function({
+      Value<String> assignmentId,
+      Value<DateTime> notifiedAt,
+      Value<int> rowid,
+    });
+
+class $$NotificationLogsTableFilterComposer
+    extends Composer<_$AppDatabase, $NotificationLogsTable> {
+  $$NotificationLogsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get assignmentId => $composableBuilder(
+    column: $table.assignmentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get notifiedAt => $composableBuilder(
+    column: $table.notifiedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$NotificationLogsTableOrderingComposer
+    extends Composer<_$AppDatabase, $NotificationLogsTable> {
+  $$NotificationLogsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get assignmentId => $composableBuilder(
+    column: $table.assignmentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get notifiedAt => $composableBuilder(
+    column: $table.notifiedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$NotificationLogsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $NotificationLogsTable> {
+  $$NotificationLogsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get assignmentId => $composableBuilder(
+    column: $table.assignmentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get notifiedAt => $composableBuilder(
+    column: $table.notifiedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$NotificationLogsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $NotificationLogsTable,
+          NotificationLogRow,
+          $$NotificationLogsTableFilterComposer,
+          $$NotificationLogsTableOrderingComposer,
+          $$NotificationLogsTableAnnotationComposer,
+          $$NotificationLogsTableCreateCompanionBuilder,
+          $$NotificationLogsTableUpdateCompanionBuilder,
+          (
+            NotificationLogRow,
+            BaseReferences<
+              _$AppDatabase,
+              $NotificationLogsTable,
+              NotificationLogRow
+            >,
+          ),
+          NotificationLogRow,
+          PrefetchHooks Function()
+        > {
+  $$NotificationLogsTableTableManager(
+    _$AppDatabase db,
+    $NotificationLogsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$NotificationLogsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$NotificationLogsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$NotificationLogsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> assignmentId = const Value.absent(),
+                Value<DateTime> notifiedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => NotificationLogsCompanion(
+                assignmentId: assignmentId,
+                notifiedAt: notifiedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String assignmentId,
+                required DateTime notifiedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => NotificationLogsCompanion.insert(
+                assignmentId: assignmentId,
+                notifiedAt: notifiedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$NotificationLogsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $NotificationLogsTable,
+      NotificationLogRow,
+      $$NotificationLogsTableFilterComposer,
+      $$NotificationLogsTableOrderingComposer,
+      $$NotificationLogsTableAnnotationComposer,
+      $$NotificationLogsTableCreateCompanionBuilder,
+      $$NotificationLogsTableUpdateCompanionBuilder,
+      (
+        NotificationLogRow,
+        BaseReferences<
+          _$AppDatabase,
+          $NotificationLogsTable,
+          NotificationLogRow
+        >,
+      ),
+      NotificationLogRow,
+      PrefetchHooks Function()
+    >;
+typedef $$SnoozedItemsTableCreateCompanionBuilder =
+    SnoozedItemsCompanion Function({
+      required String assignmentId,
+      required DateTime snoozedUntil,
+      Value<int> rowid,
+    });
+typedef $$SnoozedItemsTableUpdateCompanionBuilder =
+    SnoozedItemsCompanion Function({
+      Value<String> assignmentId,
+      Value<DateTime> snoozedUntil,
+      Value<int> rowid,
+    });
+
+class $$SnoozedItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $SnoozedItemsTable> {
+  $$SnoozedItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get assignmentId => $composableBuilder(
+    column: $table.assignmentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get snoozedUntil => $composableBuilder(
+    column: $table.snoozedUntil,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SnoozedItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SnoozedItemsTable> {
+  $$SnoozedItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get assignmentId => $composableBuilder(
+    column: $table.assignmentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get snoozedUntil => $composableBuilder(
+    column: $table.snoozedUntil,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SnoozedItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SnoozedItemsTable> {
+  $$SnoozedItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get assignmentId => $composableBuilder(
+    column: $table.assignmentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get snoozedUntil => $composableBuilder(
+    column: $table.snoozedUntil,
+    builder: (column) => column,
+  );
+}
+
+class $$SnoozedItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SnoozedItemsTable,
+          SnoozedItemRow,
+          $$SnoozedItemsTableFilterComposer,
+          $$SnoozedItemsTableOrderingComposer,
+          $$SnoozedItemsTableAnnotationComposer,
+          $$SnoozedItemsTableCreateCompanionBuilder,
+          $$SnoozedItemsTableUpdateCompanionBuilder,
+          (
+            SnoozedItemRow,
+            BaseReferences<_$AppDatabase, $SnoozedItemsTable, SnoozedItemRow>,
+          ),
+          SnoozedItemRow,
+          PrefetchHooks Function()
+        > {
+  $$SnoozedItemsTableTableManager(_$AppDatabase db, $SnoozedItemsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SnoozedItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SnoozedItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SnoozedItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> assignmentId = const Value.absent(),
+                Value<DateTime> snoozedUntil = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SnoozedItemsCompanion(
+                assignmentId: assignmentId,
+                snoozedUntil: snoozedUntil,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String assignmentId,
+                required DateTime snoozedUntil,
+                Value<int> rowid = const Value.absent(),
+              }) => SnoozedItemsCompanion.insert(
+                assignmentId: assignmentId,
+                snoozedUntil: snoozedUntil,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SnoozedItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SnoozedItemsTable,
+      SnoozedItemRow,
+      $$SnoozedItemsTableFilterComposer,
+      $$SnoozedItemsTableOrderingComposer,
+      $$SnoozedItemsTableAnnotationComposer,
+      $$SnoozedItemsTableCreateCompanionBuilder,
+      $$SnoozedItemsTableUpdateCompanionBuilder,
+      (
+        SnoozedItemRow,
+        BaseReferences<_$AppDatabase, $SnoozedItemsTable, SnoozedItemRow>,
+      ),
+      SnoozedItemRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2591,4 +3723,10 @@ class $AppDatabaseManager {
       $$SyncStatesTableTableManager(_db, _db.syncStates);
   $$HiddenItemsTableTableManager get hiddenItems =>
       $$HiddenItemsTableTableManager(_db, _db.hiddenItems);
+  $$UserPreferencesTableTableManager get userPreferences =>
+      $$UserPreferencesTableTableManager(_db, _db.userPreferences);
+  $$NotificationLogsTableTableManager get notificationLogs =>
+      $$NotificationLogsTableTableManager(_db, _db.notificationLogs);
+  $$SnoozedItemsTableTableManager get snoozedItems =>
+      $$SnoozedItemsTableTableManager(_db, _db.snoozedItems);
 }

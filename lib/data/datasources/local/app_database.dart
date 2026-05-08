@@ -64,13 +64,49 @@ class HiddenItems extends Table {
   Set<Column> get primaryKey => {itemId};
 }
 
-@DriftDatabase(tables: [Courses, Assignments, CourseOrders, SyncStates, HiddenItems])
+@DataClassName('UserPreferenceRow')
+class UserPreferences extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column> get primaryKey => {key};
+}
+
+@DataClassName('NotificationLogRow')
+class NotificationLogs extends Table {
+  TextColumn get assignmentId => text()();
+  DateTimeColumn get notifiedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {assignmentId};
+}
+
+@DataClassName('SnoozedItemRow')
+class SnoozedItems extends Table {
+  TextColumn get assignmentId => text()();
+  DateTimeColumn get snoozedUntil => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {assignmentId};
+}
+
+@DriftDatabase(tables: [
+  Courses,
+  Assignments,
+  CourseOrders,
+  SyncStates,
+  HiddenItems,
+  UserPreferences,
+  NotificationLogs,
+  SnoozedItems,
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -79,8 +115,19 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             await m.createTable(hiddenItems);
           }
+          if (from < 3) {
+            await m.createTable(userPreferences);
+            await m.createTable(notificationLogs);
+            await m.createTable(snoozedItems);
+          }
         },
       );
+
+  static Future<AppDatabase> openBackground() async {
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, 'app.db'));
+    return AppDatabase.forTesting(NativeDatabase(file));
+  }
 }
 
 LazyDatabase _openConnection() {

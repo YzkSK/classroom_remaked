@@ -53,4 +53,38 @@ void main() {
     final afterDelete = await db.select(db.hiddenItems).get();
     expect(afterDelete, isEmpty);
   });
+
+  test('UserPreferences を保存・取得できる', () async {
+    await db.into(db.userPreferences).insert(
+      UserPreferencesCompanion.insert(key: 'notifyBeforeHours', value: '24'),
+    );
+    final row = await (db.select(db.userPreferences)
+          ..where((t) => t.key.equals('notifyBeforeHours')))
+        .getSingleOrNull();
+    expect(row?.value, '24');
+  });
+
+  test('NotificationLog を保存・取得できる', () async {
+    await db.into(db.notificationLogs).insert(
+      NotificationLogsCompanion.insert(
+        assignmentId: 'a1',
+        notifiedAt: DateTime(2026, 5, 8),
+      ),
+    );
+    final rows = await db.select(db.notificationLogs).get();
+    expect(rows.length, 1);
+    expect(rows.first.assignmentId, 'a1');
+  });
+
+  test('SnoozedItem を保存・取得できる', () async {
+    await db.into(db.snoozedItems).insert(
+      SnoozedItemsCompanion.insert(
+        assignmentId: 'a1',
+        snoozedUntil: DateTime(2026, 5, 8, 13, 0),
+      ),
+    );
+    final rows = await db.select(db.snoozedItems).get();
+    expect(rows.length, 1);
+    expect(rows.first.snoozedUntil, DateTime(2026, 5, 8, 13, 0));
+  });
 }
