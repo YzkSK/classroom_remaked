@@ -54,8 +54,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (value) {
       final confirmed = await showShadDialog<bool>(
         context: context,
-        builder: (context) => ShadDialog(
-          closeIcon: const SizedBox.shrink(),
+        builder: (context) => ShadDialog.alert(
           titleTextAlign: TextAlign.center,
           title: const Text('怠惰人間モードを有効にしますか？'),
           description: const Text(
