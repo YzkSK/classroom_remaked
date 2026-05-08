@@ -47,12 +47,14 @@ class _NotificationSetupScreenState
       final confirmed = await showShadDialog<bool>(
         context: context,
         builder: (context) => ShadDialog(
+          closeIcon: const SizedBox.shrink(),
+          titleTextAlign: TextAlign.center,
           title: const Text('怠惰人間モードを有効にしますか？'),
           description: const Text(
             '・スヌーズが1時間固定になります\n'
             '・OFFに戻すには、設定した通知タイミング以内に\n'
-            '　締め切りがある課題をすべて提出するまで\n'
-            '　無効にできません',
+            '  締め切りがある課題をすべて提出するまで\n'
+            '  無効にできません',
           ),
           actions: [
             ShadButton.outline(
@@ -93,15 +95,12 @@ class _NotificationSetupScreenState
                 style: ShadTheme.of(context).textTheme.h3,
               ),
               const SizedBox(height: 32),
-              Text(
-                '締め切りの何時間前に通知しますか？',
-                style: ShadTheme.of(context).textTheme.muted,
-              ),
-              const SizedBox(height: 8),
               Row(
                 children: [
+                  Text('締め切りの', style: ShadTheme.of(context).textTheme.muted),
+                  const SizedBox(width: 8),
                   SizedBox(
-                    width: 80,
+                    width: 72,
                     child: ShadInput(
                       controller: _hoursController,
                       keyboardType: TextInputType.number,
@@ -111,7 +110,7 @@ class _NotificationSetupScreenState
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text('時間前', style: ShadTheme.of(context).textTheme.p),
+                  Text('時間前に通知', style: ShadTheme.of(context).textTheme.muted),
                 ],
               ),
               const SizedBox(height: 24),
