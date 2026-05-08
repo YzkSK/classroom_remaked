@@ -129,7 +129,7 @@ class _NotificationSetupScreenState
                   ),
                   ShadSwitch(
                     value: lazyMode,
-                    onChanged: _onLazyModeToggle,
+                    onChanged: (v) => _onLazyModeToggle(v),
                   ),
                 ],
               ),
