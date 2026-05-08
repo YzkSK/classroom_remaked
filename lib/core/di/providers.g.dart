@@ -116,25 +116,8 @@ final lmsRepositoryProvider = AutoDisposeProvider<LmsRepository>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef LmsRepositoryRef = AutoDisposeProviderRef<LmsRepository>;
-String _$pubSubServiceHash() => r'9fb42810816400f3e0dc0d27ac5f3b9aee4ec5fb';
-
-/// See also [pubSubService].
-@ProviderFor(pubSubService)
-final pubSubServiceProvider = AutoDisposeProvider<PubSubService>.internal(
-  pubSubService,
-  name: r'pubSubServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$pubSubServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef PubSubServiceRef = AutoDisposeProviderRef<PubSubService>;
 String _$classroomSyncServiceHash() =>
-    r'24891e26f56a5f4fcb9dead7f3a7a9710a3ea135';
+    r'bb53fa70fcf89fe7c6795e62148df54f17586fce';
 
 /// See also [classroomSyncService].
 @ProviderFor(classroomSyncService)

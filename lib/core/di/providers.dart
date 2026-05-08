@@ -2,7 +2,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../services/auth_service.dart';
 import '../services/classroom_sync_service.dart';
-import '../services/pubsub_service.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/course_order_datasource.dart';
 import '../../data/datasources/local/sync_state_datasource.dart';
@@ -45,18 +44,8 @@ LmsRepository lmsRepository(LmsRepositoryRef ref) =>
     ref.watch(googleClassroomRepositoryProvider);
 
 @riverpod
-PubSubService pubSubService(PubSubServiceRef ref) {
-  final account = ref.watch(authViewModelProvider).valueOrNull;
-  if (account == null) throw StateError('Not signed in');
-  return PubSubService(
-    account: account,
-    syncState: ref.watch(syncStateDataSourceProvider),
-  );
-}
-
-@riverpod
 ClassroomSyncService classroomSyncService(ClassroomSyncServiceRef ref) =>
     ClassroomSyncService(
-      pubSubService: ref.watch(pubSubServiceProvider),
+      syncState: ref.watch(syncStateDataSourceProvider),
       repository: ref.watch(googleClassroomRepositoryProvider),
     );
