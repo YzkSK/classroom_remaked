@@ -8,8 +8,6 @@ class AuthService {
     'https://www.googleapis.com/auth/classroom.announcements.readonly',
     'https://www.googleapis.com/auth/classroom.coursework.students.readonly',
     'https://www.googleapis.com/auth/classroom.rosters.readonly',
-    'https://www.googleapis.com/auth/classroom.push-notifications',
-    'https://www.googleapis.com/auth/pubsub',
   ];
 
   Future<void> initialize() async {

@@ -1,40 +1,40 @@
 // lib/core/services/classroom_sync_service.dart
+import '../../data/datasources/local/sync_state_datasource.dart';
 import '../../data/repositories/google_classroom_repository.dart';
-import 'pubsub_service.dart';
 
 class ClassroomSyncService {
   ClassroomSyncService({
-    required PubSubService pubSubService,
+    required SyncStateDataSource syncState,
     required GoogleClassroomRepository repository,
-  })  : _pubSub = pubSubService,
+  })  : _syncState = syncState,
         _repo = repository;
 
-  final PubSubService _pubSub;
+  final SyncStateDataSource _syncState;
   final GoogleClassroomRepository _repo;
 
+  static const _cacheValidDuration = Duration(hours: 1);
+
+  /// 起動時・フォアグラウンド復帰時に呼ぶ。
+  /// 最終同期から1時間以内ならキャッシュをそのまま使い API を呼ばない。
   Future<void> fullSync() async {
-    await _pubSub.ensureSetup();
+    final lastSyncStr = await _syncState.get('last_sync_at');
+    final shouldRefresh = lastSyncStr == null ||
+        DateTime.now().difference(DateTime.parse(lastSyncStr)) >
+            _cacheValidDuration;
 
-    final coursesResult = await _repo.getCourses();
-    final courses = coursesResult.getOrElse(() => []);
+    if (!shouldRefresh) return;
 
-    await Future.wait(
-      courses.map((c) => _pubSub.ensureRegistration(c.id)),
-    );
-
-    final changedIds = await _pubSub.pullChangedCourseIds();
-
-    if (changedIds.isNotEmpty) {
-      await Future.wait(
-        changedIds.map((id) => _repo.refreshAssignments(id)),
-      );
-    }
+    await _refreshAll();
   }
 
-  Future<void> forceRefresh() async {
+  /// Pull-to-refresh 用: 常に API から取り直す。
+  Future<void> forceRefresh() => _refreshAll();
+
+  Future<void> _refreshAll() async {
     await _repo.refreshCourses();
     final coursesResult = await _repo.getCourses();
     final courses = coursesResult.getOrElse(() => []);
     await Future.wait(courses.map((c) => _repo.refreshAssignments(c.id)));
+    await _syncState.set('last_sync_at', DateTime.now().toIso8601String());
   }
 }

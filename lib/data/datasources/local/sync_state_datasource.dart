@@ -1,5 +1,4 @@
 // lib/data/datasources/local/sync_state_datasource.dart
-import 'package:drift/drift.dart';
 import 'app_database.dart';
 
 class SyncStateDataSource {
