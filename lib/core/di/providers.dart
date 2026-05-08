@@ -4,6 +4,7 @@ import '../services/auth_service.dart';
 import '../services/classroom_sync_service.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/course_order_datasource.dart';
+import '../../data/datasources/local/hidden_items_datasource.dart';
 import '../../data/datasources/local/sync_state_datasource.dart';
 import '../../data/repositories/google_classroom_repository.dart';
 import '../../domain/repositories/lms_repository.dart';
@@ -27,6 +28,10 @@ SyncStateDataSource syncStateDataSource(SyncStateDataSourceRef ref) =>
 @riverpod
 CourseOrderDataSource courseOrderDataSource(CourseOrderDataSourceRef ref) =>
     CourseOrderDataSource(ref.watch(appDatabaseProvider));
+
+@riverpod
+HiddenItemsDataSource hiddenItemsDataSource(HiddenItemsDataSourceRef ref) =>
+    HiddenItemsDataSource(ref.watch(appDatabaseProvider));
 
 @riverpod
 GoogleClassroomRepository googleClassroomRepository(

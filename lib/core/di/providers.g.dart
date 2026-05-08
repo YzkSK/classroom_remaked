@@ -79,6 +79,26 @@ final courseOrderDataSourceProvider =
 // ignore: unused_element
 typedef CourseOrderDataSourceRef =
     AutoDisposeProviderRef<CourseOrderDataSource>;
+String _$hiddenItemsDataSourceHash() =>
+    r'1e8cbfd667de95e578111368b1258c8bd99c49bd';
+
+/// See also [hiddenItemsDataSource].
+@ProviderFor(hiddenItemsDataSource)
+final hiddenItemsDataSourceProvider =
+    AutoDisposeProvider<HiddenItemsDataSource>.internal(
+      hiddenItemsDataSource,
+      name: r'hiddenItemsDataSourceProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$hiddenItemsDataSourceHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef HiddenItemsDataSourceRef =
+    AutoDisposeProviderRef<HiddenItemsDataSource>;
 String _$googleClassroomRepositoryHash() =>
     r'a297daac53537481940c64af5c47ccbccea17c86';
 
