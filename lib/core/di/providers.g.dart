@@ -99,6 +99,66 @@ final hiddenItemsDataSourceProvider =
 // ignore: unused_element
 typedef HiddenItemsDataSourceRef =
     AutoDisposeProviderRef<HiddenItemsDataSource>;
+String _$userPreferencesDataSourceHash() =>
+    r'edeae790d96ea98317278be67eee2a0abbe3aed2';
+
+/// See also [userPreferencesDataSource].
+@ProviderFor(userPreferencesDataSource)
+final userPreferencesDataSourceProvider =
+    AutoDisposeProvider<UserPreferencesDataSource>.internal(
+      userPreferencesDataSource,
+      name: r'userPreferencesDataSourceProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$userPreferencesDataSourceHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef UserPreferencesDataSourceRef =
+    AutoDisposeProviderRef<UserPreferencesDataSource>;
+String _$notificationLogsDataSourceHash() =>
+    r'd1cb72318cd22d4338e7344c5ad90e69a068d5c2';
+
+/// See also [notificationLogsDataSource].
+@ProviderFor(notificationLogsDataSource)
+final notificationLogsDataSourceProvider =
+    AutoDisposeProvider<NotificationLogsDataSource>.internal(
+      notificationLogsDataSource,
+      name: r'notificationLogsDataSourceProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$notificationLogsDataSourceHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef NotificationLogsDataSourceRef =
+    AutoDisposeProviderRef<NotificationLogsDataSource>;
+String _$snoozedItemsDataSourceHash() =>
+    r'292cf6bdd85b59659bc894720a468086467b101d';
+
+/// See also [snoozedItemsDataSource].
+@ProviderFor(snoozedItemsDataSource)
+final snoozedItemsDataSourceProvider =
+    AutoDisposeProvider<SnoozedItemsDataSource>.internal(
+      snoozedItemsDataSource,
+      name: r'snoozedItemsDataSourceProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$snoozedItemsDataSourceHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef SnoozedItemsDataSourceRef =
+    AutoDisposeProviderRef<SnoozedItemsDataSource>;
 String _$googleClassroomRepositoryHash() =>
     r'a297daac53537481940c64af5c47ccbccea17c86';
 
