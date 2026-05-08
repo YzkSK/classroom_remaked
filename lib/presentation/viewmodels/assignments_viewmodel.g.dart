@@ -7,7 +7,7 @@ part of 'assignments_viewmodel.dart';
 // **************************************************************************
 
 String _$assignmentsViewModelHash() =>
-    r'4501ac9712d17001d74849bfa5820bc2cfa7f509';
+    r'7d93fa1648d869539f5ab9ea87528c8f52424fb0';
 
 /// See also [AssignmentsViewModel].
 @ProviderFor(AssignmentsViewModel)
