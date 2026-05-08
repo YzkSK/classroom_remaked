@@ -59,6 +59,7 @@ class AssignmentsScreen extends ConsumerWidget {
           final assignment = assignments[index];
           final isHidden = state?.isHidden(assignment.id) ?? false;
           return _AssignmentCard(
+            key: ValueKey(assignment.id),
             assignment: assignment,
             isHidden: isHidden,
             onHide: () => ref
@@ -130,6 +131,7 @@ class _FilterBar extends ConsumerWidget {
 
 class _AssignmentCard extends StatelessWidget {
   const _AssignmentCard({
+    super.key,
     required this.assignment,
     required this.isHidden,
     required this.onHide,
