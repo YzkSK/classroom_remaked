@@ -57,7 +57,7 @@ dependencies:
 
   # 通知
   flutter_local_notifications: ^18.0.0
-  # workmanager: Phase 3（バックグラウンド通知）実装時に追加
+  workmanager: ^0.5.2
 
   # ユーティリティ
   freezed_annotation: ^2.4.0
