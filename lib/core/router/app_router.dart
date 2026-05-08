@@ -19,7 +19,7 @@ GoRouter appRouter(AppRouterRef ref) {
       if (authState.isLoading) return '/splash';
       final isSignedIn = authState.valueOrNull != null;
       final loc = state.matchedLocation;
-      if (!isSignedIn && loc != '/sign-in' && loc != '/splash') {
+      if (!isSignedIn && loc != '/sign-in') {
         return '/sign-in';
       }
       if (isSignedIn && (loc == '/sign-in' || loc == '/splash')) {
