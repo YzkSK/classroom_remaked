@@ -67,7 +67,7 @@ class HiddenItems extends Table {
 @DriftDatabase(tables: [Courses, Assignments, CourseOrders, SyncStates, HiddenItems])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
-  AppDatabase.forTesting(QueryExecutor e) : super(e);
+  AppDatabase.forTesting(super.e);
 
   @override
   int get schemaVersion => 2;
