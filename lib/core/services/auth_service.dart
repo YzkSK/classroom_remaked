@@ -13,7 +13,10 @@ class AuthService {
   ];
 
   Future<void> initialize() async {
-    await GoogleSignIn.instance.initialize();
+    await GoogleSignIn.instance.initialize(
+      serverClientId:
+          '184568296872-7079toktlo42fe5etcbke4mkue9l7ua7.apps.googleusercontent.com',
+    );
   }
 
   /// サイレントサインインを試みる。失敗・タイムアウト時は null を返す。
