@@ -104,6 +104,7 @@ class SnoozedItems extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.e);
+  AppDatabase.withConnection(super.e);
 
   @override
   int get schemaVersion => 3;
@@ -126,7 +127,7 @@ class AppDatabase extends _$AppDatabase {
   static Future<AppDatabase> openBackground() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'app.db'));
-    return AppDatabase.forTesting(NativeDatabase(file));
+    return AppDatabase.withConnection(NativeDatabase(file));
   }
 }
 
