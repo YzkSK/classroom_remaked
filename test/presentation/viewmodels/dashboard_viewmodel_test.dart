@@ -37,7 +37,7 @@ void main() {
     when(() => mockRepo.getCourses())
         .thenAnswer((_) async => Right(fakeCourses));
     when(() => mockRepo.getUpcomingDeadlines(within: any(named: 'within')))
-        .thenAnswer((_) async => Right(<Assignment>[]));
+        .thenAnswer((_) async => const Right(<Assignment>[]));
     when(() => mockOrder.getOrderedIds())
         .thenAnswer((_) async => ['c1', 'c2']);
     when(() => mockOrder.initializeNewCourses(any()))
@@ -109,6 +109,23 @@ void main() {
         .hideItem('c1');
 
     verify(() => mockHidden.hide('c1', 'course')).called(1);
+  });
+
+  test('unhideItem が HiddenItemsDataSource.unhide を呼び visibleCourses に戻る', () async {
+    final container = makeContainer(hiddenIds: {'c1'});
+    addTearDown(container.dispose);
+
+    await container.read(dashboardViewModelProvider.future);
+    // c1 は非表示なので visibleCourses に含まれない
+    expect(container.read(dashboardViewModelProvider).value!.visibleCourses.length, 1);
+
+    await container
+        .read(dashboardViewModelProvider.notifier)
+        .unhideItem('c1');
+
+    verify(() => mockHidden.unhide('c1')).called(1);
+    // 解除後は visibleCourses に c1 が戻る
+    expect(container.read(dashboardViewModelProvider).value!.visibleCourses.length, 2);
   });
 
   test('reorderCourses で並び順が更新される', () async {
