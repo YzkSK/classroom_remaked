@@ -29,7 +29,7 @@ class CourseList extends ConsumerWidget {
       return Center(child: Text('エラー: ${async.error}'));
     }
 
-    final courses = async.value!.orderedCourses;
+    final courses = async.value!.visibleCourses;
     return ReorderableListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),

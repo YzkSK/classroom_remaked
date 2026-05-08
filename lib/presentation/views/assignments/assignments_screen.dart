@@ -42,7 +42,7 @@ class AssignmentsScreen extends ConsumerWidget {
     }
     final isLoading = async.isLoading;
     final assignments =
-        async.valueOrNull?.filteredAssignments ?? _fakeAssignments;
+        async.valueOrNull?.visibleAssignments ?? _fakeAssignments;
 
     return Skeletonizer(
       enabled: isLoading,
