@@ -1370,6 +1370,268 @@ class SyncStatesCompanion extends UpdateCompanion<SyncStateRow> {
   }
 }
 
+class $HiddenItemsTable extends HiddenItems
+    with TableInfo<$HiddenItemsTable, HiddenItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HiddenItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _itemIdMeta = const VerificationMeta('itemId');
+  @override
+  late final GeneratedColumn<String> itemId = GeneratedColumn<String>(
+    'item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hiddenAtMeta = const VerificationMeta(
+    'hiddenAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> hiddenAt = GeneratedColumn<DateTime>(
+    'hidden_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [itemId, type, hiddenAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'hidden_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<HiddenItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('item_id')) {
+      context.handle(
+        _itemIdMeta,
+        itemId.isAcceptableOrUnknown(data['item_id']!, _itemIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemIdMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('hidden_at')) {
+      context.handle(
+        _hiddenAtMeta,
+        hiddenAt.isAcceptableOrUnknown(data['hidden_at']!, _hiddenAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hiddenAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {itemId};
+  @override
+  HiddenItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return HiddenItemRow(
+      itemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}item_id'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      hiddenAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}hidden_at'],
+      )!,
+    );
+  }
+
+  @override
+  $HiddenItemsTable createAlias(String alias) {
+    return $HiddenItemsTable(attachedDatabase, alias);
+  }
+}
+
+class HiddenItemRow extends DataClass implements Insertable<HiddenItemRow> {
+  final String itemId;
+  final String type;
+  final DateTime hiddenAt;
+  const HiddenItemRow({
+    required this.itemId,
+    required this.type,
+    required this.hiddenAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['item_id'] = Variable<String>(itemId);
+    map['type'] = Variable<String>(type);
+    map['hidden_at'] = Variable<DateTime>(hiddenAt);
+    return map;
+  }
+
+  HiddenItemsCompanion toCompanion(bool nullToAbsent) {
+    return HiddenItemsCompanion(
+      itemId: Value(itemId),
+      type: Value(type),
+      hiddenAt: Value(hiddenAt),
+    );
+  }
+
+  factory HiddenItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return HiddenItemRow(
+      itemId: serializer.fromJson<String>(json['itemId']),
+      type: serializer.fromJson<String>(json['type']),
+      hiddenAt: serializer.fromJson<DateTime>(json['hiddenAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'itemId': serializer.toJson<String>(itemId),
+      'type': serializer.toJson<String>(type),
+      'hiddenAt': serializer.toJson<DateTime>(hiddenAt),
+    };
+  }
+
+  HiddenItemRow copyWith({String? itemId, String? type, DateTime? hiddenAt}) =>
+      HiddenItemRow(
+        itemId: itemId ?? this.itemId,
+        type: type ?? this.type,
+        hiddenAt: hiddenAt ?? this.hiddenAt,
+      );
+  HiddenItemRow copyWithCompanion(HiddenItemsCompanion data) {
+    return HiddenItemRow(
+      itemId: data.itemId.present ? data.itemId.value : this.itemId,
+      type: data.type.present ? data.type.value : this.type,
+      hiddenAt: data.hiddenAt.present ? data.hiddenAt.value : this.hiddenAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HiddenItemRow(')
+          ..write('itemId: $itemId, ')
+          ..write('type: $type, ')
+          ..write('hiddenAt: $hiddenAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(itemId, type, hiddenAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HiddenItemRow &&
+          other.itemId == this.itemId &&
+          other.type == this.type &&
+          other.hiddenAt == this.hiddenAt);
+}
+
+class HiddenItemsCompanion extends UpdateCompanion<HiddenItemRow> {
+  final Value<String> itemId;
+  final Value<String> type;
+  final Value<DateTime> hiddenAt;
+  final Value<int> rowid;
+  const HiddenItemsCompanion({
+    this.itemId = const Value.absent(),
+    this.type = const Value.absent(),
+    this.hiddenAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  HiddenItemsCompanion.insert({
+    required String itemId,
+    required String type,
+    required DateTime hiddenAt,
+    this.rowid = const Value.absent(),
+  }) : itemId = Value(itemId),
+       type = Value(type),
+       hiddenAt = Value(hiddenAt);
+  static Insertable<HiddenItemRow> custom({
+    Expression<String>? itemId,
+    Expression<String>? type,
+    Expression<DateTime>? hiddenAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (itemId != null) 'item_id': itemId,
+      if (type != null) 'type': type,
+      if (hiddenAt != null) 'hidden_at': hiddenAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  HiddenItemsCompanion copyWith({
+    Value<String>? itemId,
+    Value<String>? type,
+    Value<DateTime>? hiddenAt,
+    Value<int>? rowid,
+  }) {
+    return HiddenItemsCompanion(
+      itemId: itemId ?? this.itemId,
+      type: type ?? this.type,
+      hiddenAt: hiddenAt ?? this.hiddenAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (itemId.present) {
+      map['item_id'] = Variable<String>(itemId.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (hiddenAt.present) {
+      map['hidden_at'] = Variable<DateTime>(hiddenAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HiddenItemsCompanion(')
+          ..write('itemId: $itemId, ')
+          ..write('type: $type, ')
+          ..write('hiddenAt: $hiddenAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1377,6 +1639,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AssignmentsTable assignments = $AssignmentsTable(this);
   late final $CourseOrdersTable courseOrders = $CourseOrdersTable(this);
   late final $SyncStatesTable syncStates = $SyncStatesTable(this);
+  late final $HiddenItemsTable hiddenItems = $HiddenItemsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1386,6 +1649,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     assignments,
     courseOrders,
     syncStates,
+    hiddenItems,
   ];
 }
 
@@ -2151,6 +2415,168 @@ typedef $$SyncStatesTableProcessedTableManager =
       SyncStateRow,
       PrefetchHooks Function()
     >;
+typedef $$HiddenItemsTableCreateCompanionBuilder =
+    HiddenItemsCompanion Function({
+      required String itemId,
+      required String type,
+      required DateTime hiddenAt,
+      Value<int> rowid,
+    });
+typedef $$HiddenItemsTableUpdateCompanionBuilder =
+    HiddenItemsCompanion Function({
+      Value<String> itemId,
+      Value<String> type,
+      Value<DateTime> hiddenAt,
+      Value<int> rowid,
+    });
+
+class $$HiddenItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $HiddenItemsTable> {
+  $$HiddenItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get hiddenAt => $composableBuilder(
+    column: $table.hiddenAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$HiddenItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $HiddenItemsTable> {
+  $$HiddenItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get hiddenAt => $composableBuilder(
+    column: $table.hiddenAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$HiddenItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $HiddenItemsTable> {
+  $$HiddenItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get itemId =>
+      $composableBuilder(column: $table.itemId, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get hiddenAt =>
+      $composableBuilder(column: $table.hiddenAt, builder: (column) => column);
+}
+
+class $$HiddenItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $HiddenItemsTable,
+          HiddenItemRow,
+          $$HiddenItemsTableFilterComposer,
+          $$HiddenItemsTableOrderingComposer,
+          $$HiddenItemsTableAnnotationComposer,
+          $$HiddenItemsTableCreateCompanionBuilder,
+          $$HiddenItemsTableUpdateCompanionBuilder,
+          (
+            HiddenItemRow,
+            BaseReferences<_$AppDatabase, $HiddenItemsTable, HiddenItemRow>,
+          ),
+          HiddenItemRow,
+          PrefetchHooks Function()
+        > {
+  $$HiddenItemsTableTableManager(_$AppDatabase db, $HiddenItemsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$HiddenItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$HiddenItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$HiddenItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> itemId = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<DateTime> hiddenAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HiddenItemsCompanion(
+                itemId: itemId,
+                type: type,
+                hiddenAt: hiddenAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String itemId,
+                required String type,
+                required DateTime hiddenAt,
+                Value<int> rowid = const Value.absent(),
+              }) => HiddenItemsCompanion.insert(
+                itemId: itemId,
+                type: type,
+                hiddenAt: hiddenAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$HiddenItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $HiddenItemsTable,
+      HiddenItemRow,
+      $$HiddenItemsTableFilterComposer,
+      $$HiddenItemsTableOrderingComposer,
+      $$HiddenItemsTableAnnotationComposer,
+      $$HiddenItemsTableCreateCompanionBuilder,
+      $$HiddenItemsTableUpdateCompanionBuilder,
+      (
+        HiddenItemRow,
+        BaseReferences<_$AppDatabase, $HiddenItemsTable, HiddenItemRow>,
+      ),
+      HiddenItemRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2163,4 +2589,6 @@ class $AppDatabaseManager {
       $$CourseOrdersTableTableManager(_db, _db.courseOrders);
   $$SyncStatesTableTableManager get syncStates =>
       $$SyncStatesTableTableManager(_db, _db.syncStates);
+  $$HiddenItemsTableTableManager get hiddenItems =>
+      $$HiddenItemsTableTableManager(_db, _db.hiddenItems);
 }

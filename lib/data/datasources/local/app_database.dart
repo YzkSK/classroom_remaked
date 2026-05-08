@@ -54,13 +54,33 @@ class SyncStates extends Table {
   Set<Column> get primaryKey => {key};
 }
 
-@DriftDatabase(tables: [Courses, Assignments, CourseOrders, SyncStates])
+@DataClassName('HiddenItemRow')
+class HiddenItems extends Table {
+  TextColumn get itemId => text()();
+  TextColumn get type => text()();
+  DateTimeColumn get hiddenAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {itemId};
+}
+
+@DriftDatabase(tables: [Courses, Assignments, CourseOrders, SyncStates, HiddenItems])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(QueryExecutor e) : super(e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(hiddenItems);
+          }
+        },
+      );
 }
 
 LazyDatabase _openConnection() {

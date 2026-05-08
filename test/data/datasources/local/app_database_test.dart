@@ -31,4 +31,26 @@ void main() {
         .getSingleOrNull();
     expect(row?.value, 'done');
   });
+
+  test('HiddenItemを保存・取得・削除できる', () async {
+    await db.into(db.hiddenItems).insert(
+      HiddenItemsCompanion.insert(
+        itemId: 'c1',
+        type: 'course',
+        hiddenAt: DateTime(2026, 1, 1),
+      ),
+    );
+
+    final rows = await (db.select(db.hiddenItems)
+          ..where((t) => t.type.equals('course')))
+        .get();
+    expect(rows.length, 1);
+    expect(rows.first.itemId, 'c1');
+
+    await (db.delete(db.hiddenItems)
+          ..where((t) => t.itemId.equals('c1')))
+        .go();
+    final afterDelete = await db.select(db.hiddenItems).get();
+    expect(afterDelete, isEmpty);
+  });
 }
