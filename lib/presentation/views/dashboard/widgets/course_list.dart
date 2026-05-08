@@ -47,11 +47,14 @@ class CourseList extends ConsumerWidget {
           itemBuilder: (context, index) {
             final course = courses[index];
             final isHidden = dashState.isHidden(course.id);
+            final notifier = ref.read(dashboardViewModelProvider.notifier);
             return _CourseCard(
               key: ValueKey(course.id),
               course: course,
               isHidden: isHidden,
               index: index,
+              onHide: () => notifier.hideItem(course.id),
+              onUnhide: () => notifier.unhideItem(course.id),
             );
           },
         ),
@@ -64,11 +67,9 @@ class CourseList extends ConsumerWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: courses.length,
-      itemBuilder: (context, index) => _CourseCard(
+      itemBuilder: (context, index) => _SkeletonCourseCard(
         key: ValueKey(courses[index].id),
         course: courses[index],
-        isHidden: false,
-        index: index,
       ),
     );
   }
@@ -108,22 +109,24 @@ class _HiddenToggleRow extends ConsumerWidget {
   }
 }
 
-class _CourseCard extends ConsumerWidget {
+class _CourseCard extends StatelessWidget {
   const _CourseCard({
     super.key,
     required this.course,
     required this.isHidden,
     required this.index,
+    required this.onHide,
+    required this.onUnhide,
   });
 
   final Course course;
   final bool isHidden;
   final int index;
+  final VoidCallback onHide;
+  final VoidCallback onUnhide;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(dashboardViewModelProvider.notifier);
-
+  Widget build(BuildContext context) {
     return Opacity(
       opacity: isHidden ? 0.4 : 1.0,
       child: Padding(
@@ -133,13 +136,13 @@ class _CourseCard extends ConsumerWidget {
             if (isHidden)
               ShadContextMenuItem(
                 leading: const Icon(Icons.visibility, size: 16),
-                onPressed: () => notifier.unhideItem(course.id),
+                onPressed: onUnhide,
                 child: const Text('非表示を解除'),
               )
             else
               ShadContextMenuItem(
                 leading: const Icon(Icons.visibility_off, size: 16),
-                onPressed: () => notifier.hideItem(course.id),
+                onPressed: onHide,
                 child: const Text('非表示にする'),
               ),
           ],
@@ -169,6 +172,37 @@ class _CourseCard extends ConsumerWidget {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SkeletonCourseCard extends StatelessWidget {
+  const _SkeletonCourseCard({super.key, required this.course});
+  final Course course;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: ShadCard(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(course.name,
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+              const Icon(Icons.drag_handle_rounded),
+            ],
           ),
         ),
       ),
