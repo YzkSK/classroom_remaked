@@ -1,8 +1,180 @@
+// lib/presentation/views/settings/settings_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
+import '../../viewmodels/assignments_viewmodel.dart';
+import '../../viewmodels/settings_viewmodel.dart';
+import '../../../core/services/notification_service.dart';
+import '../../../domain/usecases/can_disable_lazy_mode_usecase.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
+
   @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: Text('Settings')));
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late TextEditingController _hoursController;
+  bool _permissionGranted = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _hoursController = TextEditingController();
+    _checkPermission();
+  }
+
+  @override
+  void dispose() {
+    _hoursController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkPermission() async {
+    final granted = await const NotificationService().isPermissionGranted();
+    if (mounted) setState(() => _permissionGranted = granted);
+  }
+
+  void _onEditingComplete() {
+    final hours = int.tryParse(_hoursController.text) ?? 0;
+    if (hours < 24) {
+      _hoursController.text = '24';
+      ShadToaster.of(context).show(
+        const ShadToast(title: Text('最低24時間以上を設定してください')),
+      );
+      ref.read(settingsViewModelProvider.notifier).setNotifyBeforeHours(24);
+    } else {
+      ref.read(settingsViewModelProvider.notifier).setNotifyBeforeHours(hours);
+    }
+  }
+
+  Future<void> _onLazyModeToggle(bool value) async {
+    if (value) {
+      final confirmed = await showShadDialog<bool>(
+        context: context,
+        builder: (context) => ShadDialog(
+          title: const Text('怠惰人間モードを有効にしますか？'),
+          description: const Text(
+            '・スヌーズが1時間固定になります\n'
+            '・OFFに戻すには、設定した通知タイミング以内に\n'
+            '　締め切りがある課題をすべて提出するまで\n'
+            '　無効にできません',
+          ),
+          actions: [
+            ShadButton.outline(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            ShadButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('有効にする'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed == true) {
+        await ref.read(settingsViewModelProvider.notifier).enableLazyMode();
+      }
+    } else {
+      final assignments =
+          ref.read(assignmentsViewModelProvider).valueOrNull?.assignments ?? [];
+      final canDisable = await ref
+          .read(settingsViewModelProvider.notifier)
+          .tryDisableLazyMode(assignments);
+      if (!canDisable && mounted) {
+        final settings = ref.read(settingsViewModelProvider).valueOrNull;
+        final blocked = settings == null
+            ? 0
+            : const CanDisableLazyModeUseCase().countBlockingAssignments(
+                assignments: assignments,
+                notifyBefore: Duration(hours: settings.notifyBeforeHours),
+                now: DateTime.now(),
+              );
+        ShadToaster.of(context).show(
+          ShadToast(title: Text('あと$blocked件提出するとOFFにできます')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsAsync = ref.watch(settingsViewModelProvider);
+    final settings = settingsAsync.valueOrNull;
+
+    if (settings != null && _hoursController.text.isEmpty) {
+      _hoursController.text = settings.notifyBeforeHours.toString();
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('設定')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          if (!_permissionGranted) ...[
+            ShadCard(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.notifications_off, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    const Expanded(child: Text('通知が許可されていません')),
+                    ShadButton.outline(
+                      onPressed: () async {
+                        await const NotificationService().requestPermission();
+                        await _checkPermission();
+                      },
+                      child: const Text('許可する'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          Text('通知タイミング', style: ShadTheme.of(context).textTheme.h4),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              SizedBox(
+                width: 80,
+                child: ShadInput(
+                  controller: _hoursController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  onEditingComplete: _onEditingComplete,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text('時間前に通知', style: ShadTheme.of(context).textTheme.p),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('怠惰人間モード',
+                      style: ShadTheme.of(context).textTheme.p),
+                  Text('ONのときスヌーズは1時間固定',
+                      style: ShadTheme.of(context).textTheme.muted),
+                ],
+              ),
+              ShadSwitch(
+                value: settings?.lazyModeEnabled ?? false,
+                onChanged: settings != null
+                    ? (v) => _onLazyModeToggle(v)
+                    : null,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
