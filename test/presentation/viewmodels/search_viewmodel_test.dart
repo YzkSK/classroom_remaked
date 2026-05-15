@@ -29,7 +29,7 @@ void main() {
   test('search でキーワードにマッチする課題が返る', () async {
     when(() => mockDb.searchAssignments('数学')).thenAnswer(
       (_) async => [
-        AssignmentRow(
+        const AssignmentRow(
           id: 'a1',
           courseId: 'c1',
           title: '数学レポート',
