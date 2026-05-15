@@ -54,25 +54,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (value) {
       final confirmed = await showShadDialog<bool>(
         context: context,
-        builder: (context) => ShadDialog.alert(
-          titleTextAlign: TextAlign.center,
-          title: const Text('怠惰人間モードを有効にしますか？'),
-          description: const Text(
-            '・スヌーズが1時間固定になります\n'
-            '・OFFに戻すには、設定した通知タイミング以内に\n'
-            '  締め切りがある課題をすべて提出するまで\n'
-            '  無効にできません',
+        builder: (context) => Padding(
+          padding: const EdgeInsets.all(16),
+          child: ShadDialog.alert(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            titleTextAlign: TextAlign.center,
+            title: const Text('怠惰人間モードを有効にしますか？'),
+            description: const Text(
+              '・スヌーズが1時間固定になります\n'
+              '・OFFに戻すには、設定した通知タイミング以内に\n'
+              '  締め切りがある課題をすべて提出するまで\n'
+              '  無効にできません',
+            ),
+            actions: [
+              ShadButton.outline(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('キャンセル'),
+              ),
+              ShadButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('有効にする'),
+              ),
+            ],
           ),
-          actions: [
-            ShadButton.outline(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('キャンセル'),
-            ),
-            ShadButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('有効にする'),
-            ),
-          ],
         ),
       );
       if (confirmed == true) {
