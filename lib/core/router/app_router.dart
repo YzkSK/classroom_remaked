@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/di/providers.dart';
 import '../../presentation/viewmodels/auth_viewmodel.dart';
+import '../../presentation/views/assignments/assignment_detail_screen.dart';
 import '../../presentation/views/assignments/assignments_screen.dart';
 import '../../presentation/views/auth/sign_in_screen.dart';
 import '../../presentation/views/dashboard/course_detail_screen.dart';
@@ -68,6 +69,14 @@ GoRouter appRouter(AppRouterRef ref) {
             GoRoute(
               path: '/assignments',
               builder: (_, __) => const AssignmentsScreen(),
+              routes: [
+                GoRoute(
+                  path: ':assignmentId',
+                  builder: (_, state) => AssignmentDetailScreen(
+                    assignmentId: state.pathParameters['assignmentId']!,
+                  ),
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [
