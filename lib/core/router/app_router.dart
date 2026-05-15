@@ -7,6 +7,7 @@ import '../../presentation/views/assignments/assignments_screen.dart';
 import '../../presentation/views/auth/sign_in_screen.dart';
 import '../../presentation/views/dashboard/dashboard_screen.dart';
 import '../../presentation/views/notification_setup/notification_setup_screen.dart';
+import '../../presentation/views/search/search_screen.dart';
 import '../../presentation/views/settings/settings_screen.dart';
 import '../../presentation/views/shared/scaffold_with_nav.dart';
 import '../../presentation/views/splash/splash_screen.dart';
@@ -58,6 +59,9 @@ GoRouter appRouter(AppRouterRef ref) {
               path: '/assignments',
               builder: (_, __) => const AssignmentsScreen(),
             ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/search', builder: (_, __) => const SearchScreen()),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
