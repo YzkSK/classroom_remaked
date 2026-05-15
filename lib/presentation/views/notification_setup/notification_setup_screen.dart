@@ -50,6 +50,7 @@ class _NotificationSetupScreenState
           padding: const EdgeInsets.all(16),
           child: ShadDialog.alert(
             radius: const BorderRadius.all(Radius.circular(24)),
+            removeBorderRadiusWhenTiny: false,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             useSafeArea: false,
             crossAxisAlignment: CrossAxisAlignment.center,
