@@ -1,30 +1,26 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'assignments_viewmodel.dart';
+part of 'settings_viewmodel.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$assignmentsViewModelHash() =>
-    r'7d93fa1648d869539f5ab9ea87528c8f52424fb0';
+String _$settingsViewModelHash() => r'dbf8e6e2df79368f107ed06135a1f493a3993bad';
 
-/// See also [AssignmentsViewModel].
-@ProviderFor(AssignmentsViewModel)
-final assignmentsViewModelProvider =
-    AutoDisposeAsyncNotifierProvider<
-      AssignmentsViewModel,
-      AssignmentsState
-    >.internal(
-      AssignmentsViewModel.new,
-      name: r'assignmentsViewModelProvider',
+/// See also [SettingsViewModel].
+@ProviderFor(SettingsViewModel)
+final settingsViewModelProvider =
+    AutoDisposeAsyncNotifierProvider<SettingsViewModel, SettingsState>.internal(
+      SettingsViewModel.new,
+      name: r'settingsViewModelProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
-          : _$assignmentsViewModelHash,
+          : _$settingsViewModelHash,
       dependencies: null,
       allTransitiveDependencies: null,
     );
 
-typedef _$AssignmentsViewModel = AutoDisposeAsyncNotifier<AssignmentsState>;
+typedef _$SettingsViewModel = AutoDisposeAsyncNotifier<SettingsState>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

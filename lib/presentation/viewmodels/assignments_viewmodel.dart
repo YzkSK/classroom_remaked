@@ -9,24 +9,43 @@ enum AssignmentsFilter { all, unsubmitted }
 class AssignmentsState {
   const AssignmentsState({
     required this.assignments,
+    required this.hiddenAssignmentIds,
     this.filter = AssignmentsFilter.all,
+    this.showHidden = false,
   });
 
   final List<Assignment> assignments;
+  final Set<String> hiddenAssignmentIds;
   final AssignmentsFilter filter;
+  final bool showHidden;
 
-  List<Assignment> get filteredAssignments {
-    if (filter == AssignmentsFilter.all) return assignments;
-    return assignments
-        .where((a) => a.submissionState != SubmissionState.turnedIn)
-        .toList();
+  List<Assignment> get visibleAssignments {
+    var list = showHidden
+        ? assignments
+        : assignments.where((a) => !hiddenAssignmentIds.contains(a.id)).toList();
+
+    if (filter == AssignmentsFilter.unsubmitted) {
+      list = list
+          .where((a) => a.submissionState != SubmissionState.turnedIn)
+          .toList();
+    }
+    return list;
   }
 
-  AssignmentsState copyWith(
-          {List<Assignment>? assignments, AssignmentsFilter? filter}) =>
+  bool isHidden(String assignmentId) =>
+      hiddenAssignmentIds.contains(assignmentId);
+
+  AssignmentsState copyWith({
+    List<Assignment>? assignments,
+    Set<String>? hiddenAssignmentIds,
+    AssignmentsFilter? filter,
+    bool? showHidden,
+  }) =>
       AssignmentsState(
         assignments: assignments ?? this.assignments,
+        hiddenAssignmentIds: hiddenAssignmentIds ?? this.hiddenAssignmentIds,
         filter: filter ?? this.filter,
+        showHidden: showHidden ?? this.showHidden,
       );
 }
 
@@ -35,6 +54,8 @@ class AssignmentsViewModel extends _$AssignmentsViewModel {
   @override
   Future<AssignmentsState> build() async {
     final repo = ref.watch(lmsRepositoryProvider);
+    final hiddenDs = ref.watch(hiddenItemsDataSourceProvider);
+
     final coursesResult = await repo.getCourses();
     final courses = coursesResult.getOrElse(() => []);
 
@@ -52,12 +73,43 @@ class AssignmentsViewModel extends _$AssignmentsViewModel {
         return a.dueDate!.compareTo(b.dueDate!);
       });
 
-    return AssignmentsState(assignments: all);
+    final hiddenIds = await hiddenDs.getHiddenIds('assignment');
+
+    return AssignmentsState(
+      assignments: all,
+      hiddenAssignmentIds: hiddenIds,
+    );
   }
 
   void setFilter(AssignmentsFilter filter) {
     final current = state.valueOrNull;
     if (current == null) return;
     state = AsyncData(current.copyWith(filter: filter));
+  }
+
+  void toggleShowHidden() {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(showHidden: !current.showHidden));
+  }
+
+  Future<void> hideItem(String assignmentId) async {
+    await ref
+        .read(hiddenItemsDataSourceProvider)
+        .hide(assignmentId, 'assignment');
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(
+      hiddenAssignmentIds: {...current.hiddenAssignmentIds, assignmentId},
+    ));
+  }
+
+  Future<void> unhideItem(String assignmentId) async {
+    await ref.read(hiddenItemsDataSourceProvider).unhide(assignmentId);
+    final current = state.valueOrNull;
+    if (current == null) return;
+    final updated = Set<String>.from(current.hiddenAssignmentIds)
+      ..remove(assignmentId);
+    state = AsyncData(current.copyWith(hiddenAssignmentIds: updated));
   }
 }

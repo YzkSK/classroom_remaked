@@ -54,13 +54,90 @@ class SyncStates extends Table {
   Set<Column> get primaryKey => {key};
 }
 
-@DriftDatabase(tables: [Courses, Assignments, CourseOrders, SyncStates])
-class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
-  AppDatabase.forTesting(QueryExecutor e) : super(e);
+@DataClassName('HiddenItemRow')
+class HiddenItems extends Table {
+  TextColumn get itemId => text()();
+  TextColumn get type => text()();
+  DateTimeColumn get hiddenAt => dateTime()();
 
   @override
-  int get schemaVersion => 1;
+  Set<Column> get primaryKey => {itemId};
+}
+
+@DataClassName('UserPreferenceRow')
+class UserPreferences extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column> get primaryKey => {key};
+}
+
+@DataClassName('NotificationLogRow')
+class NotificationLogs extends Table {
+  TextColumn get assignmentId => text()();
+  DateTimeColumn get notifiedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {assignmentId};
+}
+
+@DataClassName('SnoozedItemRow')
+class SnoozedItems extends Table {
+  TextColumn get assignmentId => text()();
+  DateTimeColumn get snoozedUntil => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {assignmentId};
+}
+
+@DriftDatabase(tables: [
+  Courses,
+  Assignments,
+  CourseOrders,
+  SyncStates,
+  HiddenItems,
+  UserPreferences,
+  NotificationLogs,
+  SnoozedItems,
+])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+  AppDatabase.forTesting(super.e);
+  AppDatabase.withConnection(super.e);
+
+  @override
+  int get schemaVersion => 3;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(hiddenItems);
+          }
+          if (from < 3) {
+            await m.createTable(userPreferences);
+            await m.createTable(notificationLogs);
+            await m.createTable(snoozedItems);
+          }
+        },
+      );
+
+  Future<List<AssignmentRow>> searchAssignments(String query) {
+    final q = '%${query.toLowerCase()}%';
+    return (select(assignments)
+          ..where((t) =>
+              t.title.lower().like(q) |
+              t.description.lower().like(q)))
+        .get();
+  }
+
+  static Future<AppDatabase> openBackground() async {
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, 'app.db'));
+    return AppDatabase.withConnection(NativeDatabase(file));
+  }
 }
 
 LazyDatabase _openConnection() {

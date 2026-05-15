@@ -26,6 +26,14 @@ class ScaffoldWithNav extends StatelessWidget {
             icon: Icon(Icons.assignment_rounded),
             label: '課題',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search_rounded),
+            label: '検索',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_rounded),
+            label: '設定',
+          ),
         ],
       ),
     );
