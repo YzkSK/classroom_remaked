@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../viewmodels/assignments_viewmodel.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/settings_viewmodel.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../domain/usecases/can_disable_lazy_mode_usecase.dart';
@@ -217,6 +218,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     : null,
               ),
             ],
+          ),
+          const SizedBox(height: 32),
+          const ShadSeparator.horizontal(),
+          const SizedBox(height: 16),
+          ShadButton.outline(
+            width: double.infinity,
+            onPressed: () =>
+                ref.read(authViewModelProvider.notifier).signOut(),
+            child: const Text('サインアウト'),
           ),
         ],
       ),
