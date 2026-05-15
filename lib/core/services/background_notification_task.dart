@@ -23,6 +23,8 @@ class BackgroundNotificationTask {
 
     final notifyBeforeHours = await prefsDs.getNotifyBeforeHours();
     final lazyMode = await prefsDs.getLazyModeEnabled();
+    final configuredSnooze = await prefsDs.getSnoozeHours();
+    final snooze = Duration(hours: lazyMode ? 1 : configuredSnooze);
     final notifyBefore = Duration(hours: notifyBeforeHours);
 
     final rows = await db.select(db.assignments).get();
@@ -60,8 +62,9 @@ class BackgroundNotificationTask {
 
     const notifService = NotificationService();
     for (final assignment in candidates) {
-      await notifService.show(assignment, lazyMode: lazyMode);
+      await notifService.show(assignment);
       await logsDs.log(assignment.id);
+      await snoozeDs.upsert(assignment.id, now.add(snooze));
     }
 
     return true;
