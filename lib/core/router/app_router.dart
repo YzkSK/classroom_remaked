@@ -5,6 +5,7 @@ import '../../core/di/providers.dart';
 import '../../presentation/viewmodels/auth_viewmodel.dart';
 import '../../presentation/views/assignments/assignments_screen.dart';
 import '../../presentation/views/auth/sign_in_screen.dart';
+import '../../presentation/views/dashboard/course_detail_screen.dart';
 import '../../presentation/views/dashboard/dashboard_screen.dart';
 import '../../presentation/views/notification_setup/notification_setup_screen.dart';
 import '../../presentation/views/search/search_screen.dart';
@@ -52,6 +53,15 @@ GoRouter appRouter(AppRouterRef ref) {
             GoRoute(
               path: '/dashboard',
               builder: (_, __) => const DashboardScreen(),
+              routes: [
+                GoRoute(
+                  path: 'courses/:courseId',
+                  builder: (_, state) => CourseDetailScreen(
+                    courseId: state.pathParameters['courseId']!,
+                    courseName: state.uri.queryParameters['name'] ?? '',
+                  ),
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [
