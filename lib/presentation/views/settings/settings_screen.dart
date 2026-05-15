@@ -59,6 +59,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: ShadDialog.alert(
             radius: const BorderRadius.all(Radius.circular(24)),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            useSafeArea: false,
             crossAxisAlignment: CrossAxisAlignment.center,
             titleTextAlign: TextAlign.center,
             title: const Text('怠惰人間モードを有効にしますか？'),
