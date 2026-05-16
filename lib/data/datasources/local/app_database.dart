@@ -124,6 +124,15 @@ class AppDatabase extends _$AppDatabase {
         },
       );
 
+  Future<List<AssignmentRow>> searchAssignments(String query) {
+    final q = '%${query.toLowerCase()}%';
+    return (select(assignments)
+          ..where((t) =>
+              t.title.lower().like(q) |
+              t.description.lower().like(q)))
+        .get();
+  }
+
   static Future<AppDatabase> openBackground() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'app.db'));

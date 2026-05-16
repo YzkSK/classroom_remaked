@@ -8,6 +8,7 @@ class UserPreferencesDataSource {
 
   static const _keyNotifyBeforeHours = 'notifyBeforeHours';
   static const _keyLazyModeEnabled = 'lazyModeEnabled';
+  static const _keySnoozeHours = 'snoozeHours';
   static const _keyOnboardingDone = 'notificationOnboardingDone';
 
   Future<String?> _get(String key) async {
@@ -30,6 +31,14 @@ class UserPreferencesDataSource {
 
   Future<void> setNotifyBeforeHours(int hours) =>
       _set(_keyNotifyBeforeHours, hours.toString());
+
+  Future<int> getSnoozeHours() async {
+    final v = await _get(_keySnoozeHours);
+    return v != null ? int.parse(v) : 1;
+  }
+
+  Future<void> setSnoozeHours(int hours) =>
+      _set(_keySnoozeHours, hours.toString());
 
   Future<bool> getLazyModeEnabled() async {
     final v = await _get(_keyLazyModeEnabled);

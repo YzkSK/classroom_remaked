@@ -17,6 +17,7 @@ class ScaffoldWithNav extends StatelessWidget {
           index,
           initialLocation: index == navigationShell.currentIndex,
         ),
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_rounded),
@@ -25,6 +26,10 @@ class ScaffoldWithNav extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment_rounded),
             label: '課題',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search_rounded),
+            label: '検索',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_rounded),

@@ -1,6 +1,7 @@
 // lib/presentation/views/assignments/assignments_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../domain/entities/assignment.dart';
@@ -191,7 +192,10 @@ class _AssignmentCard extends StatelessWidget {
                   child: const Text('非表示にする'),
                 ),
             ],
-            child: _AssignmentCardContent(assignment: assignment),
+            child: GestureDetector(
+              onTap: () => context.go('/assignments/${assignment.id}'),
+              child: _AssignmentCardContent(assignment: assignment),
+            ),
           ),
         ),
       ),
