@@ -16,7 +16,7 @@ void main() async {
     notificationTaskUniqueName,
     notificationTaskName,
     frequency: const Duration(hours: 1),
-    existingWorkPolicy: ExistingWorkPolicy.keep,
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
   );
   runApp(const ProviderScope(child: App()));
 }
