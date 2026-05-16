@@ -3,7 +3,9 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:mime/mime.dart';
 import 'package:open_file/open_file.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../data/datasources/remote/classroom_http_client.dart';
@@ -167,6 +169,20 @@ class DriveFileService {
     final file = File('${tmp.path}/$safeName.$ext');
     await file.writeAsBytes(bytes);
     await OpenFile.open(file.path);
+  }
+
+  /// ローカルファイルを Drive にアップロードしてファイル ID と名前を返す。
+  Future<({String fileId, String name})> uploadFile(File file) async {
+    final name = p.basename(file.path);
+    final mimeType =
+        lookupMimeType(file.path) ?? 'application/octet-stream';
+    final length = await file.length();
+    final media = drive.Media(file.openRead(), length, contentType: mimeType);
+    final created = await _api.files.create(
+      drive.File()..name = name,
+      uploadMedia: media,
+    );
+    return (fileId: created.id!, name: name);
   }
 
   Future<Uint8List> _readStream(Stream<List<int>> stream) async {

@@ -141,6 +141,32 @@ class GoogleClassroomRepository implements LmsRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, void>> addAttachment(
+    String courseId,
+    String courseWorkId,
+    String submissionId,
+    String driveFileId,
+  ) async {
+    try {
+      await _api.courses.courseWork.studentSubmissions.modifyAttachments(
+        classroom.ModifyAttachmentsRequest(
+          addAttachments: [
+            classroom.Attachment(
+              driveFile: classroom.DriveFile(id: driveFileId),
+            ),
+          ],
+        ),
+        courseId,
+        courseWorkId,
+        submissionId,
+      );
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(ApiFailure(e.toString()));
+    }
+  }
+
   // ────────────────────── Private: fetch & cache ──────────────────────
 
   Future<Either<Failure, List<Course>>> _fetchAndCacheCourses() async {

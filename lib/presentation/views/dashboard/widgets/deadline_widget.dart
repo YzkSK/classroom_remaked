@@ -1,6 +1,7 @@
 // lib/presentation/views/dashboard/widgets/deadline_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../domain/entities/assignment.dart';
@@ -63,21 +64,24 @@ class _DeadlineTile extends StatelessWidget {
     final daysLeft = due?.difference(DateTime.now()).inDays;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: ShadCard(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(assignment.title,
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-            if (due != null)
-              ShadBadge(
-                backgroundColor:
-                    daysLeft != null && daysLeft <= 1 ? Colors.red : null,
-                child: Text(DateFormat('M/d').format(due)),
+      child: GestureDetector(
+        onTap: () => context.go('/assignments/${assignment.id}'),
+        child: ShadCard(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(assignment.title,
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
-          ],
+              if (due != null)
+                ShadBadge(
+                  backgroundColor:
+                      daysLeft != null && daysLeft <= 1 ? Colors.red : null,
+                  child: Text(DateFormat('M/d').format(due)),
+                ),
+            ],
+          ),
         ),
       ),
     );

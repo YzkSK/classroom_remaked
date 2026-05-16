@@ -1,6 +1,7 @@
 // lib/core/router/app_router.dart
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../app.dart';
 import '../../core/di/providers.dart';
 import '../../presentation/viewmodels/auth_viewmodel.dart';
 import '../../presentation/views/assignments/assignment_detail_screen.dart';
@@ -19,6 +20,7 @@ part 'app_router.g.dart';
 @riverpod
 GoRouter appRouter(AppRouterRef ref) {
   final authState = ref.watch(authViewModelProvider);
+  final pendingRoute = ref.watch(pendingNotificationRouteProvider);
 
   return GoRouter(
     initialLocation: '/splash',
@@ -30,6 +32,12 @@ GoRouter appRouter(AppRouterRef ref) {
 
       if (!isSignedIn && loc != '/sign-in') return '/sign-in';
       if (!isSignedIn) return null;
+
+      // 通知タップからの起動
+      if (pendingRoute != null) {
+        ref.read(pendingNotificationRouteProvider.notifier).clear();
+        return pendingRoute;
+      }
 
       // サインイン済み: オンボーディング確認
       if (loc == '/sign-in' || loc == '/splash') {

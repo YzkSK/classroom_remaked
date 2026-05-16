@@ -46,10 +46,10 @@ class ClassroomSyncService {
 
     final courseIds = courses.map((c) => c.id).toList();
 
-    // FCM トークンと Pub/Sub フィード登録を並行して行う
-    await Future.wait([
-      const FcmTokenService().register(userId: _userId, courseIds: courseIds),
-      _repo.registerPubSubFeeds(courseIds),
-    ]);
+    // UI をブロックしないようバックグラウンドで実行
+    const FcmTokenService()
+        .register(userId: _userId, courseIds: courseIds)
+        .ignore();
+    _repo.registerPubSubFeeds(courseIds).ignore();
   }
 }
