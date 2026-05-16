@@ -1,4 +1,5 @@
 // lib/core/services/notification_service.dart
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../domain/entities/assignment.dart';
 
@@ -42,6 +43,26 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
+  }
+
+  static Future<void> showPush(RemoteMessage message) async {
+    final title = message.notification?.title ?? '新しいお知らせ';
+    final body = message.notification?.body ?? '';
+    const androidDetails = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    await _plugin.show(
+      message.messageId.hashCode.abs() % 0x7FFFFFFF,
+      title,
+      body,
+      const NotificationDetails(
+        android: androidDetails,
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
   }
 
   Future<void> show(Assignment assignment) async {

@@ -463,4 +463,34 @@ class GoogleClassroomRepository implements LmsRepository {
             ? DateTime.fromMillisecondsSinceEpoch(r.updateTimeMillis!)
             : null,
       );
+
+  // ────────────────────── Pub/Sub Registrations ──────────────────────
+
+  static const _pubsubTopic =
+      'projects/core-phoenix-489602-b1/topics/classroom-notifications';
+
+  /// 各コースの COURSE_WORK_CHANGES を Classroom Pub/Sub に登録する。
+  /// 登録済みのコースは 409 が返るのでスキップする。
+  Future<void> registerPubSubFeeds(List<String> courseIds) async {
+    for (final courseId in courseIds) {
+      try {
+        await _api.registrations.create(
+          classroom.Registration(
+            feed: classroom.Feed(
+              feedType: 'COURSE_WORK_CHANGES',
+              courseWorkChangesInfo:
+                  classroom.CourseWorkChangesInfo(courseId: courseId),
+            ),
+            cloudPubsubTopic:
+                classroom.CloudPubsubTopic(topicName: _pubsubTopic),
+          ),
+        );
+      } catch (e) {
+        if (!e.toString().contains('409') &&
+            !e.toString().contains('already exists')) {
+          rethrow;
+        }
+      }
+    }
+  }
 }
