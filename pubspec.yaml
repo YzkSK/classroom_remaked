@@ -62,6 +62,9 @@ dependencies:
   # ユーティリティ
   freezed_annotation: ^2.4.0
   dartz: ^0.10.1
+  url_launcher: ^6.3.0
+  pdfx: ^2.9.0
+  open_file: ^3.5.10
   intl: ^0.20.0
 
 dev_dependencies:

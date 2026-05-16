@@ -215,5 +215,162 @@ final classroomSyncServiceProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ClassroomSyncServiceRef = AutoDisposeProviderRef<ClassroomSyncService>;
+String _$driveFileServiceHash() => r'c7e4fe5e844b68a410a24e9c4e4ee392137857f5';
+
+/// See also [driveFileService].
+@ProviderFor(driveFileService)
+final driveFileServiceProvider = AutoDisposeProvider<DriveFileService>.internal(
+  driveFileService,
+  name: r'driveFileServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$driveFileServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef DriveFileServiceRef = AutoDisposeProviderRef<DriveFileService>;
+String _$fileViewerHash() => r'af2755fbeae573937463977ebb1248785d655138';
+
+/// Copied from Dart SDK
+class _SystemHash {
+  _SystemHash._();
+
+  static int combine(int hash, int value) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + value);
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
+    return hash ^ (hash >> 6);
+  }
+
+  static int finish(int hash) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
+    // ignore: parameter_assignments
+    hash = hash ^ (hash >> 11);
+    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  }
+}
+
+/// See also [fileViewer].
+@ProviderFor(fileViewer)
+const fileViewerProvider = FileViewerFamily();
+
+/// See also [fileViewer].
+class FileViewerFamily extends Family<AsyncValue<Uint8List>> {
+  /// See also [fileViewer].
+  const FileViewerFamily();
+
+  /// See also [fileViewer].
+  FileViewerProvider call(String fileId) {
+    return FileViewerProvider(fileId);
+  }
+
+  @override
+  FileViewerProvider getProviderOverride(
+    covariant FileViewerProvider provider,
+  ) {
+    return call(provider.fileId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'fileViewerProvider';
+}
+
+/// See also [fileViewer].
+class FileViewerProvider extends AutoDisposeFutureProvider<Uint8List> {
+  /// See also [fileViewer].
+  FileViewerProvider(String fileId)
+    : this._internal(
+        (ref) => fileViewer(ref as FileViewerRef, fileId),
+        from: fileViewerProvider,
+        name: r'fileViewerProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$fileViewerHash,
+        dependencies: FileViewerFamily._dependencies,
+        allTransitiveDependencies: FileViewerFamily._allTransitiveDependencies,
+        fileId: fileId,
+      );
+
+  FileViewerProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.fileId,
+  }) : super.internal();
+
+  final String fileId;
+
+  @override
+  Override overrideWith(
+    FutureOr<Uint8List> Function(FileViewerRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: FileViewerProvider._internal(
+        (ref) => create(ref as FileViewerRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        fileId: fileId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<Uint8List> createElement() {
+    return _FileViewerProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FileViewerProvider && other.fileId == fileId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, fileId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin FileViewerRef on AutoDisposeFutureProviderRef<Uint8List> {
+  /// The parameter `fileId` of this provider.
+  String get fileId;
+}
+
+class _FileViewerProviderElement
+    extends AutoDisposeFutureProviderElement<Uint8List>
+    with FileViewerRef {
+  _FileViewerProviderElement(super.provider);
+
+  @override
+  String get fileId => (origin as FileViewerProvider).fileId;
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

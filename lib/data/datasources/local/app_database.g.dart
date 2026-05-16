@@ -543,6 +543,28 @@ class $AssignmentsTable extends Assignments
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _submissionIdMeta = const VerificationMeta(
+    'submissionId',
+  );
+  @override
+  late final GeneratedColumn<String> submissionId = GeneratedColumn<String>(
+    'submission_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _materialsJsonMeta = const VerificationMeta(
+    'materialsJson',
+  );
+  @override
+  late final GeneratedColumn<String> materialsJson = GeneratedColumn<String>(
+    'materials_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -552,6 +574,8 @@ class $AssignmentsTable extends Assignments
     dueDateMillis,
     state,
     submissionState,
+    submissionId,
+    materialsJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -619,6 +643,24 @@ class $AssignmentsTable extends Assignments
         ),
       );
     }
+    if (data.containsKey('submission_id')) {
+      context.handle(
+        _submissionIdMeta,
+        submissionId.isAcceptableOrUnknown(
+          data['submission_id']!,
+          _submissionIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('materials_json')) {
+      context.handle(
+        _materialsJsonMeta,
+        materialsJson.isAcceptableOrUnknown(
+          data['materials_json']!,
+          _materialsJsonMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -656,6 +698,14 @@ class $AssignmentsTable extends Assignments
         DriftSqlType.string,
         data['${effectivePrefix}submission_state'],
       ),
+      submissionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}submission_id'],
+      ),
+      materialsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}materials_json'],
+      ),
     );
   }
 
@@ -673,6 +723,8 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
   final int? dueDateMillis;
   final String state;
   final String? submissionState;
+  final String? submissionId;
+  final String? materialsJson;
   const AssignmentRow({
     required this.id,
     required this.courseId,
@@ -681,6 +733,8 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
     this.dueDateMillis,
     required this.state,
     this.submissionState,
+    this.submissionId,
+    this.materialsJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -697,6 +751,12 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
     map['state'] = Variable<String>(state);
     if (!nullToAbsent || submissionState != null) {
       map['submission_state'] = Variable<String>(submissionState);
+    }
+    if (!nullToAbsent || submissionId != null) {
+      map['submission_id'] = Variable<String>(submissionId);
+    }
+    if (!nullToAbsent || materialsJson != null) {
+      map['materials_json'] = Variable<String>(materialsJson);
     }
     return map;
   }
@@ -716,6 +776,12 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
       submissionState: submissionState == null && nullToAbsent
           ? const Value.absent()
           : Value(submissionState),
+      submissionId: submissionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(submissionId),
+      materialsJson: materialsJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(materialsJson),
     );
   }
 
@@ -732,6 +798,8 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
       dueDateMillis: serializer.fromJson<int?>(json['dueDateMillis']),
       state: serializer.fromJson<String>(json['state']),
       submissionState: serializer.fromJson<String?>(json['submissionState']),
+      submissionId: serializer.fromJson<String?>(json['submissionId']),
+      materialsJson: serializer.fromJson<String?>(json['materialsJson']),
     );
   }
   @override
@@ -745,6 +813,8 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
       'dueDateMillis': serializer.toJson<int?>(dueDateMillis),
       'state': serializer.toJson<String>(state),
       'submissionState': serializer.toJson<String?>(submissionState),
+      'submissionId': serializer.toJson<String?>(submissionId),
+      'materialsJson': serializer.toJson<String?>(materialsJson),
     };
   }
 
@@ -756,6 +826,8 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
     Value<int?> dueDateMillis = const Value.absent(),
     String? state,
     Value<String?> submissionState = const Value.absent(),
+    Value<String?> submissionId = const Value.absent(),
+    Value<String?> materialsJson = const Value.absent(),
   }) => AssignmentRow(
     id: id ?? this.id,
     courseId: courseId ?? this.courseId,
@@ -768,6 +840,10 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
     submissionState: submissionState.present
         ? submissionState.value
         : this.submissionState,
+    submissionId: submissionId.present ? submissionId.value : this.submissionId,
+    materialsJson: materialsJson.present
+        ? materialsJson.value
+        : this.materialsJson,
   );
   AssignmentRow copyWithCompanion(AssignmentsCompanion data) {
     return AssignmentRow(
@@ -784,6 +860,12 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
       submissionState: data.submissionState.present
           ? data.submissionState.value
           : this.submissionState,
+      submissionId: data.submissionId.present
+          ? data.submissionId.value
+          : this.submissionId,
+      materialsJson: data.materialsJson.present
+          ? data.materialsJson.value
+          : this.materialsJson,
     );
   }
 
@@ -796,7 +878,9 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
           ..write('description: $description, ')
           ..write('dueDateMillis: $dueDateMillis, ')
           ..write('state: $state, ')
-          ..write('submissionState: $submissionState')
+          ..write('submissionState: $submissionState, ')
+          ..write('submissionId: $submissionId, ')
+          ..write('materialsJson: $materialsJson')
           ..write(')'))
         .toString();
   }
@@ -810,6 +894,8 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
     dueDateMillis,
     state,
     submissionState,
+    submissionId,
+    materialsJson,
   );
   @override
   bool operator ==(Object other) =>
@@ -821,7 +907,9 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
           other.description == this.description &&
           other.dueDateMillis == this.dueDateMillis &&
           other.state == this.state &&
-          other.submissionState == this.submissionState);
+          other.submissionState == this.submissionState &&
+          other.submissionId == this.submissionId &&
+          other.materialsJson == this.materialsJson);
 }
 
 class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
@@ -832,6 +920,8 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
   final Value<int?> dueDateMillis;
   final Value<String> state;
   final Value<String?> submissionState;
+  final Value<String?> submissionId;
+  final Value<String?> materialsJson;
   final Value<int> rowid;
   const AssignmentsCompanion({
     this.id = const Value.absent(),
@@ -841,6 +931,8 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
     this.dueDateMillis = const Value.absent(),
     this.state = const Value.absent(),
     this.submissionState = const Value.absent(),
+    this.submissionId = const Value.absent(),
+    this.materialsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AssignmentsCompanion.insert({
@@ -851,6 +943,8 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
     this.dueDateMillis = const Value.absent(),
     this.state = const Value.absent(),
     this.submissionState = const Value.absent(),
+    this.submissionId = const Value.absent(),
+    this.materialsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        courseId = Value(courseId),
@@ -863,6 +957,8 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
     Expression<int>? dueDateMillis,
     Expression<String>? state,
     Expression<String>? submissionState,
+    Expression<String>? submissionId,
+    Expression<String>? materialsJson,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -873,6 +969,8 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
       if (dueDateMillis != null) 'due_date_millis': dueDateMillis,
       if (state != null) 'state': state,
       if (submissionState != null) 'submission_state': submissionState,
+      if (submissionId != null) 'submission_id': submissionId,
+      if (materialsJson != null) 'materials_json': materialsJson,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -885,6 +983,8 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
     Value<int?>? dueDateMillis,
     Value<String>? state,
     Value<String?>? submissionState,
+    Value<String?>? submissionId,
+    Value<String?>? materialsJson,
     Value<int>? rowid,
   }) {
     return AssignmentsCompanion(
@@ -895,6 +995,8 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
       dueDateMillis: dueDateMillis ?? this.dueDateMillis,
       state: state ?? this.state,
       submissionState: submissionState ?? this.submissionState,
+      submissionId: submissionId ?? this.submissionId,
+      materialsJson: materialsJson ?? this.materialsJson,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -923,6 +1025,12 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
     if (submissionState.present) {
       map['submission_state'] = Variable<String>(submissionState.value);
     }
+    if (submissionId.present) {
+      map['submission_id'] = Variable<String>(submissionId.value);
+    }
+    if (materialsJson.present) {
+      map['materials_json'] = Variable<String>(materialsJson.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -939,6 +1047,382 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
           ..write('dueDateMillis: $dueDateMillis, ')
           ..write('state: $state, ')
           ..write('submissionState: $submissionState, ')
+          ..write('submissionId: $submissionId, ')
+          ..write('materialsJson: $materialsJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AnnouncementsTable extends Announcements
+    with TableInfo<$AnnouncementsTable, AnnouncementRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AnnouncementsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _courseIdMeta = const VerificationMeta(
+    'courseId',
+  );
+  @override
+  late final GeneratedColumn<String> courseId = GeneratedColumn<String>(
+    'course_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _creationTimeMillisMeta =
+      const VerificationMeta('creationTimeMillis');
+  @override
+  late final GeneratedColumn<int> creationTimeMillis = GeneratedColumn<int>(
+    'creation_time_millis',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updateTimeMillisMeta = const VerificationMeta(
+    'updateTimeMillis',
+  );
+  @override
+  late final GeneratedColumn<int> updateTimeMillis = GeneratedColumn<int>(
+    'update_time_millis',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    courseId,
+    body,
+    creationTimeMillis,
+    updateTimeMillis,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'announcements';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AnnouncementRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('course_id')) {
+      context.handle(
+        _courseIdMeta,
+        courseId.isAcceptableOrUnknown(data['course_id']!, _courseIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_courseIdMeta);
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['body']!, _bodyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('creation_time_millis')) {
+      context.handle(
+        _creationTimeMillisMeta,
+        creationTimeMillis.isAcceptableOrUnknown(
+          data['creation_time_millis']!,
+          _creationTimeMillisMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_creationTimeMillisMeta);
+    }
+    if (data.containsKey('update_time_millis')) {
+      context.handle(
+        _updateTimeMillisMeta,
+        updateTimeMillis.isAcceptableOrUnknown(
+          data['update_time_millis']!,
+          _updateTimeMillisMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AnnouncementRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AnnouncementRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      courseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}course_id'],
+      )!,
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body'],
+      )!,
+      creationTimeMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}creation_time_millis'],
+      )!,
+      updateTimeMillis: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}update_time_millis'],
+      ),
+    );
+  }
+
+  @override
+  $AnnouncementsTable createAlias(String alias) {
+    return $AnnouncementsTable(attachedDatabase, alias);
+  }
+}
+
+class AnnouncementRow extends DataClass implements Insertable<AnnouncementRow> {
+  final String id;
+  final String courseId;
+  final String body;
+  final int creationTimeMillis;
+  final int? updateTimeMillis;
+  const AnnouncementRow({
+    required this.id,
+    required this.courseId,
+    required this.body,
+    required this.creationTimeMillis,
+    this.updateTimeMillis,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['course_id'] = Variable<String>(courseId);
+    map['body'] = Variable<String>(body);
+    map['creation_time_millis'] = Variable<int>(creationTimeMillis);
+    if (!nullToAbsent || updateTimeMillis != null) {
+      map['update_time_millis'] = Variable<int>(updateTimeMillis);
+    }
+    return map;
+  }
+
+  AnnouncementsCompanion toCompanion(bool nullToAbsent) {
+    return AnnouncementsCompanion(
+      id: Value(id),
+      courseId: Value(courseId),
+      body: Value(body),
+      creationTimeMillis: Value(creationTimeMillis),
+      updateTimeMillis: updateTimeMillis == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updateTimeMillis),
+    );
+  }
+
+  factory AnnouncementRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AnnouncementRow(
+      id: serializer.fromJson<String>(json['id']),
+      courseId: serializer.fromJson<String>(json['courseId']),
+      body: serializer.fromJson<String>(json['body']),
+      creationTimeMillis: serializer.fromJson<int>(json['creationTimeMillis']),
+      updateTimeMillis: serializer.fromJson<int?>(json['updateTimeMillis']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'courseId': serializer.toJson<String>(courseId),
+      'body': serializer.toJson<String>(body),
+      'creationTimeMillis': serializer.toJson<int>(creationTimeMillis),
+      'updateTimeMillis': serializer.toJson<int?>(updateTimeMillis),
+    };
+  }
+
+  AnnouncementRow copyWith({
+    String? id,
+    String? courseId,
+    String? body,
+    int? creationTimeMillis,
+    Value<int?> updateTimeMillis = const Value.absent(),
+  }) => AnnouncementRow(
+    id: id ?? this.id,
+    courseId: courseId ?? this.courseId,
+    body: body ?? this.body,
+    creationTimeMillis: creationTimeMillis ?? this.creationTimeMillis,
+    updateTimeMillis: updateTimeMillis.present
+        ? updateTimeMillis.value
+        : this.updateTimeMillis,
+  );
+  AnnouncementRow copyWithCompanion(AnnouncementsCompanion data) {
+    return AnnouncementRow(
+      id: data.id.present ? data.id.value : this.id,
+      courseId: data.courseId.present ? data.courseId.value : this.courseId,
+      body: data.body.present ? data.body.value : this.body,
+      creationTimeMillis: data.creationTimeMillis.present
+          ? data.creationTimeMillis.value
+          : this.creationTimeMillis,
+      updateTimeMillis: data.updateTimeMillis.present
+          ? data.updateTimeMillis.value
+          : this.updateTimeMillis,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnnouncementRow(')
+          ..write('id: $id, ')
+          ..write('courseId: $courseId, ')
+          ..write('body: $body, ')
+          ..write('creationTimeMillis: $creationTimeMillis, ')
+          ..write('updateTimeMillis: $updateTimeMillis')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, courseId, body, creationTimeMillis, updateTimeMillis);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AnnouncementRow &&
+          other.id == this.id &&
+          other.courseId == this.courseId &&
+          other.body == this.body &&
+          other.creationTimeMillis == this.creationTimeMillis &&
+          other.updateTimeMillis == this.updateTimeMillis);
+}
+
+class AnnouncementsCompanion extends UpdateCompanion<AnnouncementRow> {
+  final Value<String> id;
+  final Value<String> courseId;
+  final Value<String> body;
+  final Value<int> creationTimeMillis;
+  final Value<int?> updateTimeMillis;
+  final Value<int> rowid;
+  const AnnouncementsCompanion({
+    this.id = const Value.absent(),
+    this.courseId = const Value.absent(),
+    this.body = const Value.absent(),
+    this.creationTimeMillis = const Value.absent(),
+    this.updateTimeMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AnnouncementsCompanion.insert({
+    required String id,
+    required String courseId,
+    required String body,
+    required int creationTimeMillis,
+    this.updateTimeMillis = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       courseId = Value(courseId),
+       body = Value(body),
+       creationTimeMillis = Value(creationTimeMillis);
+  static Insertable<AnnouncementRow> custom({
+    Expression<String>? id,
+    Expression<String>? courseId,
+    Expression<String>? body,
+    Expression<int>? creationTimeMillis,
+    Expression<int>? updateTimeMillis,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (courseId != null) 'course_id': courseId,
+      if (body != null) 'body': body,
+      if (creationTimeMillis != null)
+        'creation_time_millis': creationTimeMillis,
+      if (updateTimeMillis != null) 'update_time_millis': updateTimeMillis,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AnnouncementsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? courseId,
+    Value<String>? body,
+    Value<int>? creationTimeMillis,
+    Value<int?>? updateTimeMillis,
+    Value<int>? rowid,
+  }) {
+    return AnnouncementsCompanion(
+      id: id ?? this.id,
+      courseId: courseId ?? this.courseId,
+      body: body ?? this.body,
+      creationTimeMillis: creationTimeMillis ?? this.creationTimeMillis,
+      updateTimeMillis: updateTimeMillis ?? this.updateTimeMillis,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (courseId.present) {
+      map['course_id'] = Variable<String>(courseId.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (creationTimeMillis.present) {
+      map['creation_time_millis'] = Variable<int>(creationTimeMillis.value);
+    }
+    if (updateTimeMillis.present) {
+      map['update_time_millis'] = Variable<int>(updateTimeMillis.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnnouncementsCompanion(')
+          ..write('id: $id, ')
+          ..write('courseId: $courseId, ')
+          ..write('body: $body, ')
+          ..write('creationTimeMillis: $creationTimeMillis, ')
+          ..write('updateTimeMillis: $updateTimeMillis, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2306,6 +2790,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CoursesTable courses = $CoursesTable(this);
   late final $AssignmentsTable assignments = $AssignmentsTable(this);
+  late final $AnnouncementsTable announcements = $AnnouncementsTable(this);
   late final $CourseOrdersTable courseOrders = $CourseOrdersTable(this);
   late final $SyncStatesTable syncStates = $SyncStatesTable(this);
   late final $HiddenItemsTable hiddenItems = $HiddenItemsTable(this);
@@ -2323,6 +2808,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     courses,
     assignments,
+    announcements,
     courseOrders,
     syncStates,
     hiddenItems,
@@ -2577,6 +3063,8 @@ typedef $$AssignmentsTableCreateCompanionBuilder =
       Value<int?> dueDateMillis,
       Value<String> state,
       Value<String?> submissionState,
+      Value<String?> submissionId,
+      Value<String?> materialsJson,
       Value<int> rowid,
     });
 typedef $$AssignmentsTableUpdateCompanionBuilder =
@@ -2588,6 +3076,8 @@ typedef $$AssignmentsTableUpdateCompanionBuilder =
       Value<int?> dueDateMillis,
       Value<String> state,
       Value<String?> submissionState,
+      Value<String?> submissionId,
+      Value<String?> materialsJson,
       Value<int> rowid,
     });
 
@@ -2632,6 +3122,16 @@ class $$AssignmentsTableFilterComposer
 
   ColumnFilters<String> get submissionState => $composableBuilder(
     column: $table.submissionState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get submissionId => $composableBuilder(
+    column: $table.submissionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get materialsJson => $composableBuilder(
+    column: $table.materialsJson,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2679,6 +3179,16 @@ class $$AssignmentsTableOrderingComposer
     column: $table.submissionState,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get submissionId => $composableBuilder(
+    column: $table.submissionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get materialsJson => $composableBuilder(
+    column: $table.materialsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AssignmentsTableAnnotationComposer
@@ -2714,6 +3224,16 @@ class $$AssignmentsTableAnnotationComposer
 
   GeneratedColumn<String> get submissionState => $composableBuilder(
     column: $table.submissionState,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get submissionId => $composableBuilder(
+    column: $table.submissionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get materialsJson => $composableBuilder(
+    column: $table.materialsJson,
     builder: (column) => column,
   );
 }
@@ -2756,6 +3276,8 @@ class $$AssignmentsTableTableManager
                 Value<int?> dueDateMillis = const Value.absent(),
                 Value<String> state = const Value.absent(),
                 Value<String?> submissionState = const Value.absent(),
+                Value<String?> submissionId = const Value.absent(),
+                Value<String?> materialsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AssignmentsCompanion(
                 id: id,
@@ -2765,6 +3287,8 @@ class $$AssignmentsTableTableManager
                 dueDateMillis: dueDateMillis,
                 state: state,
                 submissionState: submissionState,
+                submissionId: submissionId,
+                materialsJson: materialsJson,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2776,6 +3300,8 @@ class $$AssignmentsTableTableManager
                 Value<int?> dueDateMillis = const Value.absent(),
                 Value<String> state = const Value.absent(),
                 Value<String?> submissionState = const Value.absent(),
+                Value<String?> submissionId = const Value.absent(),
+                Value<String?> materialsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AssignmentsCompanion.insert(
                 id: id,
@@ -2785,6 +3311,8 @@ class $$AssignmentsTableTableManager
                 dueDateMillis: dueDateMillis,
                 state: state,
                 submissionState: submissionState,
+                submissionId: submissionId,
+                materialsJson: materialsJson,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -2810,6 +3338,210 @@ typedef $$AssignmentsTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $AssignmentsTable, AssignmentRow>,
       ),
       AssignmentRow,
+      PrefetchHooks Function()
+    >;
+typedef $$AnnouncementsTableCreateCompanionBuilder =
+    AnnouncementsCompanion Function({
+      required String id,
+      required String courseId,
+      required String body,
+      required int creationTimeMillis,
+      Value<int?> updateTimeMillis,
+      Value<int> rowid,
+    });
+typedef $$AnnouncementsTableUpdateCompanionBuilder =
+    AnnouncementsCompanion Function({
+      Value<String> id,
+      Value<String> courseId,
+      Value<String> body,
+      Value<int> creationTimeMillis,
+      Value<int?> updateTimeMillis,
+      Value<int> rowid,
+    });
+
+class $$AnnouncementsTableFilterComposer
+    extends Composer<_$AppDatabase, $AnnouncementsTable> {
+  $$AnnouncementsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get courseId => $composableBuilder(
+    column: $table.courseId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get creationTimeMillis => $composableBuilder(
+    column: $table.creationTimeMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updateTimeMillis => $composableBuilder(
+    column: $table.updateTimeMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AnnouncementsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AnnouncementsTable> {
+  $$AnnouncementsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get courseId => $composableBuilder(
+    column: $table.courseId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get creationTimeMillis => $composableBuilder(
+    column: $table.creationTimeMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updateTimeMillis => $composableBuilder(
+    column: $table.updateTimeMillis,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AnnouncementsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AnnouncementsTable> {
+  $$AnnouncementsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get courseId =>
+      $composableBuilder(column: $table.courseId, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<int> get creationTimeMillis => $composableBuilder(
+    column: $table.creationTimeMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updateTimeMillis => $composableBuilder(
+    column: $table.updateTimeMillis,
+    builder: (column) => column,
+  );
+}
+
+class $$AnnouncementsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AnnouncementsTable,
+          AnnouncementRow,
+          $$AnnouncementsTableFilterComposer,
+          $$AnnouncementsTableOrderingComposer,
+          $$AnnouncementsTableAnnotationComposer,
+          $$AnnouncementsTableCreateCompanionBuilder,
+          $$AnnouncementsTableUpdateCompanionBuilder,
+          (
+            AnnouncementRow,
+            BaseReferences<_$AppDatabase, $AnnouncementsTable, AnnouncementRow>,
+          ),
+          AnnouncementRow,
+          PrefetchHooks Function()
+        > {
+  $$AnnouncementsTableTableManager(_$AppDatabase db, $AnnouncementsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AnnouncementsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AnnouncementsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AnnouncementsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> courseId = const Value.absent(),
+                Value<String> body = const Value.absent(),
+                Value<int> creationTimeMillis = const Value.absent(),
+                Value<int?> updateTimeMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AnnouncementsCompanion(
+                id: id,
+                courseId: courseId,
+                body: body,
+                creationTimeMillis: creationTimeMillis,
+                updateTimeMillis: updateTimeMillis,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String courseId,
+                required String body,
+                required int creationTimeMillis,
+                Value<int?> updateTimeMillis = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AnnouncementsCompanion.insert(
+                id: id,
+                courseId: courseId,
+                body: body,
+                creationTimeMillis: creationTimeMillis,
+                updateTimeMillis: updateTimeMillis,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AnnouncementsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AnnouncementsTable,
+      AnnouncementRow,
+      $$AnnouncementsTableFilterComposer,
+      $$AnnouncementsTableOrderingComposer,
+      $$AnnouncementsTableAnnotationComposer,
+      $$AnnouncementsTableCreateCompanionBuilder,
+      $$AnnouncementsTableUpdateCompanionBuilder,
+      (
+        AnnouncementRow,
+        BaseReferences<_$AppDatabase, $AnnouncementsTable, AnnouncementRow>,
+      ),
+      AnnouncementRow,
       PrefetchHooks Function()
     >;
 typedef $$CourseOrdersTableCreateCompanionBuilder =
@@ -3717,6 +4449,8 @@ class $AppDatabaseManager {
       $$CoursesTableTableManager(_db, _db.courses);
   $$AssignmentsTableTableManager get assignments =>
       $$AssignmentsTableTableManager(_db, _db.assignments);
+  $$AnnouncementsTableTableManager get announcements =>
+      $$AnnouncementsTableTableManager(_db, _db.announcements);
   $$CourseOrdersTableTableManager get courseOrders =>
       $$CourseOrdersTableTableManager(_db, _db.courseOrders);
   $$SyncStatesTableTableManager get syncStates =>
