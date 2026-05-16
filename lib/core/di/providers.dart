@@ -1,6 +1,8 @@
 // lib/core/di/providers.dart
+import 'dart:typed_data';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../services/auth_service.dart';
+import '../services/drive_file_service.dart';
 import '../services/classroom_sync_service.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/course_order_datasource.dart';
@@ -72,3 +74,15 @@ ClassroomSyncService classroomSyncService(ClassroomSyncServiceRef ref) =>
       syncState: ref.watch(syncStateDataSourceProvider),
       repository: ref.watch(googleClassroomRepositoryProvider),
     );
+
+@riverpod
+DriveFileService driveFileService(DriveFileServiceRef ref) {
+  final account = ref.watch(authViewModelProvider).valueOrNull;
+  if (account == null) throw StateError('Not signed in');
+  return DriveFileService(account: account);
+}
+
+@riverpod
+Future<Uint8List> fileViewer(FileViewerRef ref, String fileId) {
+  return ref.watch(driveFileServiceProvider).downloadPdf(fileId);
+}

@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../domain/entities/assignment.dart';
+import '../../../domain/entities/announcement.dart';
 import '../../viewmodels/assignments_viewmodel.dart';
+import '../../viewmodels/announcements_viewmodel.dart';
 
 class CourseDetailScreen extends ConsumerWidget {
   const CourseDetailScreen({
@@ -34,7 +36,7 @@ class CourseDetailScreen extends ConsumerWidget {
         body: TabBarView(
           children: [
             _AssignmentsTab(courseId: courseId),
-            const Center(child: Text('お知らせ（未実装）')),
+            _AnnouncementsTab(courseId: courseId),
           ],
         ),
       ),
@@ -117,6 +119,67 @@ class _AssignmentsTab extends ConsumerWidget {
                               const ShadBadge.secondary(child: Text('提出済み')),
                           ],
                         ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+class _AnnouncementsTab extends ConsumerWidget {
+  const _AnnouncementsTab({required this.courseId});
+
+  final String courseId;
+
+  static final _fake = List.generate(
+    3,
+    (i) => Announcement(
+      id: 'fake_$i',
+      courseId: 'fake',
+      text: 'お知らせのサンプルテキストがここに表示されます。',
+      creationTime: DateTime.now().subtract(Duration(days: i)),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(announcementsViewModelProvider(courseId));
+
+    if (async.hasError) {
+      return Center(child: Text('エラー: ${async.error}'));
+    }
+
+    final announcements = async.valueOrNull ?? _fake;
+    final isLoading = async.isLoading;
+
+    return Skeletonizer(
+      enabled: isLoading,
+      child: announcements.isEmpty
+          ? const Center(child: Text('お知らせはありません'))
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: announcements.length,
+              itemBuilder: (context, index) {
+                final a = announcements[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: ShadCard(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            DateFormat('yyyy/M/d HH:mm')
+                                .format(a.creationTime),
+                            style: ShadTheme.of(context).textTheme.muted,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(a.text),
+                        ],
                       ),
                     ),
                   ),

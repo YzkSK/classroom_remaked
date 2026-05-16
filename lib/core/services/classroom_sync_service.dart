@@ -34,7 +34,10 @@ class ClassroomSyncService {
     await _repo.refreshCourses();
     final coursesResult = await _repo.getCourses();
     final courses = coursesResult.getOrElse(() => []);
-    await Future.wait(courses.map((c) => _repo.refreshAssignments(c.id)));
+    await Future.wait([
+      ...courses.map((c) => _repo.refreshAssignments(c.id)),
+      ...courses.map((c) => _repo.refreshAnnouncements(c.id)),
+    ]);
     await _syncState.set('last_sync_at', DateTime.now().toIso8601String());
   }
 }

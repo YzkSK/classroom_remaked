@@ -11,6 +11,7 @@ import '../../presentation/views/dashboard/dashboard_screen.dart';
 import '../../presentation/views/notification_setup/notification_setup_screen.dart';
 import '../../presentation/views/search/search_screen.dart';
 import '../../presentation/views/settings/settings_screen.dart';
+import '../../presentation/views/shared/file_viewer_screen.dart';
 import '../../presentation/views/shared/scaffold_with_nav.dart';
 import '../../presentation/views/splash/splash_screen.dart';
 part 'app_router.g.dart';
@@ -45,6 +46,13 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/notification-setup',
         builder: (_, __) => const NotificationSetupScreen(),
+      ),
+      GoRoute(
+        path: '/viewer/:fileId',
+        builder: (_, state) => FileViewerScreen(
+          fileId: state.pathParameters['fileId']!,
+          title: state.uri.queryParameters['title'] ?? 'ファイル',
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) =>

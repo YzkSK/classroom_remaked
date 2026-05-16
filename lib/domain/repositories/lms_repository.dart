@@ -2,7 +2,6 @@
 import 'package:dartz/dartz.dart';
 import '../entities/assignment.dart';
 import '../entities/announcement.dart';
-import '../entities/comment.dart';
 import '../entities/course.dart';
 import '../errors/failures.dart';
 
@@ -50,9 +49,9 @@ abstract class LmsRepository {
     String courseId,
     String assignmentId,
   );
-  Future<Either<Failure, List<Comment>>> getComments(
+  Future<Either<Failure, void>> turnIn(
     String courseId,
-    String itemId, {
-    CommentVisibility? filterBy,
-  });
+    String assignmentId,
+    String submissionId,
+  );
 }

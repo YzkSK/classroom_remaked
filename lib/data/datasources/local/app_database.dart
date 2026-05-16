@@ -31,6 +31,20 @@ class Assignments extends Table {
   TextColumn get state =>
       text().withDefault(const Constant('published'))();
   TextColumn get submissionState => text().nullable()();
+  TextColumn get submissionId => text().nullable()();
+  TextColumn get materialsJson => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DataClassName('AnnouncementRow')
+class Announcements extends Table {
+  TextColumn get id => text()();
+  TextColumn get courseId => text()();
+  TextColumn get body => text()();
+  IntColumn get creationTimeMillis => integer()();
+  IntColumn get updateTimeMillis => integer().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -94,6 +108,7 @@ class SnoozedItems extends Table {
 @DriftDatabase(tables: [
   Courses,
   Assignments,
+  Announcements,
   CourseOrders,
   SyncStates,
   HiddenItems,
@@ -107,7 +122,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withConnection(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -120,6 +135,11 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(userPreferences);
             await m.createTable(notificationLogs);
             await m.createTable(snoozedItems);
+          }
+          if (from < 4) {
+            await m.addColumn(assignments, assignments.submissionId);
+            await m.addColumn(assignments, assignments.materialsJson);
+            await m.createTable(announcements);
           }
         },
       );
