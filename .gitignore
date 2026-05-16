@@ -46,3 +46,7 @@ app.*.map.json
 
 # Claude Token Monitor data
 .claude-monitor/
+
+# Firebase Functions
+functions/lib/
+functions/node_modules/
