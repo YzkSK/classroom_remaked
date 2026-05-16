@@ -316,13 +316,13 @@ class GoogleClassroomRepository implements LmsRepository {
   ) {
     DateTime? dueDate;
     if (cw.dueDate != null) {
-      dueDate = DateTime(
+      dueDate = DateTime.utc(
         cw.dueDate!.year!,
         cw.dueDate!.month!,
         cw.dueDate!.day!,
         cw.dueTime?.hours ?? 23,
         cw.dueTime?.minutes ?? 59,
-      );
+      ).toLocal();
     }
 
     final materials = _parseMaterials(cw.materials ?? []);
