@@ -54,4 +54,10 @@ abstract class LmsRepository {
     String assignmentId,
     String submissionId,
   );
+  Future<Either<Failure, void>> addAttachment(
+    String courseId,
+    String courseWorkId,
+    String submissionId,
+    String driveFileId,
+  );
 }

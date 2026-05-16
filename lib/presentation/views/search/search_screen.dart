@@ -1,6 +1,7 @@
 // lib/presentation/views/search/search_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../domain/entities/assignment.dart';
 import '../../viewmodels/search_viewmodel.dart';
@@ -76,20 +77,23 @@ class _ResultCard extends StatelessWidget {
     final due = assignment.dueDate;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: ShadCard(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(assignment.title,
-                  maxLines: 2, overflow: TextOverflow.ellipsis),
-              if (due != null)
-                Text(
-                  '締め切り: ${DateFormat('yyyy/M/d HH:mm').format(due)}',
-                  style: ShadTheme.of(context).textTheme.muted,
-                ),
-            ],
+      child: GestureDetector(
+        onTap: () => context.go('/assignments/${assignment.id}'),
+        child: ShadCard(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(assignment.title,
+                    maxLines: 2, overflow: TextOverflow.ellipsis),
+                if (due != null)
+                  Text(
+                    '締め切り: ${DateFormat('yyyy/M/d HH:mm').format(due)}',
+                    style: ShadTheme.of(context).textTheme.muted,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

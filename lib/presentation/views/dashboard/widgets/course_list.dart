@@ -126,56 +126,64 @@ class _CourseCard extends StatelessWidget {
   final VoidCallback onHide;
   final VoidCallback onUnhide;
 
+  void _showMenu(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(
+                isHidden ? Icons.visibility : Icons.visibility_off,
+              ),
+              title: Text(isHidden ? '非表示を解除' : '非表示にする'),
+              onTap: () {
+                Navigator.pop(context);
+                isHidden ? onUnhide() : onHide();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Opacity(
       opacity: isHidden ? 0.4 : 1.0,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: ShadContextMenu(
-          items: [
-            if (isHidden)
-              ShadContextMenuItem(
-                leading: const Icon(Icons.visibility, size: 16),
-                onPressed: onUnhide,
-                child: const Text('非表示を解除'),
-              )
-            else
-              ShadContextMenuItem(
-                leading: const Icon(Icons.visibility_off, size: 16),
-                onPressed: onHide,
-                child: const Text('非表示にする'),
-              ),
-          ],
-          child: GestureDetector(
-            onTap: () => context.go(
-              '/dashboard/courses/${course.id}?name=${Uri.encodeComponent(course.name)}',
-            ),
-            child: ShadCard(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(course.name,
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
-                          if (course.section != null)
-                            Text(course.section!,
-                                style: ShadTheme.of(context).textTheme.muted,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
+        child: GestureDetector(
+          onTap: () => context.go(
+            '/dashboard/courses/${course.id}?name=${Uri.encodeComponent(course.name)}',
+          ),
+          onLongPress: () => _showMenu(context),
+          child: ShadCard(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(course.name,
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                        if (course.section != null)
+                          Text(course.section!,
+                              style: ShadTheme.of(context).textTheme.muted,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                      ],
                     ),
-                    ReorderableDragStartListener(
-                      index: index,
-                      child: const Icon(Icons.drag_handle_rounded),
-                    ),
-                  ],
-                ),
+                  ),
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: const Icon(Icons.drag_handle_rounded),
+                  ),
+                ],
               ),
             ),
           ),
@@ -184,6 +192,7 @@ class _CourseCard extends StatelessWidget {
     );
   }
 }
+
 
 class _SkeletonCourseCard extends StatelessWidget {
   const _SkeletonCourseCard({super.key, required this.course});

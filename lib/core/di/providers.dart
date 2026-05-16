@@ -16,6 +16,7 @@ import '../../domain/repositories/lms_repository.dart';
 import '../../presentation/viewmodels/auth_viewmodel.dart';
 part 'providers.g.dart';
 
+
 @riverpod
 AuthService authService(AuthServiceRef ref) => AuthService();
 
@@ -69,11 +70,14 @@ LmsRepository lmsRepository(LmsRepositoryRef ref) =>
     ref.watch(googleClassroomRepositoryProvider);
 
 @riverpod
-ClassroomSyncService classroomSyncService(ClassroomSyncServiceRef ref) =>
-    ClassroomSyncService(
-      syncState: ref.watch(syncStateDataSourceProvider),
-      repository: ref.watch(googleClassroomRepositoryProvider),
-    );
+ClassroomSyncService classroomSyncService(ClassroomSyncServiceRef ref) {
+  final account = ref.watch(authViewModelProvider).valueOrNull;
+  return ClassroomSyncService(
+    syncState: ref.watch(syncStateDataSourceProvider),
+    repository: ref.watch(googleClassroomRepositoryProvider),
+    userId: account?.id ?? '',
+  );
+}
 
 @riverpod
 DriveFileService driveFileService(DriveFileServiceRef ref) {
@@ -86,3 +90,4 @@ DriveFileService driveFileService(DriveFileServiceRef ref) {
 Future<Uint8List> fileViewer(FileViewerRef ref, String fileId) {
   return ref.watch(driveFileServiceProvider).downloadPdf(fileId);
 }
+

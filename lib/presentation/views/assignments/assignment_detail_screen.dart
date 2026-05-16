@@ -1,4 +1,6 @@
 // lib/presentation/views/assignments/assignment_detail_screen.dart
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -81,7 +83,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
             Text(assignment.description!),
           ],
 
-          // ── 添付ファイル ───────────────────────────────
+          // ── 添付ファイル（教師から） ────────────────────
           if (assignment.materials.isNotEmpty) ...[
             const SizedBox(height: 24),
             const ShadSeparator.horizontal(),
@@ -93,13 +95,205 @@ class AssignmentDetailScreen extends ConsumerWidget {
             ),
           ],
 
-          // ── 提出ボタン ─────────────────────────────────
+          // ── 提出セクション ─────────────────────────────
           if (!isSubmitted && assignment.submissionId != null) ...[
             const SizedBox(height: 32),
-            _TurnInButton(assignment: assignment),
+            const ShadSeparator.horizontal(),
+            const SizedBox(height: 16),
+            _SubmitSection(assignment: assignment),
           ],
         ],
       ),
+    );
+  }
+}
+
+/// 提出ファイル添付 + 提出ボタンをまとめた StatefulWidget
+class _SubmitSection extends ConsumerStatefulWidget {
+  const _SubmitSection({required this.assignment});
+  final Assignment assignment;
+
+  @override
+  ConsumerState<_SubmitSection> createState() => _SubmitSectionState();
+}
+
+class _SubmitSectionState extends ConsumerState<_SubmitSection> {
+  final List<({String name, String fileId})> _attachments = [];
+  bool _isUploading = false;
+
+  Future<void> _pickAndUpload() async {
+    final result = await FilePicker.pickFiles(allowMultiple: true, withData: false);
+    if (result == null || result.files.isEmpty) return;
+
+    setState(() => _isUploading = true);
+    try {
+      final service = ref.read(driveFileServiceProvider);
+      for (final pf in result.files) {
+        if (pf.path == null) continue;
+        final uploaded = await service.uploadFile(File(pf.path!));
+        setState(() => _attachments.add(uploaded));
+      }
+    } on Exception catch (e) {
+      if (mounted) {
+        ShadToaster.of(context).show(
+          ShadToast.destructive(
+            title: const Text('アップロード失敗'),
+            description: Text(e.toString()),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _submit() async {
+    final assignment = widget.assignment;
+    final confirmed = await showShadDialog<bool>(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: ShadDialog.alert(
+          radius: const BorderRadius.all(Radius.circular(12)),
+          removeBorderRadiusWhenTiny: false,
+          padding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          useSafeArea: false,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          titleTextAlign: TextAlign.center,
+          title: const Text('課題を提出しますか？'),
+          description: const Text('提出後は取り消せません。'),
+          actions: [
+            ShadButton.outline(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            ShadButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('提出する'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final repo = ref.read(lmsRepositoryProvider);
+
+    // 添付ファイルを先に登録
+    for (final att in _attachments) {
+      final r = await repo.addAttachment(
+        assignment.courseId,
+        assignment.id,
+        assignment.submissionId!,
+        att.fileId,
+      );
+      if (r.isLeft() && mounted) {
+        ShadToaster.of(context).show(
+          ShadToast.destructive(
+            title: Text('${att.name} の添付に失敗しました'),
+          ),
+        );
+        return;
+      }
+    }
+
+    final result = await ref
+        .read(turnInViewModelProvider.notifier)
+        .turnIn(assignment.courseId, assignment.id, assignment.submissionId!);
+
+    if (!mounted) return;
+    result.fold(
+      (failure) => ShadToaster.of(context).show(
+        ShadToast.destructive(
+          title: const Text('提出に失敗しました'),
+          description: Text(failure.message),
+        ),
+      ),
+      (_) {
+        ShadToaster.of(context)
+            .show(const ShadToast(title: Text('提出しました')));
+        ref.invalidate(assignmentsViewModelProvider);
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLoading =
+        ref.watch(turnInViewModelProvider).isLoading || _isUploading;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('提出', style: ShadTheme.of(context).textTheme.h4),
+        const SizedBox(height: 12),
+
+        // 添付済みファイル一覧
+        if (_attachments.isNotEmpty) ...[
+          ..._attachments.map((att) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: ShadCard(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.insert_drive_file_outlined,
+                            size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(att.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                        GestureDetector(
+                          onTap: () => setState(
+                              () => _attachments.remove(att)),
+                          child: const Icon(Icons.close, size: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )),
+          const SizedBox(height: 8),
+        ],
+
+        // ファイルを追加ボタン
+        ShadButton.outline(
+          width: double.infinity,
+          onPressed: isLoading ? null : _pickAndUpload,
+          child: _isUploading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.attach_file, size: 16),
+                    SizedBox(width: 6),
+                    Text('ファイルを添付'),
+                  ],
+                ),
+        ),
+        const SizedBox(height: 12),
+
+        // 提出ボタン
+        ShadButton(
+          width: double.infinity,
+          onPressed: isLoading ? null : _submit,
+          child: isLoading && !_isUploading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('提出する'),
+        ),
+      ],
     );
   }
 }
@@ -199,83 +393,6 @@ class _MaterialTile extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _TurnInButton extends ConsumerWidget {
-  const _TurnInButton({required this.assignment});
-
-  final Assignment assignment;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isLoading = ref.watch(turnInViewModelProvider).isLoading;
-
-    return ShadButton(
-      width: double.infinity,
-      onPressed: isLoading
-          ? null
-          : () async {
-              final confirmed = await showShadDialog<bool>(
-                context: context,
-                builder: (context) => Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ShadDialog.alert(
-                    radius: const BorderRadius.all(Radius.circular(12)),
-                    removeBorderRadiusWhenTiny: false,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 24),
-                    useSafeArea: false,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    titleTextAlign: TextAlign.center,
-                    title: const Text('課題を提出しますか？'),
-                    description: const Text('提出後は取り消せません。'),
-                    actions: [
-                      ShadButton.outline(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('キャンセル'),
-                      ),
-                      ShadButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text('提出する'),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-              if (confirmed == true && context.mounted) {
-                final result = await ref
-                    .read(turnInViewModelProvider.notifier)
-                    .turnIn(
-                      assignment.courseId,
-                      assignment.id,
-                      assignment.submissionId!,
-                    );
-                if (!context.mounted) return;
-                result.fold(
-                  (failure) => ShadToaster.of(context).show(
-                    ShadToast.destructive(
-                      title: const Text('提出に失敗しました'),
-                      description: Text(failure.message),
-                    ),
-                  ),
-                  (_) {
-                    ShadToaster.of(context).show(
-                      const ShadToast(title: Text('提出しました')),
-                    );
-                    ref.invalidate(assignmentsViewModelProvider);
-                  },
-                );
-              }
-            },
-      child: isLoading
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Text('提出する'),
     );
   }
 }
