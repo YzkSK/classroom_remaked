@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../viewmodels/assignments_viewmodel.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/settings_viewmodel.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../domain/usecases/can_disable_lazy_mode_usecase.dart';
@@ -17,18 +18,21 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late TextEditingController _hoursController;
+  late TextEditingController _snoozeController;
   bool _permissionGranted = true;
 
   @override
   void initState() {
     super.initState();
     _hoursController = TextEditingController();
+    _snoozeController = TextEditingController();
     _checkPermission();
   }
 
   @override
   void dispose() {
     _hoursController.dispose();
+    _snoozeController.dispose();
     super.dispose();
   }
 
@@ -57,9 +61,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         builder: (context) => Padding(
           padding: const EdgeInsets.all(16),
           child: ShadDialog.alert(
-            radius: const BorderRadius.all(Radius.circular(24)),
+            radius: const BorderRadius.all(Radius.circular(12)),
             removeBorderRadiusWhenTiny: false,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             useSafeArea: false,
             crossAxisAlignment: CrossAxisAlignment.center,
             titleTextAlign: TextAlign.center,
@@ -116,6 +120,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (settings != null && _hoursController.text.isEmpty) {
       _hoursController.text = settings.notifyBeforeHours.toString();
     }
+    if (settings != null && _snoozeController.text.isEmpty) {
+      _snoozeController.text = settings.snoozeHours.toString();
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
@@ -164,6 +171,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
           const SizedBox(height: 24),
+          Text('スヌーズ間隔', style: ShadTheme.of(context).textTheme.h4),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text('通知の', style: ShadTheme.of(context).textTheme.muted),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 72,
+                child: ShadInput(
+                  controller: _snoozeController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  enabled: !(settings?.lazyModeEnabled ?? false),
+                  onEditingComplete: () {
+                    final h = int.tryParse(_snoozeController.text) ?? 1;
+                    final clamped = h < 1 ? 1 : h;
+                    _snoozeController.text = clamped.toString();
+                    ref
+                        .read(settingsViewModelProvider.notifier)
+                        .setSnoozeHours(clamped);
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text('時間後に再通知', style: ShadTheme.of(context).textTheme.muted),
+            ],
+          ),
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -183,6 +218,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     : null,
               ),
             ],
+          ),
+          const SizedBox(height: 32),
+          const ShadSeparator.horizontal(),
+          const SizedBox(height: 16),
+          ShadButton.outline(
+            width: double.infinity,
+            onPressed: () =>
+                ref.read(authViewModelProvider.notifier).signOut(),
+            child: const Text('サインアウト'),
           ),
         ],
       ),

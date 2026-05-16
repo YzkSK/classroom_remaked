@@ -22,6 +22,8 @@ void main() {
     when(() => mockPrefs.setLazyModeEnabled(any())).thenAnswer((_) async {});
     when(() => mockPrefs.getOnboardingDone()).thenAnswer((_) async => false);
     when(() => mockPrefs.setOnboardingDone(any())).thenAnswer((_) async {});
+    when(() => mockPrefs.getSnoozeHours()).thenAnswer((_) async => 1);
+    when(() => mockPrefs.setSnoozeHours(any())).thenAnswer((_) async {});
   });
 
   ProviderContainer makeContainer() => ProviderContainer(overrides: [
@@ -35,6 +37,7 @@ void main() {
     final state = container.read(settingsViewModelProvider).value!;
     expect(state.notifyBeforeHours, 24);
     expect(state.lazyModeEnabled, false);
+    expect(state.snoozeHours, 1);
   });
 
   test('setNotifyBeforeHours で状態と datasource が更新される', () async {
@@ -100,5 +103,23 @@ void main() {
         .tryDisableLazyMode([]);
     expect(result, true);
     verify(() => mockPrefs.setLazyModeEnabled(false)).called(1);
+  });
+
+  test('setSnoozeHours で状態と datasource が更新される', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    await container.read(settingsViewModelProvider.future);
+    await container.read(settingsViewModelProvider.notifier).setSnoozeHours(3);
+    verify(() => mockPrefs.setSnoozeHours(3)).called(1);
+    final state = container.read(settingsViewModelProvider).value!;
+    expect(state.snoozeHours, 3);
+  });
+
+  test('setSnoozeHours(0) は無視される', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    await container.read(settingsViewModelProvider.future);
+    await container.read(settingsViewModelProvider.notifier).setSnoozeHours(0);
+    verifyNever(() => mockPrefs.setSnoozeHours(any()));
   });
 }

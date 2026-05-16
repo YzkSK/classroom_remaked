@@ -8,15 +8,21 @@ part 'settings_viewmodel.g.dart';
 class SettingsState {
   const SettingsState({
     required this.notifyBeforeHours,
+    required this.snoozeHours,
     required this.lazyModeEnabled,
   });
 
   final int notifyBeforeHours;
+  final int snoozeHours;
   final bool lazyModeEnabled;
 
-  SettingsState copyWith({int? notifyBeforeHours, bool? lazyModeEnabled}) =>
-      SettingsState(
+  SettingsState copyWith({
+    int? notifyBeforeHours,
+    int? snoozeHours,
+    bool? lazyModeEnabled,
+  }) => SettingsState(
         notifyBeforeHours: notifyBeforeHours ?? this.notifyBeforeHours,
+        snoozeHours: snoozeHours ?? this.snoozeHours,
         lazyModeEnabled: lazyModeEnabled ?? this.lazyModeEnabled,
       );
 }
@@ -27,8 +33,13 @@ class SettingsViewModel extends _$SettingsViewModel {
   Future<SettingsState> build() async {
     final prefs = ref.watch(userPreferencesDataSourceProvider);
     final hours = await prefs.getNotifyBeforeHours();
+    final snooze = await prefs.getSnoozeHours();
     final lazy = await prefs.getLazyModeEnabled();
-    return SettingsState(notifyBeforeHours: hours, lazyModeEnabled: lazy);
+    return SettingsState(
+      notifyBeforeHours: hours,
+      snoozeHours: snooze,
+      lazyModeEnabled: lazy,
+    );
   }
 
   Future<void> setNotifyBeforeHours(int hours) async {
@@ -37,6 +48,14 @@ class SettingsViewModel extends _$SettingsViewModel {
     final current = state.valueOrNull;
     if (current == null) return;
     state = AsyncData(current.copyWith(notifyBeforeHours: hours));
+  }
+
+  Future<void> setSnoozeHours(int hours) async {
+    if (hours < 1) return;
+    await ref.read(userPreferencesDataSourceProvider).setSnoozeHours(hours);
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(snoozeHours: hours));
   }
 
   Future<void> enableLazyMode() async {

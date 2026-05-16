@@ -107,4 +107,18 @@ void main() {
     );
     expect(result.map((a) => a.id), ['a1']);
   });
+
+  test('期限切れ済みの課題はスヌーズ期限切れでも候補にならない', () {
+    final result = BackgroundNotificationTask.filterCandidates(
+      assignments: [
+        makeAssignment(id: 'a1', dueDate: now.subtract(const Duration(hours: 1))),
+      ],
+      notifiedIds: {'a1'},
+      snoozedUntilMap: {},
+      expiredSnoozeIds: {'a1'},
+      notifyBefore: window,
+      now: now,
+    );
+    expect(result, isEmpty);
+  });
 }
