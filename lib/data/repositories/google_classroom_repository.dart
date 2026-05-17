@@ -316,12 +316,16 @@ class GoogleClassroomRepository implements LmsRepository {
   ) {
     DateTime? dueDate;
     if (cw.dueDate != null) {
+      // dueTime が存在する場合は hours/minutes のデフォルトを 0 にする。
+      // proto3 JSON はデフォルト値(0)のフィールドを省略するため
+      // `?.hours ?? 23` だと hours=0 が 23 に化ける。
+      final hasTime = cw.dueTime != null;
       dueDate = DateTime.utc(
         cw.dueDate!.year!,
         cw.dueDate!.month!,
         cw.dueDate!.day!,
-        cw.dueTime?.hours ?? 23,
-        cw.dueTime?.minutes ?? 59,
+        hasTime ? (cw.dueTime!.hours ?? 0) : 23,
+        hasTime ? (cw.dueTime!.minutes ?? 0) : 59,
       ).toLocal();
     }
 
