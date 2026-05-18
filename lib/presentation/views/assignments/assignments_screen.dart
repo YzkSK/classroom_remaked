@@ -141,7 +141,6 @@ class _AssignmentCard extends StatelessWidget {
           DismissDirection.endToStart: 0.25,
           DismissDirection.startToEnd: 0.25,
         },
-        // 右スワイプ（非表示復元 or 未使用）
         background: isHidden
             ? Container(
                 alignment: Alignment.centerLeft,
@@ -150,8 +149,7 @@ class _AssignmentCard extends StatelessWidget {
                 child: Icon(Icons.visibility,
                     color: Theme.of(context).colorScheme.primary),
               )
-            : const SizedBox.shrink(),
-        // 左スワイプ（非表示にする）
+            : Container(color: Colors.transparent),
         secondaryBackground: !isHidden
             ? Container(
                 alignment: Alignment.centerRight,
@@ -160,7 +158,7 @@ class _AssignmentCard extends StatelessWidget {
                 child: Icon(Icons.visibility_off,
                     color: Theme.of(context).colorScheme.error),
               )
-            : null,
+            : Container(color: Colors.transparent),
         confirmDismiss: (direction) async {
           if (direction == DismissDirection.startToEnd && isHidden) {
             onUnhide();
