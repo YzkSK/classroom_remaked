@@ -245,7 +245,7 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                 bottom: 8,
                 child: Center(
                   child: Icon(Icons.visibility_off, size: 28,
-                      color: Theme.of(context).colorScheme.error),
+                      color: Theme.of(context).colorScheme.onErrorContainer),
                 ),
               ),
             if (draggingRight)
@@ -255,7 +255,7 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                 bottom: 8,
                 child: Center(
                   child: Icon(Icons.visibility, size: 28,
-                      color: Theme.of(context).colorScheme.primary),
+                      color: Theme.of(context).colorScheme.onPrimaryContainer),
                 ),
               ),
           ],
