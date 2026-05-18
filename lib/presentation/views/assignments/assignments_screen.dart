@@ -183,27 +183,38 @@ class _AssignmentCard extends StatelessWidget {
           }
           return false;
         },
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: ShadContextMenu(
-            items: [
-              if (isHidden)
-                ShadContextMenuItem(
-                  leading: const Icon(Icons.visibility, size: 16),
-                  onPressed: onUnhide,
-                  child: const Text('非表示を解除'),
-                )
-              else
-                ShadContextMenuItem(
-                  leading: const Icon(Icons.visibility_off, size: 16),
-                  onPressed: onHide,
-                  child: const Text('非表示にする'),
-                ),
-            ],
-            child: AssignmentCard(
-              assignment: assignment,
-              variant: AssignmentCardVariant.full,
+        child: GestureDetector(
+          onLongPress: () => showModalBottomSheet<void>(
+            context: context,
+            builder: (_) => SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isHidden)
+                    ListTile(
+                      leading: const Icon(Icons.visibility),
+                      title: const Text('非表示を解除'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        onUnhide();
+                      },
+                    )
+                  else
+                    ListTile(
+                      leading: const Icon(Icons.visibility_off),
+                      title: const Text('非表示にする'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        onHide();
+                      },
+                    ),
+                ],
+              ),
             ),
+          ),
+          child: AssignmentCard(
+            assignment: assignment,
+            variant: AssignmentCardVariant.full,
           ),
         ),
       ),
