@@ -113,7 +113,7 @@ class _FilterBar extends ConsumerWidget {
   }
 }
 
-class _AssignmentCard extends StatefulWidget {
+class _AssignmentCard extends StatelessWidget {
   const _AssignmentCard({
     super.key,
     required this.assignment,
@@ -129,29 +129,20 @@ class _AssignmentCard extends StatefulWidget {
   final VoidCallback onUnhide;
   final VoidCallback onUndoHide;
 
-  @override
-  State<_AssignmentCard> createState() => _AssignmentCardState();
-}
-
-class _AssignmentCardState extends State<_AssignmentCard> {
-  double _offset = 0;
-
-  static const double _threshold = 0.25;
-
-  void _showMenu() {
+  void _showMenu(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (widget.isHidden)
+            if (isHidden)
               ListTile(
                 leading: const Icon(Icons.visibility),
                 title: const Text('非表示を解除'),
                 onTap: () {
                   Navigator.of(context).pop();
-                  widget.onUnhide();
+                  onUnhide();
                 },
               )
             else
@@ -160,7 +151,7 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                 title: const Text('非表示にする'),
                 onTap: () {
                   Navigator.of(context).pop();
-                  widget.onHide();
+                  onHide();
                 },
               ),
           ],
@@ -169,96 +160,65 @@ class _AssignmentCardState extends State<_AssignmentCard> {
     );
   }
 
-  void _onDragUpdate(DragUpdateDetails d) {
-    final w = MediaQuery.of(context).size.width;
-    setState(() {
-      _offset += d.delta.dx;
-      _offset = widget.isHidden
-          ? _offset.clamp(0.0, w)   // 非表示→右スワイプのみ
-          : _offset.clamp(-w, 0.0); // 通常→左スワイプのみ
-    });
-  }
-
-  void _onDragEnd(DragEndDetails d) {
-    final threshold = MediaQuery.of(context).size.width * _threshold;
-    if (_offset.abs() >= threshold) {
-      if (!widget.isHidden) {
-        widget.onHide();
-        ShadToaster.of(context).show(
-          ShadToast(
-            title: const Text('課題を非表示にしました'),
-            action: ShadButton.outline(
-              onPressed: widget.onUndoHide,
-              child: const Text('元に戻す'),
-            ),
-          ),
-        );
-      } else {
-        widget.onUnhide();
-        ShadToaster.of(context).show(
-          const ShadToast(title: Text('非表示を解除しました')),
-        );
-      }
-    }
-    setState(() => _offset = 0);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final draggingLeft = _offset < 0;
-    final draggingRight = _offset > 0;
-
     return Opacity(
-      opacity: widget.isHidden ? 0.4 : 1.0,
-      child: GestureDetector(
-        onTap: () => context.go('/assignments/${widget.assignment.id}'),
-        onLongPress: _showMenu,
-        onHorizontalDragUpdate: _onDragUpdate,
-        onHorizontalDragEnd: _onDragEnd,
-        child: Stack(
-          children: [
-            // 背景色（カードの下に描画）
-            if (draggingLeft)
-              Positioned.fill(
-                child: Container(
-                    color: Theme.of(context).colorScheme.errorContainer),
-              ),
-            if (draggingRight)
-              Positioned.fill(
-                child: Container(
-                    color: Theme.of(context).colorScheme.primaryContainer),
-              ),
-            // カード本体（スライド）
-            Transform.translate(
-              offset: Offset(_offset, 0),
-              child: AssignmentCard(
-                assignment: widget.assignment,
-                variant: AssignmentCardVariant.full,
-                onTap: null,
-              ),
-            ),
-            // アイコン（カードの上に描画 → 必ず見える）
-            if (draggingLeft)
-              Positioned(
-                right: 20,
-                top: 0,
-                bottom: 8,
-                child: Center(
-                  child: Icon(Icons.visibility_off, size: 28,
-                      color: Theme.of(context).colorScheme.onErrorContainer),
+      opacity: isHidden ? 0.4 : 1.0,
+      child: Dismissible(
+        key: ValueKey('dismiss_${assignment.id}'),
+        direction: isHidden
+            ? DismissDirection.startToEnd
+            : DismissDirection.endToStart,
+        dismissThresholds: const {
+          DismissDirection.endToStart: 0.25,
+          DismissDirection.startToEnd: 0.25,
+        },
+        background: Container(
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 20),
+          color: Theme.of(context).colorScheme.primaryContainer,
+          child: Icon(Icons.visibility, size: 28,
+              color: Theme.of(context).colorScheme.onPrimaryContainer),
+        ),
+        secondaryBackground: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          color: Theme.of(context).colorScheme.errorContainer,
+          child: Icon(Icons.visibility_off, size: 28,
+              color: Theme.of(context).colorScheme.onErrorContainer),
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.startToEnd && isHidden) {
+            onUnhide();
+            if (context.mounted) {
+              ShadToaster.of(context).show(
+                const ShadToast(title: Text('非表示を解除しました')),
+              );
+            }
+          } else if (direction == DismissDirection.endToStart && !isHidden) {
+            onHide();
+            if (context.mounted) {
+              ShadToaster.of(context).show(
+                ShadToast(
+                  title: const Text('課題を非表示にしました'),
+                  action: ShadButton.outline(
+                    onPressed: onUndoHide,
+                    child: const Text('元に戻す'),
+                  ),
                 ),
-              ),
-            if (draggingRight)
-              Positioned(
-                left: 20,
-                top: 0,
-                bottom: 8,
-                child: Center(
-                  child: Icon(Icons.visibility, size: 28,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer),
-                ),
-              ),
-          ],
+              );
+            }
+          }
+          return false;
+        },
+        child: GestureDetector(
+          onTap: () => context.go('/assignments/${assignment.id}'),
+          onLongPress: () => _showMenu(context),
+          child: AssignmentCard(
+            assignment: assignment,
+            variant: AssignmentCardVariant.full,
+            onTap: null,
+          ),
         ),
       ),
     );
