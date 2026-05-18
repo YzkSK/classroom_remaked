@@ -217,26 +217,16 @@ class _AssignmentCardState extends State<_AssignmentCard> {
         onHorizontalDragEnd: _onDragEnd,
         child: Stack(
           children: [
-            // 背景（スワイプ中のみ表示）
+            // 背景色（カードの下に描画）
             if (draggingLeft)
               Positioned.fill(
                 child: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20),
-                  color: Theme.of(context).colorScheme.errorContainer,
-                  child: Icon(Icons.visibility_off,
-                      size: 28, color: Theme.of(context).colorScheme.error),
-                ),
+                    color: Theme.of(context).colorScheme.errorContainer),
               ),
             if (draggingRight)
               Positioned.fill(
                 child: Container(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.only(left: 20),
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: Icon(Icons.visibility,
-                      size: 28, color: Theme.of(context).colorScheme.primary),
-                ),
+                    color: Theme.of(context).colorScheme.primaryContainer),
               ),
             // カード本体（スライド）
             Transform.translate(
@@ -247,6 +237,25 @@ class _AssignmentCardState extends State<_AssignmentCard> {
                 onTap: null,
               ),
             ),
+            // アイコン（カードの上に描画 → 必ず見える）
+            if (draggingLeft)
+              const Positioned(
+                right: 20,
+                top: 0,
+                bottom: 8,
+                child: Center(
+                  child: Icon(Icons.visibility_off, size: 28),
+                ),
+              ),
+            if (draggingRight)
+              const Positioned(
+                left: 20,
+                top: 0,
+                bottom: 8,
+                child: Center(
+                  child: Icon(Icons.visibility, size: 28),
+                ),
+              ),
           ],
         ),
       ),
