@@ -239,21 +239,23 @@ class _AssignmentCardState extends State<_AssignmentCard> {
             ),
             // アイコン（カードの上に描画 → 必ず見える）
             if (draggingLeft)
-              const Positioned(
+              Positioned(
                 right: 20,
                 top: 0,
                 bottom: 8,
                 child: Center(
-                  child: Icon(Icons.visibility_off, size: 28),
+                  child: Icon(Icons.visibility_off, size: 28,
+                      color: Theme.of(context).colorScheme.error),
                 ),
               ),
             if (draggingRight)
-              const Positioned(
+              Positioned(
                 left: 20,
                 top: 0,
                 bottom: 8,
                 child: Center(
-                  child: Icon(Icons.visibility, size: 28),
+                  child: Icon(Icons.visibility, size: 28,
+                      color: Theme.of(context).colorScheme.primary),
                 ),
               ),
           ],
