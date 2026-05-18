@@ -176,9 +176,8 @@ class _AssignmentCard extends StatelessWidget {
         background: Container(
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.only(left: 20),
-          color: Theme.of(context).colorScheme.primaryContainer,
-          child: Icon(Icons.visibility, size: 28,
-              color: Theme.of(context).colorScheme.onPrimaryContainer),
+          color: Colors.green.shade100,
+          child: const Icon(Icons.visibility, size: 28, color: Colors.green),
         ),
         secondaryBackground: Container(
           alignment: Alignment.centerRight,
