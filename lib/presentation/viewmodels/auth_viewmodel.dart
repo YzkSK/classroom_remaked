@@ -21,7 +21,10 @@ class AuthViewModel extends _$AuthViewModel {
   }
 
   Future<void> signOut() async {
-    await const FcmTokenService().unregister();
+    // FCM トークン削除は失敗してもサインアウトを止めない
+    try {
+      await const FcmTokenService().unregister();
+    } catch (_) {}
     final authService = ref.read(authServiceProvider);
     await authService.signOut();
     state = const AsyncData(null);
