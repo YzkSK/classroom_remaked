@@ -1,30 +1,20 @@
 // lib/presentation/viewmodels/settings_viewmodel.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/di/providers.dart';
 import '../../domain/entities/assignment.dart';
 import '../../domain/usecases/can_disable_lazy_mode_usecase.dart';
+
+part 'settings_viewmodel.freezed.dart';
 part 'settings_viewmodel.g.dart';
 
-class SettingsState {
-  const SettingsState({
-    required this.notifyBeforeHours,
-    required this.snoozeHours,
-    required this.lazyModeEnabled,
-  });
-
-  final int notifyBeforeHours;
-  final int snoozeHours;
-  final bool lazyModeEnabled;
-
-  SettingsState copyWith({
-    int? notifyBeforeHours,
-    int? snoozeHours,
-    bool? lazyModeEnabled,
-  }) => SettingsState(
-        notifyBeforeHours: notifyBeforeHours ?? this.notifyBeforeHours,
-        snoozeHours: snoozeHours ?? this.snoozeHours,
-        lazyModeEnabled: lazyModeEnabled ?? this.lazyModeEnabled,
-      );
+@freezed
+class SettingsState with _$SettingsState {
+  const factory SettingsState({
+    required int notifyBeforeHours,
+    required int snoozeHours,
+    required bool lazyModeEnabled,
+  }) = _SettingsState;
 }
 
 @riverpod

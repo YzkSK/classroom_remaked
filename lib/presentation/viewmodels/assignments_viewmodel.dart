@@ -1,7 +1,10 @@
 // lib/presentation/viewmodels/assignments_viewmodel.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/di/providers.dart';
 import '../../domain/entities/assignment.dart';
+
+part 'assignments_viewmodel.freezed.dart';
 part 'assignments_viewmodel.g.dart';
 
 bool isOverdue(Assignment a) =>
@@ -11,16 +14,15 @@ bool isOverdue(Assignment a) =>
 
 enum AssignmentsFilter { all, unsubmitted, overdue }
 
-class AssignmentsState {
-  const AssignmentsState({
-    required this.assignments,
-    required this.hiddenAssignmentIds,
-    this.filter = AssignmentsFilter.all,
-  });
+@freezed
+class AssignmentsState with _$AssignmentsState {
+  const AssignmentsState._();
 
-  final List<Assignment> assignments;
-  final Set<String> hiddenAssignmentIds;
-  final AssignmentsFilter filter;
+  const factory AssignmentsState({
+    required List<Assignment> assignments,
+    required List<String> hiddenAssignmentIds,
+    @Default(AssignmentsFilter.all) AssignmentsFilter filter,
+  }) = _AssignmentsState;
 
   List<Assignment> get visibleAssignments {
     switch (filter) {
@@ -39,17 +41,6 @@ class AssignmentsState {
 
   bool isHidden(String assignmentId) =>
       hiddenAssignmentIds.contains(assignmentId);
-
-  AssignmentsState copyWith({
-    List<Assignment>? assignments,
-    Set<String>? hiddenAssignmentIds,
-    AssignmentsFilter? filter,
-  }) =>
-      AssignmentsState(
-        assignments: assignments ?? this.assignments,
-        hiddenAssignmentIds: hiddenAssignmentIds ?? this.hiddenAssignmentIds,
-        filter: filter ?? this.filter,
-      );
 }
 
 @riverpod
@@ -80,7 +71,7 @@ class AssignmentsViewModel extends _$AssignmentsViewModel {
 
     return AssignmentsState(
       assignments: all,
-      hiddenAssignmentIds: hiddenIds,
+      hiddenAssignmentIds: hiddenIds.toList(),
     );
   }
 
@@ -103,7 +94,7 @@ class AssignmentsViewModel extends _$AssignmentsViewModel {
     final current = state.valueOrNull;
     if (current == null) return;
     state = AsyncData(current.copyWith(
-      hiddenAssignmentIds: {...current.hiddenAssignmentIds, assignmentId},
+      hiddenAssignmentIds: [...current.hiddenAssignmentIds, assignmentId],
     ));
   }
 
@@ -111,9 +102,10 @@ class AssignmentsViewModel extends _$AssignmentsViewModel {
     await ref.read(hiddenItemsDataSourceProvider).unhide(assignmentId);
     final current = state.valueOrNull;
     if (current == null) return;
-    final updated = Set<String>.from(current.hiddenAssignmentIds)
-      ..remove(assignmentId);
-    state = AsyncData(current.copyWith(hiddenAssignmentIds: updated));
+    state = AsyncData(current.copyWith(
+      hiddenAssignmentIds:
+          current.hiddenAssignmentIds.where((id) => id != assignmentId).toList(),
+    ));
   }
 
   void markTurnedIn(String assignmentId) {

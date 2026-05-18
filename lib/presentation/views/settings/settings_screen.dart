@@ -154,7 +154,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    const Icon(Icons.notifications_off, color: Colors.orange),
+                    Icon(Icons.notifications_off,
+                        color: Theme.of(context).colorScheme.tertiary),
                     const SizedBox(width: 8),
                     const Expanded(child: Text('通知が許可されていません')),
                     ShadButton.outline(

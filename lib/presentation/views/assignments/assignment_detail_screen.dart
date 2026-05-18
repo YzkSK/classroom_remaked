@@ -65,8 +65,9 @@ class AssignmentDetailScreen extends ConsumerWidget {
           if (isSubmitted)
             const ShadBadge.secondary(child: Text('提出済み'))
           else if (isOverdue)
-            const ShadBadge(
-                backgroundColor: Colors.red, child: Text('期限切れ'))
+            ShadBadge(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                child: const Text('期限切れ'))
           else if (due != null)
             ShadBadge.outline(
               child: Text(

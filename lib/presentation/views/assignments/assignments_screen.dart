@@ -1,24 +1,15 @@
 // lib/presentation/views/assignments/assignments_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../domain/entities/assignment.dart';
 import '../../viewmodels/assignments_viewmodel.dart';
+import '../shared/assignment_card.dart';
+import '../shared/fake_fixtures.dart';
 
 class AssignmentsScreen extends ConsumerWidget {
   const AssignmentsScreen({super.key});
-
-  static final _fakeAssignments = List.generate(
-    5,
-    (i) => Assignment(
-      id: 'fake_$i',
-      courseId: 'fake',
-      title: 'Assignment Title Example Long',
-      dueDate: DateTime.now().add(Duration(days: i + 1)),
-    ),
-  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,7 +38,7 @@ class AssignmentsScreen extends ConsumerWidget {
     }
     final isLoading = async.isLoading;
     final assignments =
-        async.valueOrNull?.visibleAssignments ?? _fakeAssignments;
+        async.valueOrNull?.visibleAssignments ?? FakeFixtures.assignments;
     final state = async.valueOrNull;
 
     return RefreshIndicator(
@@ -155,8 +146,9 @@ class _AssignmentCard extends StatelessWidget {
             ? Container(
                 alignment: Alignment.centerLeft,
                 padding: const EdgeInsets.only(left: 16),
-                color: Colors.green.shade100,
-                child: const Icon(Icons.visibility, color: Colors.green),
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: Icon(Icons.visibility,
+                    color: Theme.of(context).colorScheme.primary),
               )
             : const SizedBox.shrink(),
         // 左スワイプ（非表示にする）
@@ -164,8 +156,9 @@ class _AssignmentCard extends StatelessWidget {
             ? Container(
                 alignment: Alignment.centerRight,
                 padding: const EdgeInsets.only(right: 16),
-                color: Colors.red.shade100,
-                child: const Icon(Icons.visibility_off, color: Colors.red),
+                color: Theme.of(context).colorScheme.errorContainer,
+                child: Icon(Icons.visibility_off,
+                    color: Theme.of(context).colorScheme.error),
               )
             : null,
         confirmDismiss: (direction) async {
@@ -209,9 +202,9 @@ class _AssignmentCard extends StatelessWidget {
                   child: const Text('非表示にする'),
                 ),
             ],
-            child: GestureDetector(
-              onTap: () => context.go('/assignments/${assignment.id}'),
-              child: _AssignmentCardContent(assignment: assignment),
+            child: AssignmentCard(
+              assignment: assignment,
+              variant: AssignmentCardVariant.full,
             ),
           ),
         ),
@@ -220,58 +213,3 @@ class _AssignmentCard extends StatelessWidget {
   }
 }
 
-class _AssignmentCardContent extends StatelessWidget {
-  const _AssignmentCardContent({required this.assignment});
-
-  final Assignment assignment;
-
-  @override
-  Widget build(BuildContext context) {
-    final due = assignment.dueDate;
-    final isSubmitted =
-        assignment.submissionState == SubmissionState.turnedIn;
-    final isOverdue =
-        due != null && due.isBefore(DateTime.now()) && !isSubmitted;
-
-    return ShadCard(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(assignment.title,
-                      maxLines: 2, overflow: TextOverflow.ellipsis),
-                  if (due != null)
-                    Text(
-                      '締め切り: ${DateFormat('yyyy/M/d HH:mm').format(due)}',
-                      style: ShadTheme.of(context).textTheme.muted,
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            if (isSubmitted)
-              const ShadBadge.secondary(child: Text('提出済み'))
-            else if (isOverdue)
-              const ShadBadge(
-                  backgroundColor: Colors.red, child: Text('期限切れ'))
-            else if (due != null)
-              ShadBadge.outline(
-                child: Text(_dueBadgeLabel(due)),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-String _dueBadgeLabel(DateTime due) {
-  final diff = due.difference(DateTime.now());
-  if (diff.inHours < 24) return '今日 ${DateFormat('HH:mm').format(due)}';
-  if (diff.inHours < 48) return '明日 ${DateFormat('HH:mm').format(due)}';
-  return '${diff.inDays}日後';
-}

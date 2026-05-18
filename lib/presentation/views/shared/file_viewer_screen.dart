@@ -82,8 +82,9 @@ class _FileViewerScreenState extends ConsumerState<FileViewerScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.warning_amber_rounded,
-                        size: 48, color: Colors.orange),
+                    Icon(Icons.warning_amber_rounded,
+                        size: 48,
+                        color: Theme.of(context).colorScheme.tertiary),
                     const SizedBox(height: 16),
                     const Text(
                       'このファイルはウイルススキャンができませんでした。\nダウンロードを続けますか？',

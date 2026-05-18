@@ -1,24 +1,24 @@
 // lib/presentation/viewmodels/dashboard_viewmodel.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/di/providers.dart';
 import '../../domain/entities/assignment.dart';
 import '../../domain/entities/course.dart';
+
+part 'dashboard_viewmodel.freezed.dart';
 part 'dashboard_viewmodel.g.dart';
 
-class DashboardState {
-  const DashboardState({
-    required this.courses,
-    required this.hiddenCourseIds,
-    required this.orderedCourseIds,
-    required this.upcomingDeadlines,
-    this.showHidden = false,
-  });
+@freezed
+class DashboardState with _$DashboardState {
+  const DashboardState._();
 
-  final List<Course> courses;
-  final Set<String> hiddenCourseIds;
-  final List<String> orderedCourseIds;
-  final List<Assignment> upcomingDeadlines;
-  final bool showHidden;
+  const factory DashboardState({
+    required List<Course> courses,
+    required List<String> hiddenCourseIds,
+    required List<String> orderedCourseIds,
+    required List<Assignment> upcomingDeadlines,
+    @Default(false) bool showHidden,
+  }) = _DashboardState;
 
   List<Course> get _orderedCourses {
     if (orderedCourseIds.isEmpty) return courses;
@@ -40,21 +40,6 @@ class DashboardState {
   }
 
   bool isHidden(String courseId) => hiddenCourseIds.contains(courseId);
-
-  DashboardState copyWith({
-    List<Course>? courses,
-    Set<String>? hiddenCourseIds,
-    List<String>? orderedCourseIds,
-    List<Assignment>? upcomingDeadlines,
-    bool? showHidden,
-  }) =>
-      DashboardState(
-        courses: courses ?? this.courses,
-        hiddenCourseIds: hiddenCourseIds ?? this.hiddenCourseIds,
-        orderedCourseIds: orderedCourseIds ?? this.orderedCourseIds,
-        upcomingDeadlines: upcomingDeadlines ?? this.upcomingDeadlines,
-        showHidden: showHidden ?? this.showHidden,
-      );
 }
 
 @riverpod
@@ -81,7 +66,7 @@ class DashboardViewModel extends _$DashboardViewModel {
 
     return DashboardState(
       courses: courses,
-      hiddenCourseIds: hiddenIds,
+      hiddenCourseIds: hiddenIds.toList(),
       orderedCourseIds: orderedIds,
       upcomingDeadlines: deadlines,
     );
@@ -106,7 +91,7 @@ class DashboardViewModel extends _$DashboardViewModel {
     final current = state.valueOrNull;
     if (current == null) return;
     state = AsyncData(current.copyWith(
-      hiddenCourseIds: {...current.hiddenCourseIds, courseId},
+      hiddenCourseIds: [...current.hiddenCourseIds, courseId],
     ));
   }
 
@@ -114,9 +99,10 @@ class DashboardViewModel extends _$DashboardViewModel {
     await ref.read(hiddenItemsDataSourceProvider).unhide(courseId);
     final current = state.valueOrNull;
     if (current == null) return;
-    final updated = Set<String>.from(current.hiddenCourseIds)
-      ..remove(courseId);
-    state = AsyncData(current.copyWith(hiddenCourseIds: updated));
+    state = AsyncData(current.copyWith(
+      hiddenCourseIds:
+          current.hiddenCourseIds.where((id) => id != courseId).toList(),
+    ));
   }
 
   void toggleShowHidden() {

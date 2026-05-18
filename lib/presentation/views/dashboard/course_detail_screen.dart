@@ -1,13 +1,13 @@
 // lib/presentation/views/dashboard/course_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import '../../../domain/entities/assignment.dart';
 import '../../../domain/entities/announcement.dart';
 import '../../viewmodels/assignments_viewmodel.dart';
 import '../../viewmodels/announcements_viewmodel.dart';
+import '../shared/assignment_card.dart';
+import '../shared/fake_fixtures.dart';
 
 class CourseDetailScreen extends ConsumerWidget {
   const CourseDetailScreen({
@@ -49,16 +49,6 @@ class _AssignmentsTab extends ConsumerWidget {
 
   final String courseId;
 
-  static final _fake = List.generate(
-    3,
-    (i) => Assignment(
-      id: 'fake_$i',
-      courseId: 'fake',
-      title: 'Assignment Title Example',
-      dueDate: DateTime.now().add(Duration(days: i + 1)),
-    ),
-  );
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(assignmentsViewModelProvider);
@@ -68,9 +58,9 @@ class _AssignmentsTab extends ConsumerWidget {
       return Center(child: Text('エラー: ${async.error}'));
     }
 
-    final all = async.valueOrNull?.assignments ?? _fake;
+    final all = async.valueOrNull?.assignments ?? FakeFixtures.courseAssignments;
     final courseAssignments = isLoading
-        ? _fake
+        ? FakeFixtures.courseAssignments
         : all
             .where((a) => a.courseId == courseId)
             .where((a) => !isOverdue(a))
@@ -88,46 +78,10 @@ class _AssignmentsTab extends ConsumerWidget {
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: courseAssignments.length,
-              itemBuilder: (context, index) {
-                final a = courseAssignments[index];
-                final due = a.dueDate;
-                final isSubmitted =
-                    a.submissionState == SubmissionState.turnedIn;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: GestureDetector(
-                    onTap: () => context.go('/assignments/${a.id}'),
-                    child: ShadCard(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(a.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis),
-                                  if (due != null)
-                                    Text(
-                                      '締め切り: ${DateFormat('yyyy/M/d HH:mm').format(due)}',
-                                      style: ShadTheme.of(context)
-                                          .textTheme
-                                          .muted,
-                                    ),
-                                ],
-                              ),
-                            ),
-                            if (isSubmitted)
-                              const ShadBadge.secondary(child: Text('提出済み')),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+              itemBuilder: (context, index) => AssignmentCard(
+                assignment: courseAssignments[index],
+                variant: AssignmentCardVariant.compact,
+              ),
             ),
     );
   }

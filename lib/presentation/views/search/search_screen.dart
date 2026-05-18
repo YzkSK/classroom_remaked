@@ -1,10 +1,9 @@
 // lib/presentation/views/search/search_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import '../../../domain/entities/assignment.dart';
 import '../../viewmodels/search_viewmodel.dart';
+import '../shared/assignment_card.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -57,45 +56,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: state.results.length,
-                        itemBuilder: (context, index) =>
-                            _ResultCard(assignment: state.results[index]),
+                        itemBuilder: (context, index) => AssignmentCard(
+                          assignment: state.results[index],
+                          variant: AssignmentCardVariant.search,
+                        ),
                       ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ResultCard extends StatelessWidget {
-  const _ResultCard({required this.assignment});
-
-  final Assignment assignment;
-
-  @override
-  Widget build(BuildContext context) {
-    final due = assignment.dueDate;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: GestureDetector(
-        onTap: () => context.go('/assignments/${assignment.id}'),
-        child: ShadCard(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(assignment.title,
-                    maxLines: 2, overflow: TextOverflow.ellipsis),
-                if (due != null)
-                  Text(
-                    '締め切り: ${DateFormat('yyyy/M/d HH:mm').format(due)}',
-                    style: ShadTheme.of(context).textTheme.muted,
-                  ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

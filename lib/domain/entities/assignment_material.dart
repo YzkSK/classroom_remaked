@@ -1,22 +1,23 @@
 // lib/domain/entities/assignment_material.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'assignment_material.freezed.dart';
+
 enum AssignmentMaterialType { driveFile, youTube, link, form }
 
-class AssignmentMaterial {
-  const AssignmentMaterial({
-    required this.title,
-    required this.url,
-    required this.type,
-    this.driveFileId,
-    this.mimeType,
-  });
+@freezed
+class AssignmentMaterial with _$AssignmentMaterial {
+  const AssignmentMaterial._();
 
-  final String title;
-  final String url;
-  final AssignmentMaterialType type;
-  final String? driveFileId;
-  final String? mimeType;
+  const factory AssignmentMaterial({
+    required String title,
+    required String url,
+    required AssignmentMaterialType type,
+    String? driveFileId,
+    String? mimeType,
+  }) = _AssignmentMaterial;
 
-  factory AssignmentMaterial.fromJson(Map<String, dynamic> json) =>
+  static AssignmentMaterial fromJson(Map<String, dynamic> json) =>
       AssignmentMaterial(
         title: json['title'] as String,
         url: json['url'] as String,
@@ -35,15 +36,4 @@ class AssignmentMaterial {
         if (driveFileId != null) 'driveFileId': driveFileId,
         if (mimeType != null) 'mimeType': mimeType,
       };
-
-  @override
-  bool operator ==(Object other) =>
-      other is AssignmentMaterial &&
-      other.title == title &&
-      other.url == url &&
-      other.type == type &&
-      other.driveFileId == driveFileId;
-
-  @override
-  int get hashCode => Object.hash(title, url, type, driveFileId);
 }

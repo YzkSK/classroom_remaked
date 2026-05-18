@@ -1,13 +1,18 @@
 // lib/presentation/viewmodels/search_viewmodel.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/di/providers.dart';
 import '../../domain/entities/assignment.dart';
+
+part 'search_viewmodel.freezed.dart';
 part 'search_viewmodel.g.dart';
 
-class SearchState {
-  const SearchState({this.query = '', this.results = const []});
-  final String query;
-  final List<Assignment> results;
+@freezed
+class SearchState with _$SearchState {
+  const factory SearchState({
+    @Default('') String query,
+    @Default([]) List<Assignment> results,
+  }) = _SearchState;
 }
 
 @riverpod

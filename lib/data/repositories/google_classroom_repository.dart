@@ -102,19 +102,6 @@ class GoogleClassroomRepository implements LmsRepository {
           String courseId) =>
       _fetchAndCacheAnnouncements(courseId);
 
-  // ────────────────────── Stubs ──────────────────────
-
-  @override
-  Future<Either<Failure, List<SearchResult>>> search(String query) async =>
-      const Right([]);
-
-  @override
-  Future<Either<Failure, AssignmentSubmission?>> getSubmission(
-    String courseId,
-    String assignmentId,
-  ) async =>
-      const Right(null);
-
   // ────────────────────── TurnIn ──────────────────────
 
   @override
