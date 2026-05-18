@@ -82,23 +82,16 @@ class _CardContent extends StatelessWidget {
       ],
     );
 
-    if (badge == null) {
-      return ShadCard(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: content,
-        ),
-      );
-    }
-
     return ShadCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
             Expanded(child: content),
-            const SizedBox(width: 8),
-            badge,
+            if (badge != null) ...[
+              const SizedBox(width: 8),
+              badge,
+            ],
           ],
         ),
       ),
