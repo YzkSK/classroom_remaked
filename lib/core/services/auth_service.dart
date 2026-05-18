@@ -36,11 +36,19 @@ class AuthService {
   }
 
   /// ユーザー操作によるサインイン。
+  /// authenticate() の直後に authorizeScopes() まで済ませることで、
+  /// API初回リクエスト時に権限ダイアログが再表示されるのを防ぐ。
   Future<GoogleSignInAccount> signIn() async {
     if (!GoogleSignIn.instance.supportsAuthenticate()) {
       throw UnsupportedError('このプラットフォームはサインインをサポートしていません');
     }
-    return GoogleSignIn.instance.authenticate(scopeHint: scopes);
+    final account = await GoogleSignIn.instance.authenticate(scopeHint: scopes);
+    final alreadyAuthorized =
+        await account.authorizationClient.authorizationForScopes(scopes);
+    if (alreadyAuthorized == null) {
+      await account.authorizationClient.authorizeScopes(scopes);
+    }
+    return account;
   }
 
   Future<void> signOut() => GoogleSignIn.instance.signOut();
