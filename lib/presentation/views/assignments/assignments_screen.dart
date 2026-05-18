@@ -1,6 +1,7 @@
 // lib/presentation/views/assignments/assignments_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../domain/entities/assignment.dart';
@@ -128,93 +129,101 @@ class _AssignmentCard extends StatelessWidget {
   final VoidCallback onUnhide;
   final VoidCallback onUndoHide;
 
+  void _showMenu(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isHidden)
+              ListTile(
+                leading: const Icon(Icons.visibility),
+                title: const Text('非表示を解除'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  onUnhide();
+                },
+              )
+            else
+              ListTile(
+                leading: const Icon(Icons.visibility_off),
+                title: const Text('非表示にする'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  onHide();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: isHidden ? 0.4 : 1.0,
-      child: Dismissible(
-        key: ValueKey('dismiss_${assignment.id}'),
-        direction: isHidden
-            ? DismissDirection.startToEnd
-            : DismissDirection.endToStart,
-        dismissThresholds: const {
-          DismissDirection.endToStart: 0.25,
-          DismissDirection.startToEnd: 0.25,
-        },
-        background: isHidden
-            ? Container(
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.only(left: 16),
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: Icon(Icons.visibility,
-                    color: Theme.of(context).colorScheme.primary),
-              )
-            : Container(color: Colors.transparent),
-        secondaryBackground: !isHidden
-            ? Container(
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 16),
-                color: Theme.of(context).colorScheme.errorContainer,
-                child: Icon(Icons.visibility_off,
-                    color: Theme.of(context).colorScheme.error),
-              )
-            : Container(color: Colors.transparent),
-        confirmDismiss: (direction) async {
-          if (direction == DismissDirection.startToEnd && isHidden) {
-            onUnhide();
-            if (context.mounted) {
-              ShadToaster.of(context).show(
-                const ShadToast(title: Text('非表示を解除しました')),
-              );
-            }
-          } else if (direction == DismissDirection.endToStart && !isHidden) {
-            onHide();
-            if (context.mounted) {
-              ShadToaster.of(context).show(
-                ShadToast(
-                  title: const Text('課題を非表示にしました'),
-                  action: ShadButton.outline(
-                    onPressed: onUndoHide,
-                    child: const Text('元に戻す'),
-                  ),
-                ),
-              );
-            }
-          }
-          return false;
-        },
-        child: GestureDetector(
-          onLongPress: () => showModalBottomSheet<void>(
-            context: context,
-            builder: (_) => SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isHidden)
-                    ListTile(
-                      leading: const Icon(Icons.visibility),
-                      title: const Text('非表示を解除'),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        onUnhide();
-                      },
-                    )
-                  else
-                    ListTile(
-                      leading: const Icon(Icons.visibility_off),
-                      title: const Text('非表示にする'),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        onHide();
-                      },
+    // タップ・長押しは Dismissible の外で受け取り、
+    // Dismissible の child には GestureDetector を置かない
+    return GestureDetector(
+      onTap: () => GoRouter.of(context).go('/assignments/${assignment.id}'),
+      onLongPress: () => _showMenu(context),
+      child: Opacity(
+        opacity: isHidden ? 0.4 : 1.0,
+        child: Dismissible(
+          key: ValueKey('dismiss_${assignment.id}'),
+          direction: isHidden
+              ? DismissDirection.startToEnd
+              : DismissDirection.endToStart,
+          dismissThresholds: const {
+            DismissDirection.endToStart: 0.25,
+            DismissDirection.startToEnd: 0.25,
+          },
+          background: isHidden
+              ? Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 16),
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: Icon(Icons.visibility,
+                      color: Theme.of(context).colorScheme.primary),
+                )
+              : Container(color: Colors.transparent),
+          secondaryBackground: !isHidden
+              ? Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 16),
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Icon(Icons.visibility_off,
+                      color: Theme.of(context).colorScheme.error),
+                )
+              : Container(color: Colors.transparent),
+          confirmDismiss: (direction) async {
+            if (direction == DismissDirection.startToEnd && isHidden) {
+              onUnhide();
+              if (context.mounted) {
+                ShadToaster.of(context).show(
+                  const ShadToast(title: Text('非表示を解除しました')),
+                );
+              }
+            } else if (direction == DismissDirection.endToStart && !isHidden) {
+              onHide();
+              if (context.mounted) {
+                ShadToaster.of(context).show(
+                  ShadToast(
+                    title: const Text('課題を非表示にしました'),
+                    action: ShadButton.outline(
+                      onPressed: onUndoHide,
+                      child: const Text('元に戻す'),
                     ),
-                ],
-              ),
-            ),
-          ),
+                  ),
+                );
+              }
+            }
+            return false;
+          },
           child: AssignmentCard(
             assignment: assignment,
             variant: AssignmentCardVariant.full,
+            onTap: null, // GestureDetector なし
           ),
         ),
       ),

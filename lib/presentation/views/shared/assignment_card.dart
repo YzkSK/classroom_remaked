@@ -1,6 +1,5 @@
 // lib/presentation/views/shared/assignment_card.dart
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../domain/entities/assignment.dart';
 
@@ -23,21 +22,25 @@ class AssignmentCard extends StatelessWidget {
     super.key,
     required this.assignment,
     this.variant = AssignmentCardVariant.full,
+    this.onTap,
   });
 
   final Assignment assignment;
   final AssignmentCardVariant variant;
+  /// null のとき GestureDetector を追加しない（Dismissible 内で使う場合）
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final content = variant == AssignmentCardVariant.tile
+        ? _TileContent(assignment: assignment)
+        : _CardContent(assignment: assignment, variant: variant);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: GestureDetector(
-        onTap: () => context.go('/assignments/${assignment.id}'),
-        child: variant == AssignmentCardVariant.tile
-            ? _TileContent(assignment: assignment)
-            : _CardContent(assignment: assignment, variant: variant),
-      ),
+      child: onTap != null
+          ? GestureDetector(onTap: onTap, child: content)
+          : content,
     );
   }
 }
