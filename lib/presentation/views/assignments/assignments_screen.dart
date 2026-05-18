@@ -30,7 +30,6 @@ class AssignmentsScreen extends ConsumerWidget {
         children: [
           _FilterBar(
             filter: async.valueOrNull?.filter ?? AssignmentsFilter.all,
-            showHidden: async.valueOrNull?.showHidden ?? false,
           ),
           Expanded(child: _buildList(context, ref, async)),
         ],
@@ -51,39 +50,49 @@ class AssignmentsScreen extends ConsumerWidget {
         async.valueOrNull?.visibleAssignments ?? _fakeAssignments;
     final state = async.valueOrNull;
 
-    return Skeletonizer(
-      enabled: isLoading,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: assignments.length,
-        itemBuilder: (context, index) {
-          final assignment = assignments[index];
-          final isHidden = state?.isHidden(assignment.id) ?? false;
-          return _AssignmentCard(
-            key: ValueKey(assignment.id),
-            assignment: assignment,
-            isHidden: isHidden,
-            onHide: () => ref
-                .read(assignmentsViewModelProvider.notifier)
-                .hideItem(assignment.id),
-            onUnhide: () => ref
-                .read(assignmentsViewModelProvider.notifier)
-                .unhideItem(assignment.id),
-            onUndoHide: () => ref
-                .read(assignmentsViewModelProvider.notifier)
-                .unhideItem(assignment.id),
-          );
-        },
+    return RefreshIndicator(
+      onRefresh: () =>
+          ref.read(assignmentsViewModelProvider.notifier).refresh(),
+      child: Skeletonizer(
+        enabled: isLoading,
+        child: ListView.builder(
+          key: const PageStorageKey('assignments_list'),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: assignments.length,
+          itemBuilder: (context, index) {
+            final assignment = assignments[index];
+            final isHidden = state?.isHidden(assignment.id) ?? false;
+            return _AssignmentCard(
+              key: ValueKey(assignment.id),
+              assignment: assignment,
+              isHidden: isHidden,
+              onHide: () => ref
+                  .read(assignmentsViewModelProvider.notifier)
+                  .hideItem(assignment.id),
+              onUnhide: () => ref
+                  .read(assignmentsViewModelProvider.notifier)
+                  .unhideItem(assignment.id),
+              onUndoHide: () => ref
+                  .read(assignmentsViewModelProvider.notifier)
+                  .unhideItem(assignment.id),
+            );
+          },
+        ),
       ),
     );
   }
 }
 
 class _FilterBar extends ConsumerWidget {
-  const _FilterBar({required this.filter, required this.showHidden});
+  const _FilterBar({required this.filter});
 
   final AssignmentsFilter filter;
-  final bool showHidden;
+
+  String _label(AssignmentsFilter f) => switch (f) {
+        AssignmentsFilter.all => 'すべて',
+        AssignmentsFilter.unsubmitted => '未提出',
+        AssignmentsFilter.overdue => '期限切れ',
+      };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -92,39 +101,21 @@ class _FilterBar extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
-        children: [
-          ...AssignmentsFilter.values.map((f) {
-            final isSelected = f == filter;
-            final label =
-                f == AssignmentsFilter.all ? 'すべて' : '未提出';
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: isSelected
-                  ? ShadButton(
-                      onPressed: () {},
-                      child: Text(label),
-                    )
-                  : ShadButton.outline(
-                      onPressed: () => notifier.setFilter(f),
-                      child: Text(label),
-                    ),
-            );
-          }),
-          const Spacer(),
-          ShadButton.ghost(
-            onPressed: () => notifier.toggleShowHidden(),
-            child: Row(
-              children: [
-                Icon(
-                  showHidden ? Icons.visibility_off : Icons.visibility,
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-                Text(showHidden ? '非表示を隠す' : '非表示も表示'),
-              ],
-            ),
-          ),
-        ],
+        children: AssignmentsFilter.values.map((f) {
+          final isSelected = f == filter;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: isSelected
+                ? ShadButton(
+                    onPressed: () {},
+                    child: Text(_label(f)),
+                  )
+                : ShadButton.outline(
+                    onPressed: () => notifier.setFilter(f),
+                    child: Text(_label(f)),
+                  ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -269,11 +260,18 @@ class _AssignmentCardContent extends StatelessWidget {
                   backgroundColor: Colors.red, child: Text('期限切れ'))
             else if (due != null)
               ShadBadge.outline(
-                child: Text('${due.difference(DateTime.now()).inDays}日後'),
+                child: Text(_dueBadgeLabel(due)),
               ),
           ],
         ),
       ),
     );
   }
+}
+
+String _dueBadgeLabel(DateTime due) {
+  final diff = due.difference(DateTime.now());
+  if (diff.inHours < 24) return '今日 ${DateFormat('HH:mm').format(due)}';
+  if (diff.inHours < 48) return '明日 ${DateFormat('HH:mm').format(due)}';
+  return '${diff.inDays}日後';
 }

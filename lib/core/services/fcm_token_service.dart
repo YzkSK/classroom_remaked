@@ -1,4 +1,5 @@
 // lib/core/services/fcm_token_service.dart
+import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -8,6 +9,7 @@ class FcmTokenService {
 
   static final _messaging = FirebaseMessaging.instance;
   static final _firestore = FirebaseFirestore.instance;
+  static StreamSubscription<String>? _tokenRefreshSub;
 
   /// サインイン後・sync 完了後に呼ぶ。
   /// FCM トークンと購読コース一覧を Firestore に保存する。
@@ -27,7 +29,8 @@ class FcmTokenService {
 
     await _saveToken(token: token, userId: userId, courseIds: courseIds);
 
-    _messaging.onTokenRefresh.listen((newToken) {
+    await _tokenRefreshSub?.cancel();
+    _tokenRefreshSub = _messaging.onTokenRefresh.listen((newToken) {
       _saveToken(token: newToken, userId: userId, courseIds: courseIds);
     });
   }

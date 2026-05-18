@@ -78,7 +78,7 @@ class _DeadlineTile extends StatelessWidget {
                 ShadBadge(
                   backgroundColor:
                       daysLeft != null && daysLeft <= 1 ? Colors.red : null,
-                  child: Text(DateFormat('M/d').format(due)),
+                  child: Text(DateFormat('M/d HH:mm').format(due)),
                 ),
             ],
           ),

@@ -4,32 +4,37 @@ import '../../core/di/providers.dart';
 import '../../domain/entities/assignment.dart';
 part 'assignments_viewmodel.g.dart';
 
-enum AssignmentsFilter { all, unsubmitted }
+bool isOverdue(Assignment a) =>
+    a.dueDate != null &&
+    a.dueDate!.isBefore(DateTime.now()) &&
+    a.submissionState != SubmissionState.turnedIn;
+
+enum AssignmentsFilter { all, unsubmitted, overdue }
 
 class AssignmentsState {
   const AssignmentsState({
     required this.assignments,
     required this.hiddenAssignmentIds,
     this.filter = AssignmentsFilter.all,
-    this.showHidden = false,
   });
 
   final List<Assignment> assignments;
   final Set<String> hiddenAssignmentIds;
   final AssignmentsFilter filter;
-  final bool showHidden;
 
   List<Assignment> get visibleAssignments {
-    var list = showHidden
-        ? assignments
-        : assignments.where((a) => !hiddenAssignmentIds.contains(a.id)).toList();
-
-    if (filter == AssignmentsFilter.unsubmitted) {
-      list = list
-          .where((a) => a.submissionState != SubmissionState.turnedIn)
-          .toList();
+    switch (filter) {
+      case AssignmentsFilter.all:
+        return assignments.where((a) => !isOverdue(a)).toList();
+      case AssignmentsFilter.unsubmitted:
+        return assignments
+            .where((a) => !isOverdue(a))
+            .where((a) => !hiddenAssignmentIds.contains(a.id))
+            .where((a) => a.submissionState != SubmissionState.turnedIn)
+            .toList();
+      case AssignmentsFilter.overdue:
+        return assignments.where(isOverdue).toList();
     }
-    return list;
   }
 
   bool isHidden(String assignmentId) =>
@@ -39,13 +44,11 @@ class AssignmentsState {
     List<Assignment>? assignments,
     Set<String>? hiddenAssignmentIds,
     AssignmentsFilter? filter,
-    bool? showHidden,
   }) =>
       AssignmentsState(
         assignments: assignments ?? this.assignments,
         hiddenAssignmentIds: hiddenAssignmentIds ?? this.hiddenAssignmentIds,
         filter: filter ?? this.filter,
-        showHidden: showHidden ?? this.showHidden,
       );
 }
 
@@ -87,10 +90,10 @@ class AssignmentsViewModel extends _$AssignmentsViewModel {
     state = AsyncData(current.copyWith(filter: filter));
   }
 
-  void toggleShowHidden() {
-    final current = state.valueOrNull;
-    if (current == null) return;
-    state = AsyncData(current.copyWith(showHidden: !current.showHidden));
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    await ref.read(classroomSyncServiceProvider).forceRefresh();
+    ref.invalidateSelf();
   }
 
   Future<void> hideItem(String assignmentId) async {
@@ -111,5 +114,16 @@ class AssignmentsViewModel extends _$AssignmentsViewModel {
     final updated = Set<String>.from(current.hiddenAssignmentIds)
       ..remove(assignmentId);
     state = AsyncData(current.copyWith(hiddenAssignmentIds: updated));
+  }
+
+  void markTurnedIn(String assignmentId) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    final updated = current.assignments
+        .map((a) => a.id == assignmentId
+            ? a.copyWith(submissionState: SubmissionState.turnedIn)
+            : a)
+        .toList();
+    state = AsyncData(current.copyWith(assignments: updated));
   }
 }

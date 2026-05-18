@@ -19,6 +19,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late TextEditingController _hoursController;
   late TextEditingController _snoozeController;
+  late FocusNode _hoursFocusNode;
+  late FocusNode _snoozeFocusNode;
   bool _permissionGranted = true;
 
   @override
@@ -26,6 +28,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.initState();
     _hoursController = TextEditingController();
     _snoozeController = TextEditingController();
+    _hoursFocusNode = FocusNode()..addListener(_onHoursFocusChange);
+    _snoozeFocusNode = FocusNode()..addListener(_onSnoozeFocusChange);
     _checkPermission();
   }
 
@@ -33,7 +37,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void dispose() {
     _hoursController.dispose();
     _snoozeController.dispose();
+    _hoursFocusNode.dispose();
+    _snoozeFocusNode.dispose();
     super.dispose();
+  }
+
+  void _onHoursFocusChange() {
+    if (!_hoursFocusNode.hasFocus) _onEditingComplete();
+  }
+
+  void _onSnoozeFocusChange() {
+    if (!_snoozeFocusNode.hasFocus) {
+      final h = int.tryParse(_snoozeController.text) ?? 1;
+      final clamped = h < 1 ? 1 : h;
+      _snoozeController.text = clamped.toString();
+      ref.read(settingsViewModelProvider.notifier).setSnoozeHours(clamped);
+    }
   }
 
   Future<void> _checkPermission() async {
@@ -161,6 +180,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 width: 72,
                 child: ShadInput(
                   controller: _hoursController,
+                  focusNode: _hoursFocusNode,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   onEditingComplete: _onEditingComplete,
@@ -181,6 +201,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 width: 72,
                 child: ShadInput(
                   controller: _snoozeController,
+                  focusNode: _snoozeFocusNode,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   enabled: !(settings?.lazyModeEnabled ?? false),

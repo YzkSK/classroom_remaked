@@ -80,16 +80,17 @@ void main() {
     expect(state.value!.visibleAssignments.first.id, 'a2');
   });
 
-  test('toggleShowHidden で非表示課題が表示される', () async {
-    final container = makeContainer(hiddenIds: {'a1'});
+  test('overdue フィルターで期限切れ課題のみ表示される', () async {
+    final container = makeContainer();
     addTearDown(container.dispose);
 
     await container.read(assignmentsViewModelProvider.future);
-    container.read(assignmentsViewModelProvider.notifier).toggleShowHidden();
+    container
+        .read(assignmentsViewModelProvider.notifier)
+        .setFilter(AssignmentsFilter.overdue);
     final state = container.read(assignmentsViewModelProvider);
 
-    expect(state.value!.showHidden, isTrue);
-    expect(state.value!.visibleAssignments.length, 2);
+    expect(state.value!.filter, AssignmentsFilter.overdue);
   });
 
   test('hideItem が HiddenItemsDataSource.hide を呼ぶ', () async {

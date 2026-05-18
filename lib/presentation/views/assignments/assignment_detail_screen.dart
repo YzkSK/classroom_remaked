@@ -213,7 +213,9 @@ class _SubmitSectionState extends ConsumerState<_SubmitSection> {
       (_) {
         ShadToaster.of(context)
             .show(const ShadToast(title: Text('提出しました')));
-        ref.invalidate(assignmentsViewModelProvider);
+        ref
+            .read(assignmentsViewModelProvider.notifier)
+            .markTurnedIn(widget.assignment.id);
       },
     );
   }

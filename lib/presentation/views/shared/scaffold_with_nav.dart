@@ -13,10 +13,14 @@ class ScaffoldWithNav extends StatelessWidget {
       body: navigationShell,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: navigationShell.currentIndex,
-        onTap: (index) => navigationShell.goBranch(
-          index,
-          initialLocation: index == navigationShell.currentIndex,
-        ),
+        onTap: (index) {
+          if (index == navigationShell.currentIndex) {
+            const roots = ['/dashboard', '/assignments', '/search', '/settings'];
+            context.go(roots[index]);
+          } else {
+            navigationShell.goBranch(index);
+          }
+        },
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(

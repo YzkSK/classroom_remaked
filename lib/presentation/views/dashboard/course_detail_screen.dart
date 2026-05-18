@@ -69,8 +69,12 @@ class _AssignmentsTab extends ConsumerWidget {
     }
 
     final all = async.valueOrNull?.assignments ?? _fake;
-    final courseAssignments =
-        isLoading ? _fake : all.where((a) => a.courseId == courseId).toList()
+    final courseAssignments = isLoading
+        ? _fake
+        : all
+            .where((a) => a.courseId == courseId)
+            .where((a) => !isOverdue(a))
+            .toList()
           ..sort((a, b) {
             if (a.dueDate == null) return 1;
             if (b.dueDate == null) return -1;
