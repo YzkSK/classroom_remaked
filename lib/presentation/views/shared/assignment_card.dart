@@ -77,9 +77,9 @@ class _CardContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(assignment.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-        if (due != null)
+        if (due != null && badge == null)
           Text(
-            '締め切り: ${DateFormat('yyyy/M/d HH:mm').format(due)}',
+            DateFormat('yyyy/M/d HH:mm').format(due),
             style: ShadTheme.of(context).textTheme.muted,
           ),
       ],

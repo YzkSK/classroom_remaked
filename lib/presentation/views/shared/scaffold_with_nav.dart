@@ -11,9 +11,9 @@ class ScaffoldWithNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: navigationShell.currentIndex,
-        onTap: (index) {
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: (index) {
           if (index == navigationShell.currentIndex) {
             const roots = ['/dashboard', '/assignments', '/search', '/settings'];
             context.go(roots[index]);
@@ -21,22 +21,24 @@ class ScaffoldWithNav extends StatelessWidget {
             navigationShell.goBranch(index);
           }
         },
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
             label: 'ホーム',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_rounded),
+          NavigationDestination(
+            icon: Icon(Icons.assignment_outlined),
+            selectedIcon: Icon(Icons.assignment_rounded),
             label: '課題',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.search_rounded),
             label: '検索',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_rounded),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings_rounded),
             label: '設定',
           ),
         ],

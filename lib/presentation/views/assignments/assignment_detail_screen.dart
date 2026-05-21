@@ -41,10 +41,18 @@ class AssignmentDetailScreen extends ConsumerWidget {
     final isOverdue =
         due != null && due.isBefore(DateTime.now()) && !isSubmitted;
 
+    final hasSubmit = !isSubmitted && assignment.submissionId != null;
+    final hasSubmitted = isSubmitted && assignment.submissionId != null;
+
     return Scaffold(
       appBar: AppBar(title: const Text('課題詳細')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: hasSubmit ? 96 : 16,
+        ),
         children: [
           Text(assignment.title,
               style: ShadTheme.of(context).textTheme.h3),
@@ -96,46 +104,152 @@ class AssignmentDetailScreen extends ConsumerWidget {
             ),
           ],
 
-          // ── 提出セクション ─────────────────────────────
-          if (!isSubmitted && assignment.submissionId != null) ...[
+          // ── 提出済みセクション ──────────────────────────
+          if (hasSubmitted) ...[
             const SizedBox(height: 32),
             const ShadSeparator.horizontal(),
             const SizedBox(height: 16),
-            _SubmitSection(assignment: assignment),
+            _SubmittedSection(assignment: assignment),
+          ],
+
+          // ── 提出前：添付ファイル追加のみ（ボタンは下部固定） ─
+          if (hasSubmit) ...[
+            const SizedBox(height: 32),
+            const ShadSeparator.horizontal(),
+            const SizedBox(height: 16),
+            _SubmitAttachmentSection(assignment: assignment),
           ],
         ],
       ),
+      // ── 提出ボタン（下部固定） ─────────────────────────
+      bottomNavigationBar: hasSubmit
+          ? _SubmitBottomBar(assignment: assignment)
+          : null,
     );
   }
 }
 
-/// 提出ファイル添付 + 提出ボタンをまとめた StatefulWidget
-class _SubmitSection extends ConsumerStatefulWidget {
-  const _SubmitSection({required this.assignment});
+/// 提出済み：添付ファイル一覧 + 取り消しボタン
+class _SubmittedSection extends ConsumerWidget {
+  const _SubmittedSection({required this.assignment});
   final Assignment assignment;
 
+  Future<void> _reclaim(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showShadDialog<bool>(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: ShadDialog.alert(
+          radius: const BorderRadius.all(Radius.circular(12)),
+          removeBorderRadiusWhenTiny: false,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          useSafeArea: false,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          titleTextAlign: TextAlign.center,
+          title: const Text('提出を取り消しますか？'),
+          description: const Text('取り消し後は再提出できます。'),
+          actions: [
+            ShadButton.outline(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            ShadButton.destructive(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('取り消す'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final result = await ref.read(turnInViewModelProvider.notifier).reclaim(
+          assignment.courseId,
+          assignment.id,
+          assignment.submissionId!,
+        );
+
+    if (!context.mounted) return;
+    result.fold(
+      (failure) => ShadToaster.of(context).show(
+        ShadToast.destructive(
+          title: const Text('取り消しに失敗しました'),
+          description: Text(failure.message),
+        ),
+      ),
+      (_) {
+        ShadToaster.of(context)
+            .show(const ShadToast(title: Text('提出を取り消しました')));
+        ref
+            .read(assignmentsViewModelProvider.notifier)
+            .markReclaimedByStudent(assignment.id);
+      },
+    );
+  }
+
   @override
-  ConsumerState<_SubmitSection> createState() => _SubmitSectionState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isLoading = ref.watch(turnInViewModelProvider).isLoading;
+    final attachments = assignment.submissionAttachments;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('提出内容', style: ShadTheme.of(context).textTheme.h4),
+        const SizedBox(height: 12),
+        if (attachments.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text('添付ファイルなし',
+                style: ShadTheme.of(context).textTheme.muted),
+          )
+        else ...[
+          ...attachments.map((att) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: _MaterialTile(material: att),
+              )),
+          const SizedBox(height: 8),
+        ],
+        ShadButton.outline(
+          width: double.infinity,
+          onPressed: isLoading ? null : () => _reclaim(context, ref),
+          child: isLoading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('提出を取り消す'),
+        ),
+      ],
+    );
+  }
 }
 
-class _SubmitSectionState extends ConsumerState<_SubmitSection> {
-  final List<({String name, String fileId})> _attachments = [];
-  bool _isUploading = false;
+// 提出前の添付ファイルリストを共有する AutoDispose provider
+final _submitAttachmentsProvider = StateProvider.autoDispose<
+    List<({String name, String fileId})>>((ref) => []);
+final _submitUploadingProvider = StateProvider.autoDispose<bool>((ref) => false);
 
-  Future<void> _pickAndUpload() async {
-    final result = await FilePicker.pickFiles(allowMultiple: true, withData: false);
+/// 添付ファイル追加セクション（スクロール内）
+class _SubmitAttachmentSection extends ConsumerWidget {
+  const _SubmitAttachmentSection({required this.assignment});
+  final Assignment assignment;
+
+  Future<void> _pickAndUpload(BuildContext context, WidgetRef ref) async {
+    final result =
+        await FilePicker.pickFiles(allowMultiple: true, withData: false);
     if (result == null || result.files.isEmpty) return;
 
-    setState(() => _isUploading = true);
+    ref.read(_submitUploadingProvider.notifier).state = true;
     try {
       final service = ref.read(driveFileServiceProvider);
       for (final pf in result.files) {
         if (pf.path == null) continue;
         final uploaded = await service.uploadFile(File(pf.path!));
-        setState(() => _attachments.add(uploaded));
+        ref.read(_submitAttachmentsProvider.notifier).update((s) => [...s, uploaded]);
       }
     } on Exception catch (e) {
-      if (mounted) {
+      if (context.mounted) {
         ShadToaster.of(context).show(
           ShadToast.destructive(
             title: const Text('アップロード失敗'),
@@ -144,12 +258,79 @@ class _SubmitSectionState extends ConsumerState<_SubmitSection> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isUploading = false);
+      ref.read(_submitUploadingProvider.notifier).state = false;
     }
   }
 
-  Future<void> _submit() async {
-    final assignment = widget.assignment;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final attachments = ref.watch(_submitAttachmentsProvider);
+    final isUploading = ref.watch(_submitUploadingProvider);
+    final isTurningIn = ref.watch(turnInViewModelProvider).isLoading;
+    final isLoading = isUploading || isTurningIn;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('提出', style: ShadTheme.of(context).textTheme.h4),
+        const SizedBox(height: 12),
+        if (attachments.isNotEmpty) ...[
+          ...attachments.map((att) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: ShadCard(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.insert_drive_file_outlined, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(att.name,
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                        GestureDetector(
+                          onTap: () => ref
+                              .read(_submitAttachmentsProvider.notifier)
+                              .update((s) => s.where((a) => a != att).toList()),
+                          child: const Icon(Icons.close, size: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )),
+          const SizedBox(height: 8),
+        ],
+        ShadButton.outline(
+          width: double.infinity,
+          onPressed: isLoading ? null : () => _pickAndUpload(context, ref),
+          child: isUploading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.attach_file, size: 16),
+                    SizedBox(width: 6),
+                    Text('ファイルを添付'),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 提出ボタン（下部固定バー）
+class _SubmitBottomBar extends ConsumerWidget {
+  const _SubmitBottomBar({required this.assignment});
+  final Assignment assignment;
+
+  Future<void> _submit(BuildContext context, WidgetRef ref) async {
     final confirmed = await showShadDialog<bool>(
       context: context,
       builder: (ctx) => Padding(
@@ -157,8 +338,7 @@ class _SubmitSectionState extends ConsumerState<_SubmitSection> {
         child: ShadDialog.alert(
           radius: const BorderRadius.all(Radius.circular(12)),
           removeBorderRadiusWhenTiny: false,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           useSafeArea: false,
           crossAxisAlignment: CrossAxisAlignment.center,
           titleTextAlign: TextAlign.center,
@@ -177,19 +357,19 @@ class _SubmitSectionState extends ConsumerState<_SubmitSection> {
         ),
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !context.mounted) return;
 
+    final attachments = ref.read(_submitAttachmentsProvider);
     final repo = ref.read(lmsRepositoryProvider);
 
-    // 添付ファイルを先に登録
-    for (final att in _attachments) {
+    for (final att in attachments) {
       final r = await repo.addAttachment(
         assignment.courseId,
         assignment.id,
         assignment.submissionId!,
         att.fileId,
       );
-      if (r.isLeft() && mounted) {
+      if (r.isLeft() && context.mounted) {
         ShadToaster.of(context).show(
           ShadToast.destructive(
             title: Text('${att.name} の添付に失敗しました'),
@@ -203,7 +383,7 @@ class _SubmitSectionState extends ConsumerState<_SubmitSection> {
         .read(turnInViewModelProvider.notifier)
         .turnIn(assignment.courseId, assignment.id, assignment.submissionId!);
 
-    if (!mounted) return;
+    if (!context.mounted) return;
     result.fold(
       (failure) => ShadToaster.of(context).show(
         ShadToast.destructive(
@@ -214,81 +394,34 @@ class _SubmitSectionState extends ConsumerState<_SubmitSection> {
       (_) {
         ShadToaster.of(context)
             .show(const ShadToast(title: Text('提出しました')));
-        ref
-            .read(assignmentsViewModelProvider.notifier)
-            .markTurnedIn(widget.assignment.id);
+        final attachmentMaterials = attachments
+            .map((att) => AssignmentMaterial(
+                  title: att.name,
+                  url: '',
+                  type: AssignmentMaterialType.driveFile,
+                  driveFileId: att.fileId,
+                ))
+            .toList();
+        ref.read(assignmentsViewModelProvider.notifier).markTurnedIn(
+              assignment.id,
+              attachments: attachmentMaterials,
+            );
       },
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    final isLoading =
-        ref.watch(turnInViewModelProvider).isLoading || _isUploading;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isLoading = ref.watch(turnInViewModelProvider).isLoading ||
+        ref.watch(_submitUploadingProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('提出', style: ShadTheme.of(context).textTheme.h4),
-        const SizedBox(height: 12),
-
-        // 添付済みファイル一覧
-        if (_attachments.isNotEmpty) ...[
-          ..._attachments.map((att) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: ShadCard(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.insert_drive_file_outlined,
-                            size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(att.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                        GestureDetector(
-                          onTap: () => setState(
-                              () => _attachments.remove(att)),
-                          child: const Icon(Icons.close, size: 18),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )),
-          const SizedBox(height: 8),
-        ],
-
-        // ファイルを追加ボタン
-        ShadButton.outline(
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: ShadButton(
           width: double.infinity,
-          onPressed: isLoading ? null : _pickAndUpload,
-          child: _isUploading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.attach_file, size: 16),
-                    SizedBox(width: 6),
-                    Text('ファイルを添付'),
-                  ],
-                ),
-        ),
-        const SizedBox(height: 12),
-
-        // 提出ボタン
-        ShadButton(
-          width: double.infinity,
-          onPressed: isLoading ? null : _submit,
-          child: isLoading && !_isUploading
+          onPressed: isLoading ? null : () => _submit(context, ref),
+          child: isLoading
               ? const SizedBox(
                   width: 16,
                   height: 16,
@@ -296,87 +429,108 @@ class _SubmitSectionState extends ConsumerState<_SubmitSection> {
                 )
               : const Text('提出する'),
         ),
-      ],
+      ),
     );
   }
 }
 
-class _MaterialTile extends ConsumerWidget {
+class _MaterialTile extends ConsumerStatefulWidget {
   const _MaterialTile({required this.material});
 
   final AssignmentMaterial material;
 
-  IconData get _icon => switch (material.type) {
+  @override
+  ConsumerState<_MaterialTile> createState() => _MaterialTileState();
+}
+
+class _MaterialTileState extends ConsumerState<_MaterialTile> {
+  bool _isLoading = false;
+
+  IconData get _icon => switch (widget.material.type) {
         AssignmentMaterialType.driveFile => Icons.insert_drive_file_outlined,
         AssignmentMaterialType.youTube => Icons.play_circle_outline,
         AssignmentMaterialType.link => Icons.link,
         AssignmentMaterialType.form => Icons.assignment_outlined,
       };
 
+  Future<void> _open() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    final service = ref.read(driveFileServiceProvider);
+    try {
+      final action = await service.resolveAndOpen(widget.material);
+      if (action == DriveOpenAction.inAppPdf &&
+          widget.material.driveFileId != null &&
+          mounted) {
+        context.push(
+          '/viewer/${widget.material.driveFileId}'
+          '?title=${Uri.encodeComponent(widget.material.title)}',
+        );
+      }
+    } on DriveVirusScanWarningException catch (e) {
+      if (!mounted) return;
+      final confirmed = await showShadDialog<bool>(
+        context: context,
+        builder: (ctx) => Padding(
+          padding: const EdgeInsets.all(16),
+          child: ShadDialog.alert(
+            radius: const BorderRadius.all(Radius.circular(12)),
+            removeBorderRadiusWhenTiny: false,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            useSafeArea: false,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            titleTextAlign: TextAlign.center,
+            title: const Text('ウイルススキャン不可'),
+            description: const Text(
+                'このファイルはウイルススキャンができませんでした。自己責任でダウンロードしますか？'),
+            actions: [
+              ShadButton.outline(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('キャンセル'),
+              ),
+              ShadButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('ダウンロード'),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (confirmed == true && mounted) {
+        try {
+          await service.openWithAcknowledge(e);
+        } on Exception catch (err) {
+          if (mounted) {
+            ShadToaster.of(context).show(
+              ShadToast.destructive(
+                title: const Text('ダウンロードに失敗しました'),
+                description: Text(err.toString()),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ShadToaster.of(context).show(
+          ShadToast.destructive(
+            title: const Text('ファイルを開けませんでした'),
+            description: Text(e.toString()),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: ShadCard(
-        child: InkWell(
-          onTap: () async {
-            final service = ref.read(driveFileServiceProvider);
-            try {
-              final action = await service.resolveAndOpen(material);
-              if (action == DriveOpenAction.inAppPdf &&
-                  material.driveFileId != null &&
-                  context.mounted) {
-                context.push(
-                  '/viewer/${material.driveFileId}'
-                  '?title=${Uri.encodeComponent(material.title)}',
-                );
-              }
-            } on DriveVirusScanWarningException catch (e) {
-              if (!context.mounted) return;
-              final confirmed = await showShadDialog<bool>(
-                context: context,
-                builder: (ctx) => Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ShadDialog.alert(
-                    radius: const BorderRadius.all(Radius.circular(12)),
-                    removeBorderRadiusWhenTiny: false,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 24),
-                    useSafeArea: false,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    titleTextAlign: TextAlign.center,
-                    title: const Text('ウイルススキャン不可'),
-                    description: const Text(
-                        'このファイルはウイルススキャンができませんでした。自己責任でダウンロードしますか？'),
-                    actions: [
-                      ShadButton.outline(
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        child: const Text('キャンセル'),
-                      ),
-                      ShadButton(
-                        onPressed: () => Navigator.of(ctx).pop(true),
-                        child: const Text('ダウンロード'),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-              if (confirmed == true && context.mounted) {
-                try {
-                  await service.openWithAcknowledge(e);
-                } on Exception catch (err) {
-                  if (context.mounted) {
-                    ShadToaster.of(context).show(
-                      ShadToast.destructive(
-                        title: const Text('ダウンロードに失敗しました'),
-                        description: Text(err.toString()),
-                      ),
-                    );
-                  }
-                }
-              }
-            }
-          },
+      child: GestureDetector(
+        onTap: _open,
+        child: ShadCard(
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -385,12 +539,19 @@ class _MaterialTile extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    material.title,
+                    widget.material.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Icon(Icons.open_in_new, size: 16),
+                if (_isLoading)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  const Icon(Icons.open_in_new, size: 16),
               ],
             ),
           ),

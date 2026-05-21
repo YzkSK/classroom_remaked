@@ -47,29 +47,36 @@ class AssignmentsScreen extends ConsumerWidget {
           ref.read(assignmentsViewModelProvider.notifier).refresh(),
       child: Skeletonizer(
         enabled: isLoading,
-        child: ListView.builder(
-          key: const PageStorageKey('assignments_list'),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: assignments.length,
-          itemBuilder: (context, index) {
-            final assignment = assignments[index];
-            final isHidden = state?.isHidden(assignment.id) ?? false;
-            return _AssignmentCard(
-              key: ValueKey(assignment.id),
-              assignment: assignment,
-              isHidden: isHidden,
-              onHide: () => ref
-                  .read(assignmentsViewModelProvider.notifier)
-                  .hideItem(assignment.id),
-              onUnhide: () => ref
-                  .read(assignmentsViewModelProvider.notifier)
-                  .unhideItem(assignment.id),
-              onUndoHide: () => ref
-                  .read(assignmentsViewModelProvider.notifier)
-                  .unhideItem(assignment.id),
-            );
-          },
-        ),
+        child: assignments.isEmpty && !isLoading
+            ? ListView(
+                children: const [
+                  SizedBox(height: 80),
+                  _EmptyState(),
+                ],
+              )
+            : ListView.builder(
+                key: const PageStorageKey('assignments_list'),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: assignments.length,
+                itemBuilder: (context, index) {
+                  final assignment = assignments[index];
+                  final isHidden = state?.isHidden(assignment.id) ?? false;
+                  return _AssignmentCard(
+                    key: ValueKey(assignment.id),
+                    assignment: assignment,
+                    isHidden: isHidden,
+                    onHide: () => ref
+                        .read(assignmentsViewModelProvider.notifier)
+                        .hideItem(assignment.id),
+                    onUnhide: () => ref
+                        .read(assignmentsViewModelProvider.notifier)
+                        .unhideItem(assignment.id),
+                    onUndoHide: () => ref
+                        .read(assignmentsViewModelProvider.notifier)
+                        .unhideItem(assignment.id),
+                  );
+                },
+              ),
       ),
     );
   }
@@ -89,6 +96,7 @@ class _FilterBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(assignmentsViewModelProvider.notifier);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -97,15 +105,23 @@ class _FilterBar extends ConsumerWidget {
           final isSelected = f == filter;
           return Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: isSelected
-                ? ShadButton(
-                    onPressed: () {},
-                    child: Text(_label(f)),
-                  )
-                : ShadButton.outline(
-                    onPressed: () => notifier.setFilter(f),
-                    child: Text(_label(f)),
-                  ),
+            child: FilterChip(
+              label: Text(_label(f)),
+              selected: isSelected,
+              onSelected: (_) => notifier.setFilter(f),
+              showCheckmark: false,
+              selectedColor: colorScheme.primaryContainer,
+              labelStyle: TextStyle(
+                color: isSelected
+                    ? colorScheme.onPrimaryContainer
+                    : colorScheme.onSurface,
+                fontWeight:
+                    isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+              side: isSelected
+                  ? BorderSide.none
+                  : BorderSide(color: colorScheme.outline),
+            ),
           );
         }).toList(),
       ),
@@ -162,9 +178,7 @@ class _AssignmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: isHidden ? 0.4 : 1.0,
-      child: Dismissible(
+    return Dismissible(
         key: ValueKey('dismiss_${assignment.id}'),
         direction: isHidden
             ? DismissDirection.startToEnd
@@ -213,14 +227,55 @@ class _AssignmentCard extends StatelessWidget {
         child: GestureDetector(
           onTap: () => context.go('/assignments/${assignment.id}'),
           onLongPress: () => _showMenu(context),
-          child: AssignmentCard(
-            assignment: assignment,
-            variant: AssignmentCardVariant.full,
-            onTap: null,
+          child: Opacity(
+            opacity: isHidden ? 0.4 : 1.0,
+            child: AssignmentCard(
+              assignment: assignment,
+              variant: AssignmentCardVariant.full,
+              onTap: null,
+            ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 
+class _EmptyState extends ConsumerWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filter =
+        ref.watch(assignmentsViewModelProvider).valueOrNull?.filter ??
+            AssignmentsFilter.all;
+
+    final (icon, message) = switch (filter) {
+      AssignmentsFilter.unsubmitted => (
+          Icons.check_circle_outline_rounded,
+          'すべて提出済みです',
+        ),
+      AssignmentsFilter.overdue => (
+          Icons.celebration_rounded,
+          '期限切れの課題はありません',
+        ),
+      AssignmentsFilter.all => (
+          Icons.assignment_outlined,
+          '課題はありません',
+        ),
+    };
+
+    return Column(
+      children: [
+        Icon(icon, size: 64, color: Theme.of(context).colorScheme.outline),
+        const SizedBox(height: 16),
+        Text(
+          message,
+          style: ShadTheme.of(context)
+              .textTheme
+              .muted
+              .copyWith(fontSize: 15),
+        ),
+      ],
+    );
+  }
+}

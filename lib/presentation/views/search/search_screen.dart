@@ -5,6 +5,38 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../viewmodels/search_viewmodel.dart';
 import '../shared/assignment_card.dart';
 
+Widget _buildEmptyPrompt(BuildContext context) => Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.search_rounded,
+              size: 64, color: Theme.of(context).colorScheme.outline),
+          const SizedBox(height: 16),
+          Text('課題名で検索できます',
+              style: ShadTheme.of(context)
+                  .textTheme
+                  .muted
+                  .copyWith(fontSize: 15)),
+        ],
+      ),
+    );
+
+Widget _buildNoResults(BuildContext context, String query) => Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.find_in_page_outlined,
+              size: 64, color: Theme.of(context).colorScheme.outline),
+          const SizedBox(height: 16),
+          Text('「$query」に一致する課題はありません',
+              style: ShadTheme.of(context)
+                  .textTheme
+                  .muted
+                  .copyWith(fontSize: 15)),
+        ],
+      ),
+    );
+
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
@@ -50,9 +82,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
           Expanded(
             child: state.query.isEmpty
-                ? const Center(child: Text('キーワードを入力してください'))
+                ? _buildEmptyPrompt(context)
                 : state.results.isEmpty
-                    ? Center(child: Text('「${state.query}」に一致する課題はありません'))
+                    ? _buildNoResults(context, state.query)
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: state.results.length,
