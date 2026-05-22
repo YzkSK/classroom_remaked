@@ -23,4 +23,9 @@ abstract class LmsRepository {
     String submissionId,
     String driveFileId,
   );
+  Future<Either<Failure, void>> reclaimSubmission(
+    String courseId,
+    String assignmentId,
+    String submissionId,
+  );
 }

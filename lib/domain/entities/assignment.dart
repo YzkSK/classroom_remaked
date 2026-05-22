@@ -28,5 +28,6 @@ class Assignment with _$Assignment {
     SubmissionState? submissionState,
     String? submissionId,
     @Default([]) List<AssignmentMaterial> materials,
+    @Default([]) List<AssignmentMaterial> submissionAttachments,
   }) = _Assignment;
 }

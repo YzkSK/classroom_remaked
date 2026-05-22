@@ -26,6 +26,8 @@ mixin _$Assignment {
   SubmissionState? get submissionState => throw _privateConstructorUsedError;
   String? get submissionId => throw _privateConstructorUsedError;
   List<AssignmentMaterial> get materials => throw _privateConstructorUsedError;
+  List<AssignmentMaterial> get submissionAttachments =>
+      throw _privateConstructorUsedError;
 
   /// Create a copy of Assignment
   /// with the given fields replaced by the non-null parameter values.
@@ -51,6 +53,7 @@ abstract class $AssignmentCopyWith<$Res> {
     SubmissionState? submissionState,
     String? submissionId,
     List<AssignmentMaterial> materials,
+    List<AssignmentMaterial> submissionAttachments,
   });
 }
 
@@ -78,6 +81,7 @@ class _$AssignmentCopyWithImpl<$Res, $Val extends Assignment>
     Object? submissionState = freezed,
     Object? submissionId = freezed,
     Object? materials = null,
+    Object? submissionAttachments = null,
   }) {
     return _then(
       _value.copyWith(
@@ -117,6 +121,10 @@ class _$AssignmentCopyWithImpl<$Res, $Val extends Assignment>
                 ? _value.materials
                 : materials // ignore: cast_nullable_to_non_nullable
                       as List<AssignmentMaterial>,
+            submissionAttachments: null == submissionAttachments
+                ? _value.submissionAttachments
+                : submissionAttachments // ignore: cast_nullable_to_non_nullable
+                      as List<AssignmentMaterial>,
           )
           as $Val,
     );
@@ -142,6 +150,7 @@ abstract class _$$AssignmentImplCopyWith<$Res>
     SubmissionState? submissionState,
     String? submissionId,
     List<AssignmentMaterial> materials,
+    List<AssignmentMaterial> submissionAttachments,
   });
 }
 
@@ -168,6 +177,7 @@ class __$$AssignmentImplCopyWithImpl<$Res>
     Object? submissionState = freezed,
     Object? submissionId = freezed,
     Object? materials = null,
+    Object? submissionAttachments = null,
   }) {
     return _then(
       _$AssignmentImpl(
@@ -207,6 +217,10 @@ class __$$AssignmentImplCopyWithImpl<$Res>
             ? _value._materials
             : materials // ignore: cast_nullable_to_non_nullable
                   as List<AssignmentMaterial>,
+        submissionAttachments: null == submissionAttachments
+            ? _value._submissionAttachments
+            : submissionAttachments // ignore: cast_nullable_to_non_nullable
+                  as List<AssignmentMaterial>,
       ),
     );
   }
@@ -225,7 +239,9 @@ class _$AssignmentImpl implements _Assignment {
     this.submissionState,
     this.submissionId,
     final List<AssignmentMaterial> materials = const [],
-  }) : _materials = materials;
+    final List<AssignmentMaterial> submissionAttachments = const [],
+  }) : _materials = materials,
+       _submissionAttachments = submissionAttachments;
 
   @override
   final String id;
@@ -253,9 +269,19 @@ class _$AssignmentImpl implements _Assignment {
     return EqualUnmodifiableListView(_materials);
   }
 
+  final List<AssignmentMaterial> _submissionAttachments;
+  @override
+  @JsonKey()
+  List<AssignmentMaterial> get submissionAttachments {
+    if (_submissionAttachments is EqualUnmodifiableListView)
+      return _submissionAttachments;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_submissionAttachments);
+  }
+
   @override
   String toString() {
-    return 'Assignment(id: $id, courseId: $courseId, title: $title, description: $description, dueDate: $dueDate, state: $state, submissionState: $submissionState, submissionId: $submissionId, materials: $materials)';
+    return 'Assignment(id: $id, courseId: $courseId, title: $title, description: $description, dueDate: $dueDate, state: $state, submissionState: $submissionState, submissionId: $submissionId, materials: $materials, submissionAttachments: $submissionAttachments)';
   }
 
   @override
@@ -278,6 +304,10 @@ class _$AssignmentImpl implements _Assignment {
             const DeepCollectionEquality().equals(
               other._materials,
               _materials,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._submissionAttachments,
+              _submissionAttachments,
             ));
   }
 
@@ -293,6 +323,7 @@ class _$AssignmentImpl implements _Assignment {
     submissionState,
     submissionId,
     const DeepCollectionEquality().hash(_materials),
+    const DeepCollectionEquality().hash(_submissionAttachments),
   );
 
   /// Create a copy of Assignment
@@ -315,6 +346,7 @@ abstract class _Assignment implements Assignment {
     final SubmissionState? submissionState,
     final String? submissionId,
     final List<AssignmentMaterial> materials,
+    final List<AssignmentMaterial> submissionAttachments,
   }) = _$AssignmentImpl;
 
   @override
@@ -335,6 +367,8 @@ abstract class _Assignment implements Assignment {
   String? get submissionId;
   @override
   List<AssignmentMaterial> get materials;
+  @override
+  List<AssignmentMaterial> get submissionAttachments;
 
   /// Create a copy of Assignment
   /// with the given fields replaced by the non-null parameter values.

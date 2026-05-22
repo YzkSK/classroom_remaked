@@ -22,4 +22,17 @@ class TurnInViewModel extends _$TurnInViewModel {
     state = const AsyncData(null);
     return result;
   }
+
+  Future<Either<Failure, void>> reclaim(
+    String courseId,
+    String assignmentId,
+    String submissionId,
+  ) async {
+    state = const AsyncLoading();
+    final repo = ref.read(lmsRepositoryProvider);
+    final result =
+        await repo.reclaimSubmission(courseId, assignmentId, submissionId);
+    state = const AsyncData(null);
+    return result;
+  }
 }

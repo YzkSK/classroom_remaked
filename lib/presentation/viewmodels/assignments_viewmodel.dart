@@ -108,12 +108,31 @@ class AssignmentsViewModel extends _$AssignmentsViewModel {
     ));
   }
 
-  void markTurnedIn(String assignmentId) {
+  void markTurnedIn(String assignmentId,
+      {List<AssignmentMaterial> attachments = const []}) {
     final current = state.valueOrNull;
     if (current == null) return;
     final updated = current.assignments
         .map((a) => a.id == assignmentId
-            ? a.copyWith(submissionState: SubmissionState.turnedIn)
+            ? a.copyWith(
+                submissionState: SubmissionState.turnedIn,
+                submissionAttachments: attachments,
+              )
+            : a)
+        .toList();
+    state = AsyncData(current.copyWith(assignments: updated));
+  }
+
+  void markReclaimedByStudent(String assignmentId) {
+    _updateSubmissionState(assignmentId, SubmissionState.reclaimedByStudent);
+  }
+
+  void _updateSubmissionState(String assignmentId, SubmissionState newState) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    final updated = current.assignments
+        .map((a) => a.id == assignmentId
+            ? a.copyWith(submissionState: newState)
             : a)
         .toList();
     state = AsyncData(current.copyWith(assignments: updated));

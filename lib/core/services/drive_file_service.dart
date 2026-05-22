@@ -78,8 +78,14 @@ class DriveFileService {
       }
     }
 
-    final uri = Uri.parse(material.url);
-    if (await canLaunchUrl(uri)) {
+    // URL が空でも driveFileId があれば Drive の閲覧リンクを構築する
+    final rawUrl = material.url.isNotEmpty
+        ? material.url
+        : (material.driveFileId != null
+            ? 'https://drive.google.com/file/d/${material.driveFileId}/view'
+            : '');
+    final uri = Uri.parse(rawUrl);
+    if (rawUrl.isNotEmpty && await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
     return DriveOpenAction.externalLink;

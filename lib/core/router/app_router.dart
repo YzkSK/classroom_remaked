@@ -1,4 +1,5 @@
 // lib/core/router/app_router.dart
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../app.dart';
@@ -17,14 +18,25 @@ import '../../presentation/views/shared/scaffold_with_nav.dart';
 import '../../presentation/views/splash/splash_screen.dart';
 part 'app_router.g.dart';
 
-@riverpod
+class _RouterRefreshNotifier extends ChangeNotifier {
+  _RouterRefreshNotifier(AppRouterRef ref) {
+    ref.listen(authViewModelProvider, (_, __) => notifyListeners());
+    ref.listen(pendingNotificationRouteProvider, (_, __) => notifyListeners());
+    ref.onDispose(dispose);
+  }
+}
+
+@Riverpod(keepAlive: true)
 GoRouter appRouter(AppRouterRef ref) {
-  final authState = ref.watch(authViewModelProvider);
-  final pendingRoute = ref.watch(pendingNotificationRouteProvider);
+  final notifier = _RouterRefreshNotifier(ref);
 
   return GoRouter(
     initialLocation: '/splash',
+    refreshListenable: notifier,
     redirect: (context, state) async {
+      final authState = ref.read(authViewModelProvider);
+      final pendingRoute = ref.read(pendingNotificationRouteProvider);
+
       if (authState.isLoading) return '/splash';
 
       final isSignedIn = authState.valueOrNull != null;
