@@ -154,6 +154,30 @@ class GoogleClassroomRepository implements LmsRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, void>> reclaimSubmission(
+    String courseId,
+    String assignmentId,
+    String submissionId,
+  ) async {
+    try {
+      await _api.courses.courseWork.studentSubmissions.reclaim(
+        classroom.ReclaimStudentSubmissionRequest(),
+        courseId,
+        assignmentId,
+        submissionId,
+      );
+      await (_db.update(_db.assignments)
+            ..where((t) => t.id.equals(assignmentId)))
+          .write(const AssignmentsCompanion(
+        submissionState: Value('reclaimedByStudent'),
+      ));
+      return const Right(null);
+    } on Exception catch (e) {
+      return Left(ApiFailure(e.toString()));
+    }
+  }
+
   // ────────────────────── Private: fetch & cache ──────────────────────
 
   Future<Either<Failure, List<Course>>> _fetchAndCacheCourses() async {
@@ -236,7 +260,8 @@ class GoogleClassroomRepository implements LmsRepository {
   Future<Either<Failure, List<Announcement>>> _fetchAndCacheAnnouncements(
       String courseId) async {
     try {
-      final all = <classroom.Announcement>[];
+      // お知らせ
+      final allAnnouncements = <classroom.Announcement>[];
       String? pageToken;
       do {
         final res = await _api.courses.announcements.list(
@@ -245,11 +270,29 @@ class GoogleClassroomRepository implements LmsRepository {
           pageSize: 50,
           pageToken: pageToken,
         );
-        all.addAll(res.announcements ?? []);
+        allAnnouncements.addAll(res.announcements ?? []);
         pageToken = res.nextPageToken;
       } while (pageToken != null);
 
-      final domains = all.map(_announcementToDomain).toList();
+      // 資料
+      final allMaterials = <classroom.CourseWorkMaterial>[];
+      String? matPageToken;
+      do {
+        final res = await _api.courses.courseWorkMaterials.list(
+          courseId,
+          courseWorkMaterialStates: ['PUBLISHED'],
+          pageSize: 50,
+          pageToken: matPageToken,
+        );
+        allMaterials.addAll(res.courseWorkMaterial ?? []);
+        matPageToken = res.nextPageToken;
+      } while (matPageToken != null);
+
+      final domains = [
+        ...allAnnouncements.map(_announcementToDomain),
+        ...allMaterials.map(_materialToDomain),
+      ]..sort((a, b) => b.creationTime.compareTo(a.creationTime));
+
       await _db.batch((batch) {
         batch.insertAll(
           _db.announcements,
@@ -261,6 +304,21 @@ class GoogleClassroomRepository implements LmsRepository {
     } on Exception catch (e) {
       return Left(ApiFailure(e.toString()));
     }
+  }
+
+  Announcement _materialToDomain(classroom.CourseWorkMaterial m) {
+    final materials = _parseMaterials(m.materials ?? []);
+    return Announcement(
+      id: m.id!,
+      courseId: m.courseId!,
+      text: m.description ?? '',
+      title: m.title,
+      isMaterial: true,
+      materials: materials,
+      creationTime: DateTime.parse(m.creationTime!),
+      updateTime:
+          m.updateTime != null ? DateTime.parse(m.updateTime!) : null,
+    );
   }
 
   // ────────────────────── Converters: Course ──────────────────────
@@ -317,6 +375,8 @@ class GoogleClassroomRepository implements LmsRepository {
     }
 
     final materials = _parseMaterials(cw.materials ?? []);
+    final submissionAttachments = _parseAttachments(
+        sub?.assignmentSubmission?.attachments ?? []);
 
     return Assignment(
       id: cw.id!,
@@ -328,6 +388,7 @@ class GoogleClassroomRepository implements LmsRepository {
       submissionState: sub != null ? _parseSubmissionState(sub.state) : null,
       submissionId: sub?.id,
       materials: materials,
+      submissionAttachments: submissionAttachments,
     );
   }
 
@@ -355,13 +416,12 @@ class GoogleClassroomRepository implements LmsRepository {
       if (m.driveFile?.driveFile != null) {
         final df = m.driveFile!.driveFile!;
         final url = df.alternateLink ?? '';
-        final mimeType = _inferMimeFromDriveUrl(url);
         result.add(AssignmentMaterial(
           title: df.title ?? 'ファイル',
           url: url,
           type: AssignmentMaterialType.driveFile,
           driveFileId: df.id,
-          mimeType: mimeType,
+          mimeType: _inferMimeFromDriveUrl(url),
         ));
       } else if (m.youtubeVideo != null) {
         final yt = m.youtubeVideo!;
@@ -379,6 +439,46 @@ class GoogleClassroomRepository implements LmsRepository {
         ));
       } else if (m.form != null) {
         final fm = m.form!;
+        result.add(AssignmentMaterial(
+          title: fm.title ?? 'フォーム',
+          url: fm.responseUrl ?? fm.formUrl ?? '',
+          type: AssignmentMaterialType.form,
+        ));
+      }
+    }
+    return result;
+  }
+
+  List<AssignmentMaterial> _parseAttachments(
+      List<classroom.Attachment> attachments) {
+    final result = <AssignmentMaterial>[];
+    for (final a in attachments) {
+      if (a.driveFile != null) {
+        final df = a.driveFile!;
+        final url = df.alternateLink ?? '';
+        result.add(AssignmentMaterial(
+          title: df.title ?? 'ファイル',
+          url: url,
+          type: AssignmentMaterialType.driveFile,
+          driveFileId: df.id,
+          mimeType: _inferMimeFromDriveUrl(url),
+        ));
+      } else if (a.youTubeVideo != null) {
+        final yt = a.youTubeVideo!;
+        result.add(AssignmentMaterial(
+          title: yt.title ?? '動画',
+          url: yt.alternateLink ?? '',
+          type: AssignmentMaterialType.youTube,
+        ));
+      } else if (a.link != null) {
+        final lk = a.link!;
+        result.add(AssignmentMaterial(
+          title: lk.title ?? lk.url ?? 'リンク',
+          url: lk.url ?? '',
+          type: AssignmentMaterialType.link,
+        ));
+      } else if (a.form != null) {
+        final fm = a.form!;
         result.add(AssignmentMaterial(
           title: fm.title ?? 'フォーム',
           url: fm.responseUrl ?? fm.formUrl ?? '',
@@ -415,6 +515,10 @@ class GoogleClassroomRepository implements LmsRepository {
         materialsJson: Value(a.materials.isEmpty
             ? null
             : jsonEncode(a.materials.map((m) => m.toJson()).toList())),
+        submissionAttachmentsJson: Value(a.submissionAttachments.isEmpty
+            ? null
+            : jsonEncode(
+                a.submissionAttachments.map((m) => m.toJson()).toList())),
       );
 
   Assignment _assignmentRowToDomain(AssignmentRow r) {
@@ -445,6 +549,12 @@ class GoogleClassroomRepository implements LmsRepository {
           : null,
       submissionId: r.submissionId,
       materials: materials,
+      submissionAttachments: r.submissionAttachmentsJson != null
+          ? (jsonDecode(r.submissionAttachmentsJson!) as List)
+              .map((e) =>
+                  AssignmentMaterial.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : [],
     );
   }
 
@@ -460,7 +570,6 @@ class GoogleClassroomRepository implements LmsRepository {
             a.updateTime != null ? DateTime.parse(a.updateTime!) : null,
       );
 
-  // IMPORTANT: The DB column is `body` (not `text`), domain field is `text`
   AnnouncementsCompanion _announcementToCompanion(Announcement a) =>
       AnnouncementsCompanion.insert(
         id: a.id,
@@ -468,18 +577,32 @@ class GoogleClassroomRepository implements LmsRepository {
         body: a.text,
         creationTimeMillis: a.creationTime.millisecondsSinceEpoch,
         updateTimeMillis: Value(a.updateTime?.millisecondsSinceEpoch),
+        title: Value(a.title),
+        isMaterial: Value(a.isMaterial),
+        materialsJson: Value(a.materials.isEmpty
+            ? null
+            : jsonEncode(a.materials.map((m) => m.toJson()).toList())),
       );
 
-  Announcement _announcementRowToDomain(AnnouncementRow r) => Announcement(
-        id: r.id,
-        courseId: r.courseId,
-        text: r.body,
-        creationTime:
-            DateTime.fromMillisecondsSinceEpoch(r.creationTimeMillis),
-        updateTime: r.updateTimeMillis != null
-            ? DateTime.fromMillisecondsSinceEpoch(r.updateTimeMillis!)
-            : null,
-      );
+  Announcement _announcementRowToDomain(AnnouncementRow r) {
+    final materials = r.materialsJson != null
+        ? (jsonDecode(r.materialsJson!) as List)
+            .map((e) => AssignmentMaterial.fromJson(e as Map<String, dynamic>))
+            .toList()
+        : <AssignmentMaterial>[];
+    return Announcement(
+      id: r.id,
+      courseId: r.courseId,
+      text: r.body,
+      creationTime: DateTime.fromMillisecondsSinceEpoch(r.creationTimeMillis),
+      updateTime: r.updateTimeMillis != null
+          ? DateTime.fromMillisecondsSinceEpoch(r.updateTimeMillis!)
+          : null,
+      title: r.title,
+      isMaterial: r.isMaterial,
+      materials: materials,
+    );
+  }
 
   // ────────────────────── Pub/Sub Registrations ──────────────────────
 

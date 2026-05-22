@@ -33,6 +33,7 @@ class Assignments extends Table {
   TextColumn get submissionState => text().nullable()();
   TextColumn get submissionId => text().nullable()();
   TextColumn get materialsJson => text().nullable()();
+  TextColumn get submissionAttachmentsJson => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -45,6 +46,9 @@ class Announcements extends Table {
   TextColumn get body => text()();
   IntColumn get creationTimeMillis => integer()();
   IntColumn get updateTimeMillis => integer().nullable()();
+  TextColumn get title => text().nullable()();
+  BoolColumn get isMaterial => boolean().withDefault(const Constant(false))();
+  TextColumn get materialsJson => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -122,7 +126,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withConnection(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -141,6 +145,18 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(assignments, assignments.materialsJson);
             await m.createTable(announcements);
           }
+          if (from < 5) {
+            await m.addColumn(assignments,
+                assignments.submissionAttachmentsJson as GeneratedColumn);
+          }
+          if (from < 6) {
+            await m.addColumn(announcements,
+                announcements.title as GeneratedColumn);
+            await m.addColumn(announcements,
+                announcements.isMaterial as GeneratedColumn);
+            await m.addColumn(announcements,
+                announcements.materialsJson as GeneratedColumn);
+          }
         },
       );
 
@@ -150,6 +166,14 @@ class AppDatabase extends _$AppDatabase {
           ..where((t) =>
               t.title.lower().like(q) |
               t.description.lower().like(q)))
+        .get();
+  }
+
+  Future<List<AnnouncementRow>> searchAnnouncements(String query) {
+    final q = '%${query.toLowerCase()}%';
+    return (select(announcements)
+          ..where((t) => t.body.lower().like(q))
+          ..orderBy([(t) => OrderingTerm.desc(t.creationTimeMillis)]))
         .get();
   }
 

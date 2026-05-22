@@ -565,6 +565,17 @@ class $AssignmentsTable extends Assignments
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _submissionAttachmentsJsonMeta =
+      const VerificationMeta('submissionAttachmentsJson');
+  @override
+  late final GeneratedColumn<String> submissionAttachmentsJson =
+      GeneratedColumn<String>(
+        'submission_attachments_json',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -576,6 +587,7 @@ class $AssignmentsTable extends Assignments
     submissionState,
     submissionId,
     materialsJson,
+    submissionAttachmentsJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -661,6 +673,15 @@ class $AssignmentsTable extends Assignments
         ),
       );
     }
+    if (data.containsKey('submission_attachments_json')) {
+      context.handle(
+        _submissionAttachmentsJsonMeta,
+        submissionAttachmentsJson.isAcceptableOrUnknown(
+          data['submission_attachments_json']!,
+          _submissionAttachmentsJsonMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -706,6 +727,10 @@ class $AssignmentsTable extends Assignments
         DriftSqlType.string,
         data['${effectivePrefix}materials_json'],
       ),
+      submissionAttachmentsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}submission_attachments_json'],
+      ),
     );
   }
 
@@ -725,6 +750,7 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
   final String? submissionState;
   final String? submissionId;
   final String? materialsJson;
+  final String? submissionAttachmentsJson;
   const AssignmentRow({
     required this.id,
     required this.courseId,
@@ -735,6 +761,7 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
     this.submissionState,
     this.submissionId,
     this.materialsJson,
+    this.submissionAttachmentsJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -757,6 +784,11 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
     }
     if (!nullToAbsent || materialsJson != null) {
       map['materials_json'] = Variable<String>(materialsJson);
+    }
+    if (!nullToAbsent || submissionAttachmentsJson != null) {
+      map['submission_attachments_json'] = Variable<String>(
+        submissionAttachmentsJson,
+      );
     }
     return map;
   }
@@ -782,6 +814,10 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
       materialsJson: materialsJson == null && nullToAbsent
           ? const Value.absent()
           : Value(materialsJson),
+      submissionAttachmentsJson:
+          submissionAttachmentsJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(submissionAttachmentsJson),
     );
   }
 
@@ -800,6 +836,9 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
       submissionState: serializer.fromJson<String?>(json['submissionState']),
       submissionId: serializer.fromJson<String?>(json['submissionId']),
       materialsJson: serializer.fromJson<String?>(json['materialsJson']),
+      submissionAttachmentsJson: serializer.fromJson<String?>(
+        json['submissionAttachmentsJson'],
+      ),
     );
   }
   @override
@@ -815,6 +854,9 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
       'submissionState': serializer.toJson<String?>(submissionState),
       'submissionId': serializer.toJson<String?>(submissionId),
       'materialsJson': serializer.toJson<String?>(materialsJson),
+      'submissionAttachmentsJson': serializer.toJson<String?>(
+        submissionAttachmentsJson,
+      ),
     };
   }
 
@@ -828,6 +870,7 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
     Value<String?> submissionState = const Value.absent(),
     Value<String?> submissionId = const Value.absent(),
     Value<String?> materialsJson = const Value.absent(),
+    Value<String?> submissionAttachmentsJson = const Value.absent(),
   }) => AssignmentRow(
     id: id ?? this.id,
     courseId: courseId ?? this.courseId,
@@ -844,6 +887,9 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
     materialsJson: materialsJson.present
         ? materialsJson.value
         : this.materialsJson,
+    submissionAttachmentsJson: submissionAttachmentsJson.present
+        ? submissionAttachmentsJson.value
+        : this.submissionAttachmentsJson,
   );
   AssignmentRow copyWithCompanion(AssignmentsCompanion data) {
     return AssignmentRow(
@@ -866,6 +912,9 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
       materialsJson: data.materialsJson.present
           ? data.materialsJson.value
           : this.materialsJson,
+      submissionAttachmentsJson: data.submissionAttachmentsJson.present
+          ? data.submissionAttachmentsJson.value
+          : this.submissionAttachmentsJson,
     );
   }
 
@@ -880,7 +929,8 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
           ..write('state: $state, ')
           ..write('submissionState: $submissionState, ')
           ..write('submissionId: $submissionId, ')
-          ..write('materialsJson: $materialsJson')
+          ..write('materialsJson: $materialsJson, ')
+          ..write('submissionAttachmentsJson: $submissionAttachmentsJson')
           ..write(')'))
         .toString();
   }
@@ -896,6 +946,7 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
     submissionState,
     submissionId,
     materialsJson,
+    submissionAttachmentsJson,
   );
   @override
   bool operator ==(Object other) =>
@@ -909,7 +960,8 @@ class AssignmentRow extends DataClass implements Insertable<AssignmentRow> {
           other.state == this.state &&
           other.submissionState == this.submissionState &&
           other.submissionId == this.submissionId &&
-          other.materialsJson == this.materialsJson);
+          other.materialsJson == this.materialsJson &&
+          other.submissionAttachmentsJson == this.submissionAttachmentsJson);
 }
 
 class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
@@ -922,6 +974,7 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
   final Value<String?> submissionState;
   final Value<String?> submissionId;
   final Value<String?> materialsJson;
+  final Value<String?> submissionAttachmentsJson;
   final Value<int> rowid;
   const AssignmentsCompanion({
     this.id = const Value.absent(),
@@ -933,6 +986,7 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
     this.submissionState = const Value.absent(),
     this.submissionId = const Value.absent(),
     this.materialsJson = const Value.absent(),
+    this.submissionAttachmentsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AssignmentsCompanion.insert({
@@ -945,6 +999,7 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
     this.submissionState = const Value.absent(),
     this.submissionId = const Value.absent(),
     this.materialsJson = const Value.absent(),
+    this.submissionAttachmentsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        courseId = Value(courseId),
@@ -959,6 +1014,7 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
     Expression<String>? submissionState,
     Expression<String>? submissionId,
     Expression<String>? materialsJson,
+    Expression<String>? submissionAttachmentsJson,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -971,6 +1027,8 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
       if (submissionState != null) 'submission_state': submissionState,
       if (submissionId != null) 'submission_id': submissionId,
       if (materialsJson != null) 'materials_json': materialsJson,
+      if (submissionAttachmentsJson != null)
+        'submission_attachments_json': submissionAttachmentsJson,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -985,6 +1043,7 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
     Value<String?>? submissionState,
     Value<String?>? submissionId,
     Value<String?>? materialsJson,
+    Value<String?>? submissionAttachmentsJson,
     Value<int>? rowid,
   }) {
     return AssignmentsCompanion(
@@ -997,6 +1056,8 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
       submissionState: submissionState ?? this.submissionState,
       submissionId: submissionId ?? this.submissionId,
       materialsJson: materialsJson ?? this.materialsJson,
+      submissionAttachmentsJson:
+          submissionAttachmentsJson ?? this.submissionAttachmentsJson,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1031,6 +1092,11 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
     if (materialsJson.present) {
       map['materials_json'] = Variable<String>(materialsJson.value);
     }
+    if (submissionAttachmentsJson.present) {
+      map['submission_attachments_json'] = Variable<String>(
+        submissionAttachmentsJson.value,
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1049,6 +1115,7 @@ class AssignmentsCompanion extends UpdateCompanion<AssignmentRow> {
           ..write('submissionState: $submissionState, ')
           ..write('submissionId: $submissionId, ')
           ..write('materialsJson: $materialsJson, ')
+          ..write('submissionAttachmentsJson: $submissionAttachmentsJson, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1111,6 +1178,41 @@ class $AnnouncementsTable extends Announcements
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isMaterialMeta = const VerificationMeta(
+    'isMaterial',
+  );
+  @override
+  late final GeneratedColumn<bool> isMaterial = GeneratedColumn<bool>(
+    'is_material',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_material" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _materialsJsonMeta = const VerificationMeta(
+    'materialsJson',
+  );
+  @override
+  late final GeneratedColumn<String> materialsJson = GeneratedColumn<String>(
+    'materials_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1118,6 +1220,9 @@ class $AnnouncementsTable extends Announcements
     body,
     creationTimeMillis,
     updateTimeMillis,
+    title,
+    isMaterial,
+    materialsJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1172,6 +1277,27 @@ class $AnnouncementsTable extends Announcements
         ),
       );
     }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    }
+    if (data.containsKey('is_material')) {
+      context.handle(
+        _isMaterialMeta,
+        isMaterial.isAcceptableOrUnknown(data['is_material']!, _isMaterialMeta),
+      );
+    }
+    if (data.containsKey('materials_json')) {
+      context.handle(
+        _materialsJsonMeta,
+        materialsJson.isAcceptableOrUnknown(
+          data['materials_json']!,
+          _materialsJsonMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1201,6 +1327,18 @@ class $AnnouncementsTable extends Announcements
         DriftSqlType.int,
         data['${effectivePrefix}update_time_millis'],
       ),
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      ),
+      isMaterial: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_material'],
+      )!,
+      materialsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}materials_json'],
+      ),
     );
   }
 
@@ -1216,12 +1354,18 @@ class AnnouncementRow extends DataClass implements Insertable<AnnouncementRow> {
   final String body;
   final int creationTimeMillis;
   final int? updateTimeMillis;
+  final String? title;
+  final bool isMaterial;
+  final String? materialsJson;
   const AnnouncementRow({
     required this.id,
     required this.courseId,
     required this.body,
     required this.creationTimeMillis,
     this.updateTimeMillis,
+    this.title,
+    required this.isMaterial,
+    this.materialsJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1232,6 +1376,13 @@ class AnnouncementRow extends DataClass implements Insertable<AnnouncementRow> {
     map['creation_time_millis'] = Variable<int>(creationTimeMillis);
     if (!nullToAbsent || updateTimeMillis != null) {
       map['update_time_millis'] = Variable<int>(updateTimeMillis);
+    }
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
+    map['is_material'] = Variable<bool>(isMaterial);
+    if (!nullToAbsent || materialsJson != null) {
+      map['materials_json'] = Variable<String>(materialsJson);
     }
     return map;
   }
@@ -1245,6 +1396,13 @@ class AnnouncementRow extends DataClass implements Insertable<AnnouncementRow> {
       updateTimeMillis: updateTimeMillis == null && nullToAbsent
           ? const Value.absent()
           : Value(updateTimeMillis),
+      title: title == null && nullToAbsent
+          ? const Value.absent()
+          : Value(title),
+      isMaterial: Value(isMaterial),
+      materialsJson: materialsJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(materialsJson),
     );
   }
 
@@ -1259,6 +1417,9 @@ class AnnouncementRow extends DataClass implements Insertable<AnnouncementRow> {
       body: serializer.fromJson<String>(json['body']),
       creationTimeMillis: serializer.fromJson<int>(json['creationTimeMillis']),
       updateTimeMillis: serializer.fromJson<int?>(json['updateTimeMillis']),
+      title: serializer.fromJson<String?>(json['title']),
+      isMaterial: serializer.fromJson<bool>(json['isMaterial']),
+      materialsJson: serializer.fromJson<String?>(json['materialsJson']),
     );
   }
   @override
@@ -1270,6 +1431,9 @@ class AnnouncementRow extends DataClass implements Insertable<AnnouncementRow> {
       'body': serializer.toJson<String>(body),
       'creationTimeMillis': serializer.toJson<int>(creationTimeMillis),
       'updateTimeMillis': serializer.toJson<int?>(updateTimeMillis),
+      'title': serializer.toJson<String?>(title),
+      'isMaterial': serializer.toJson<bool>(isMaterial),
+      'materialsJson': serializer.toJson<String?>(materialsJson),
     };
   }
 
@@ -1279,6 +1443,9 @@ class AnnouncementRow extends DataClass implements Insertable<AnnouncementRow> {
     String? body,
     int? creationTimeMillis,
     Value<int?> updateTimeMillis = const Value.absent(),
+    Value<String?> title = const Value.absent(),
+    bool? isMaterial,
+    Value<String?> materialsJson = const Value.absent(),
   }) => AnnouncementRow(
     id: id ?? this.id,
     courseId: courseId ?? this.courseId,
@@ -1287,6 +1454,11 @@ class AnnouncementRow extends DataClass implements Insertable<AnnouncementRow> {
     updateTimeMillis: updateTimeMillis.present
         ? updateTimeMillis.value
         : this.updateTimeMillis,
+    title: title.present ? title.value : this.title,
+    isMaterial: isMaterial ?? this.isMaterial,
+    materialsJson: materialsJson.present
+        ? materialsJson.value
+        : this.materialsJson,
   );
   AnnouncementRow copyWithCompanion(AnnouncementsCompanion data) {
     return AnnouncementRow(
@@ -1299,6 +1471,13 @@ class AnnouncementRow extends DataClass implements Insertable<AnnouncementRow> {
       updateTimeMillis: data.updateTimeMillis.present
           ? data.updateTimeMillis.value
           : this.updateTimeMillis,
+      title: data.title.present ? data.title.value : this.title,
+      isMaterial: data.isMaterial.present
+          ? data.isMaterial.value
+          : this.isMaterial,
+      materialsJson: data.materialsJson.present
+          ? data.materialsJson.value
+          : this.materialsJson,
     );
   }
 
@@ -1309,14 +1488,25 @@ class AnnouncementRow extends DataClass implements Insertable<AnnouncementRow> {
           ..write('courseId: $courseId, ')
           ..write('body: $body, ')
           ..write('creationTimeMillis: $creationTimeMillis, ')
-          ..write('updateTimeMillis: $updateTimeMillis')
+          ..write('updateTimeMillis: $updateTimeMillis, ')
+          ..write('title: $title, ')
+          ..write('isMaterial: $isMaterial, ')
+          ..write('materialsJson: $materialsJson')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, courseId, body, creationTimeMillis, updateTimeMillis);
+  int get hashCode => Object.hash(
+    id,
+    courseId,
+    body,
+    creationTimeMillis,
+    updateTimeMillis,
+    title,
+    isMaterial,
+    materialsJson,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1325,7 +1515,10 @@ class AnnouncementRow extends DataClass implements Insertable<AnnouncementRow> {
           other.courseId == this.courseId &&
           other.body == this.body &&
           other.creationTimeMillis == this.creationTimeMillis &&
-          other.updateTimeMillis == this.updateTimeMillis);
+          other.updateTimeMillis == this.updateTimeMillis &&
+          other.title == this.title &&
+          other.isMaterial == this.isMaterial &&
+          other.materialsJson == this.materialsJson);
 }
 
 class AnnouncementsCompanion extends UpdateCompanion<AnnouncementRow> {
@@ -1334,6 +1527,9 @@ class AnnouncementsCompanion extends UpdateCompanion<AnnouncementRow> {
   final Value<String> body;
   final Value<int> creationTimeMillis;
   final Value<int?> updateTimeMillis;
+  final Value<String?> title;
+  final Value<bool> isMaterial;
+  final Value<String?> materialsJson;
   final Value<int> rowid;
   const AnnouncementsCompanion({
     this.id = const Value.absent(),
@@ -1341,6 +1537,9 @@ class AnnouncementsCompanion extends UpdateCompanion<AnnouncementRow> {
     this.body = const Value.absent(),
     this.creationTimeMillis = const Value.absent(),
     this.updateTimeMillis = const Value.absent(),
+    this.title = const Value.absent(),
+    this.isMaterial = const Value.absent(),
+    this.materialsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AnnouncementsCompanion.insert({
@@ -1349,6 +1548,9 @@ class AnnouncementsCompanion extends UpdateCompanion<AnnouncementRow> {
     required String body,
     required int creationTimeMillis,
     this.updateTimeMillis = const Value.absent(),
+    this.title = const Value.absent(),
+    this.isMaterial = const Value.absent(),
+    this.materialsJson = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        courseId = Value(courseId),
@@ -1360,6 +1562,9 @@ class AnnouncementsCompanion extends UpdateCompanion<AnnouncementRow> {
     Expression<String>? body,
     Expression<int>? creationTimeMillis,
     Expression<int>? updateTimeMillis,
+    Expression<String>? title,
+    Expression<bool>? isMaterial,
+    Expression<String>? materialsJson,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1369,6 +1574,9 @@ class AnnouncementsCompanion extends UpdateCompanion<AnnouncementRow> {
       if (creationTimeMillis != null)
         'creation_time_millis': creationTimeMillis,
       if (updateTimeMillis != null) 'update_time_millis': updateTimeMillis,
+      if (title != null) 'title': title,
+      if (isMaterial != null) 'is_material': isMaterial,
+      if (materialsJson != null) 'materials_json': materialsJson,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1379,6 +1587,9 @@ class AnnouncementsCompanion extends UpdateCompanion<AnnouncementRow> {
     Value<String>? body,
     Value<int>? creationTimeMillis,
     Value<int?>? updateTimeMillis,
+    Value<String?>? title,
+    Value<bool>? isMaterial,
+    Value<String?>? materialsJson,
     Value<int>? rowid,
   }) {
     return AnnouncementsCompanion(
@@ -1387,6 +1598,9 @@ class AnnouncementsCompanion extends UpdateCompanion<AnnouncementRow> {
       body: body ?? this.body,
       creationTimeMillis: creationTimeMillis ?? this.creationTimeMillis,
       updateTimeMillis: updateTimeMillis ?? this.updateTimeMillis,
+      title: title ?? this.title,
+      isMaterial: isMaterial ?? this.isMaterial,
+      materialsJson: materialsJson ?? this.materialsJson,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1409,6 +1623,15 @@ class AnnouncementsCompanion extends UpdateCompanion<AnnouncementRow> {
     if (updateTimeMillis.present) {
       map['update_time_millis'] = Variable<int>(updateTimeMillis.value);
     }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (isMaterial.present) {
+      map['is_material'] = Variable<bool>(isMaterial.value);
+    }
+    if (materialsJson.present) {
+      map['materials_json'] = Variable<String>(materialsJson.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1423,6 +1646,9 @@ class AnnouncementsCompanion extends UpdateCompanion<AnnouncementRow> {
           ..write('body: $body, ')
           ..write('creationTimeMillis: $creationTimeMillis, ')
           ..write('updateTimeMillis: $updateTimeMillis, ')
+          ..write('title: $title, ')
+          ..write('isMaterial: $isMaterial, ')
+          ..write('materialsJson: $materialsJson, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3065,6 +3291,7 @@ typedef $$AssignmentsTableCreateCompanionBuilder =
       Value<String?> submissionState,
       Value<String?> submissionId,
       Value<String?> materialsJson,
+      Value<String?> submissionAttachmentsJson,
       Value<int> rowid,
     });
 typedef $$AssignmentsTableUpdateCompanionBuilder =
@@ -3078,6 +3305,7 @@ typedef $$AssignmentsTableUpdateCompanionBuilder =
       Value<String?> submissionState,
       Value<String?> submissionId,
       Value<String?> materialsJson,
+      Value<String?> submissionAttachmentsJson,
       Value<int> rowid,
     });
 
@@ -3132,6 +3360,11 @@ class $$AssignmentsTableFilterComposer
 
   ColumnFilters<String> get materialsJson => $composableBuilder(
     column: $table.materialsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get submissionAttachmentsJson => $composableBuilder(
+    column: $table.submissionAttachmentsJson,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3189,6 +3422,11 @@ class $$AssignmentsTableOrderingComposer
     column: $table.materialsJson,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get submissionAttachmentsJson => $composableBuilder(
+    column: $table.submissionAttachmentsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AssignmentsTableAnnotationComposer
@@ -3236,6 +3474,11 @@ class $$AssignmentsTableAnnotationComposer
     column: $table.materialsJson,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get submissionAttachmentsJson => $composableBuilder(
+    column: $table.submissionAttachmentsJson,
+    builder: (column) => column,
+  );
 }
 
 class $$AssignmentsTableTableManager
@@ -3278,6 +3521,7 @@ class $$AssignmentsTableTableManager
                 Value<String?> submissionState = const Value.absent(),
                 Value<String?> submissionId = const Value.absent(),
                 Value<String?> materialsJson = const Value.absent(),
+                Value<String?> submissionAttachmentsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AssignmentsCompanion(
                 id: id,
@@ -3289,6 +3533,7 @@ class $$AssignmentsTableTableManager
                 submissionState: submissionState,
                 submissionId: submissionId,
                 materialsJson: materialsJson,
+                submissionAttachmentsJson: submissionAttachmentsJson,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3302,6 +3547,7 @@ class $$AssignmentsTableTableManager
                 Value<String?> submissionState = const Value.absent(),
                 Value<String?> submissionId = const Value.absent(),
                 Value<String?> materialsJson = const Value.absent(),
+                Value<String?> submissionAttachmentsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AssignmentsCompanion.insert(
                 id: id,
@@ -3313,6 +3559,7 @@ class $$AssignmentsTableTableManager
                 submissionState: submissionState,
                 submissionId: submissionId,
                 materialsJson: materialsJson,
+                submissionAttachmentsJson: submissionAttachmentsJson,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -3347,6 +3594,9 @@ typedef $$AnnouncementsTableCreateCompanionBuilder =
       required String body,
       required int creationTimeMillis,
       Value<int?> updateTimeMillis,
+      Value<String?> title,
+      Value<bool> isMaterial,
+      Value<String?> materialsJson,
       Value<int> rowid,
     });
 typedef $$AnnouncementsTableUpdateCompanionBuilder =
@@ -3356,6 +3606,9 @@ typedef $$AnnouncementsTableUpdateCompanionBuilder =
       Value<String> body,
       Value<int> creationTimeMillis,
       Value<int?> updateTimeMillis,
+      Value<String?> title,
+      Value<bool> isMaterial,
+      Value<String?> materialsJson,
       Value<int> rowid,
     });
 
@@ -3390,6 +3643,21 @@ class $$AnnouncementsTableFilterComposer
 
   ColumnFilters<int> get updateTimeMillis => $composableBuilder(
     column: $table.updateTimeMillis,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isMaterial => $composableBuilder(
+    column: $table.isMaterial,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get materialsJson => $composableBuilder(
+    column: $table.materialsJson,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3427,6 +3695,21 @@ class $$AnnouncementsTableOrderingComposer
     column: $table.updateTimeMillis,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isMaterial => $composableBuilder(
+    column: $table.isMaterial,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get materialsJson => $composableBuilder(
+    column: $table.materialsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AnnouncementsTableAnnotationComposer
@@ -3454,6 +3737,19 @@ class $$AnnouncementsTableAnnotationComposer
 
   GeneratedColumn<int> get updateTimeMillis => $composableBuilder(
     column: $table.updateTimeMillis,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<bool> get isMaterial => $composableBuilder(
+    column: $table.isMaterial,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get materialsJson => $composableBuilder(
+    column: $table.materialsJson,
     builder: (column) => column,
   );
 }
@@ -3494,6 +3790,9 @@ class $$AnnouncementsTableTableManager
                 Value<String> body = const Value.absent(),
                 Value<int> creationTimeMillis = const Value.absent(),
                 Value<int?> updateTimeMillis = const Value.absent(),
+                Value<String?> title = const Value.absent(),
+                Value<bool> isMaterial = const Value.absent(),
+                Value<String?> materialsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AnnouncementsCompanion(
                 id: id,
@@ -3501,6 +3800,9 @@ class $$AnnouncementsTableTableManager
                 body: body,
                 creationTimeMillis: creationTimeMillis,
                 updateTimeMillis: updateTimeMillis,
+                title: title,
+                isMaterial: isMaterial,
+                materialsJson: materialsJson,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3510,6 +3812,9 @@ class $$AnnouncementsTableTableManager
                 required String body,
                 required int creationTimeMillis,
                 Value<int?> updateTimeMillis = const Value.absent(),
+                Value<String?> title = const Value.absent(),
+                Value<bool> isMaterial = const Value.absent(),
+                Value<String?> materialsJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AnnouncementsCompanion.insert(
                 id: id,
@@ -3517,6 +3822,9 @@ class $$AnnouncementsTableTableManager
                 body: body,
                 creationTimeMillis: creationTimeMillis,
                 updateTimeMillis: updateTimeMillis,
+                title: title,
+                isMaterial: isMaterial,
+                materialsJson: materialsJson,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
