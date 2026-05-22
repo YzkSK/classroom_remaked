@@ -11,7 +11,7 @@ void main() {
       now = DateTime(2026, 5, 22, 10, 0, 0);
     });
 
-    AssignmentRow _row({
+    AssignmentRow makeRow({
       required String id,
       required String courseId,
       required String title,
@@ -32,7 +32,7 @@ void main() {
       );
     }
 
-    CourseRow _course(String id, String name) => CourseRow(
+    CourseRow makeCourse(String id, String name) => CourseRow(
           id: id,
           name: name,
           description: null,
@@ -46,33 +46,33 @@ void main() {
       final todayEnd = DateTime(2026, 5, 22, 23, 59, 59);
       final tomorrow = DateTime(2026, 5, 23, 23, 59, 59);
       final rows = [
-        _row(
+        makeRow(
           id: 'a1',
           courseId: 'c1',
           title: '今日締切',
           dueDateMillis: todayEnd.millisecondsSinceEpoch,
         ),
-        _row(
+        makeRow(
           id: 'a2',
           courseId: 'c1',
           title: '明日締切',
           dueDateMillis: tomorrow.millisecondsSinceEpoch,
         ),
-        _row(
+        makeRow(
           id: 'a3',
           courseId: 'c1',
           title: '提出済み',
           dueDateMillis: tomorrow.millisecondsSinceEpoch,
           submissionState: 'TURNED_IN',
         ),
-        _row(
+        makeRow(
           id: 'a4',
           courseId: 'c1',
           title: '期限切れ',
           dueDateMillis: DateTime(2026, 5, 21).millisecondsSinceEpoch,
         ),
       ];
-      final courses = [_course('c1', 'コース1')];
+      final courses = [makeCourse('c1', 'コース1')];
 
       final result = WidgetDataService.filterAssignments(
         assignmentRows: rows,
@@ -87,14 +87,14 @@ void main() {
     test('今日締切の課題は is_today=true', () {
       final todayEnd = DateTime(2026, 5, 22, 23, 59, 59);
       final rows = [
-        _row(
+        makeRow(
           id: 'a1',
           courseId: 'c1',
           title: '今日締切',
           dueDateMillis: todayEnd.millisecondsSinceEpoch,
         ),
       ];
-      final courses = [_course('c1', 'コース1')];
+      final courses = [makeCourse('c1', 'コース1')];
 
       final result = WidgetDataService.filterAssignments(
         assignmentRows: rows,
@@ -108,14 +108,14 @@ void main() {
     test('明日以降の課題は is_today=false', () {
       final tomorrow = DateTime(2026, 5, 23, 23, 59, 59);
       final rows = [
-        _row(
+        makeRow(
           id: 'a1',
           courseId: 'c1',
           title: '明日締切',
           dueDateMillis: tomorrow.millisecondsSinceEpoch,
         ),
       ];
-      final courses = [_course('c1', 'コース1')];
+      final courses = [makeCourse('c1', 'コース1')];
 
       final result = WidgetDataService.filterAssignments(
         assignmentRows: rows,
@@ -130,12 +130,12 @@ void main() {
       final t1 = DateTime(2026, 5, 23, 10, 0);
       final t2 = DateTime(2026, 5, 22, 23, 59);
       final rows = [
-        _row(id: 'a1', courseId: 'c1', title: '後', dueDateMillis: t1.millisecondsSinceEpoch),
-        _row(id: 'a2', courseId: 'c1', title: '先', dueDateMillis: t2.millisecondsSinceEpoch),
+        makeRow(id: 'a1', courseId: 'c1', title: '後', dueDateMillis: t1.millisecondsSinceEpoch),
+        makeRow(id: 'a2', courseId: 'c1', title: '先', dueDateMillis: t2.millisecondsSinceEpoch),
       ];
       final result = WidgetDataService.filterAssignments(
         assignmentRows: rows,
-        courseRows: [_course('c1', 'c')],
+        courseRows: [makeCourse('c1', 'c')],
         now: now,
       );
 
@@ -146,11 +146,11 @@ void main() {
       final due = DateTime(2026, 5, 23, 10, 0).millisecondsSinceEpoch;
       final rows = List.generate(
         8,
-        (i) => _row(id: 'a$i', courseId: 'c1', title: 'T$i', dueDateMillis: due + i),
+        (i) => makeRow(id: 'a$i', courseId: 'c1', title: 'T$i', dueDateMillis: due + i),
       );
       final result = WidgetDataService.filterAssignments(
         assignmentRows: rows,
-        courseRows: [_course('c1', 'c')],
+        courseRows: [makeCourse('c1', 'c')],
         now: now,
       );
 
@@ -159,7 +159,7 @@ void main() {
 
     test('コース名が埋め込まれる', () {
       final rows = [
-        _row(
+        makeRow(
           id: 'a1',
           courseId: 'c1',
           title: '課題',
@@ -168,7 +168,7 @@ void main() {
       ];
       final result = WidgetDataService.filterAssignments(
         assignmentRows: rows,
-        courseRows: [_course('c1', '数学')],
+        courseRows: [makeCourse('c1', '数学')],
         now: now,
       );
 
