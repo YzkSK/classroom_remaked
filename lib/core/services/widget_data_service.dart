@@ -50,7 +50,7 @@ class WidgetDataService {
 
     final filtered = assignmentRows
         .where((r) =>
-            r.submissionState != 'TURNED_IN' && r.dueDateMillis != null)
+            r.submissionState != 'turnedIn' && r.dueDateMillis != null)
         .map((r) {
           final due = DateTime.fromMillisecondsSinceEpoch(r.dueDateMillis!);
           return MapEntry(r, due);

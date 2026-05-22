@@ -63,7 +63,7 @@ void main() {
           courseId: 'c1',
           title: '提出済み',
           dueDateMillis: tomorrow.millisecondsSinceEpoch,
-          submissionState: 'TURNED_IN',
+          submissionState: 'turnedIn',
         ),
         makeRow(
           id: 'a4',

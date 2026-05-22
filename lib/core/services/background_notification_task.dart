@@ -32,7 +32,7 @@ class BackgroundNotificationTask {
     final assignments = rows
         .where((r) =>
             r.state == 'published' &&
-            r.submissionState != 'TURNED_IN' &&
+            r.submissionState != 'turnedIn' &&
             r.dueDateMillis != null)
         .map((r) => Assignment(
               id: r.id,
