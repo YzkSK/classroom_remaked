@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.graphics.Color
+import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetPlugin
@@ -15,6 +16,8 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+private const val TAG = "AssignmentWidget"
+
 class AssignmentWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(
@@ -22,6 +25,7 @@ class AssignmentWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        Log.d(TAG, "onUpdate called, ids=${appWidgetIds.toList()}")
         for (appWidgetId in appWidgetIds) {
             updateWidget(context, appWidgetManager, appWidgetId)
         }
@@ -32,6 +36,7 @@ class AssignmentWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetId: Int
     ) {
+        Log.d(TAG, "updateWidget id=$appWidgetId")
         val views = RemoteViews(context.packageName, R.layout.widget_layout)
         try {
             val rowIds    = intArrayOf(R.id.widget_row_0,    R.id.widget_row_1,    R.id.widget_row_2,    R.id.widget_row_3,    R.id.widget_row_4)
@@ -49,8 +54,10 @@ class AssignmentWidgetProvider : AppWidgetProvider() {
 
             val widgetData = HomeWidgetPlugin.getData(context)
             val json = widgetData.getString("widget_assignments", null)
+            Log.d(TAG, "json=${json?.take(100)}")
 
             if (json == null) {
+                Log.d(TAG, "no data, showing empty")
                 views.setViewVisibility(R.id.widget_empty, View.VISIBLE)
             } else {
                 val obj = JSONObject(json)
@@ -87,10 +94,13 @@ class AssignmentWidgetProvider : AppWidgetProvider() {
                 views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
             }
         } catch (e: Exception) {
+            Log.e(TAG, "exception in updateWidget", e)
             views.setViewVisibility(R.id.widget_empty, View.VISIBLE)
         }
 
+        Log.d(TAG, "calling updateAppWidget id=$appWidgetId")
         appWidgetManager.updateAppWidget(appWidgetId, views)
+        Log.d(TAG, "updateAppWidget done")
     }
 
     private fun formatDue(millis: Long): Pair<String, Int> {
