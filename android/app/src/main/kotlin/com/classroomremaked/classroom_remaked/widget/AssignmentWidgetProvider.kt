@@ -33,63 +33,61 @@ class AssignmentWidgetProvider : AppWidgetProvider() {
         appWidgetId: Int
     ) {
         val views = RemoteViews(context.packageName, R.layout.widget_layout)
-        val widgetData = HomeWidgetPlugin.getData(context)
-        val json = widgetData.getString("widget_assignments", null)
+        try {
+            val rowIds    = intArrayOf(R.id.widget_row_0,    R.id.widget_row_1,    R.id.widget_row_2,    R.id.widget_row_3,    R.id.widget_row_4)
+            val titleIds  = intArrayOf(R.id.widget_title_0,  R.id.widget_title_1,  R.id.widget_title_2,  R.id.widget_title_3,  R.id.widget_title_4)
+            val courseIds = intArrayOf(R.id.widget_course_0, R.id.widget_course_1, R.id.widget_course_2, R.id.widget_course_3, R.id.widget_course_4)
+            val dueIds    = intArrayOf(R.id.widget_due_0,    R.id.widget_due_1,    R.id.widget_due_2,    R.id.widget_due_3,    R.id.widget_due_4)
+            val dividerIds = intArrayOf(R.id.widget_divider_0, R.id.widget_divider_1, R.id.widget_divider_2, R.id.widget_divider_3)
 
-        val rowIds = listOf(
-            Triple(R.id.widget_row_0, R.id.widget_title_0, R.id.widget_course_0) to Pair(R.id.widget_due_0, R.id.widget_divider_0),
-            Triple(R.id.widget_row_1, R.id.widget_title_1, R.id.widget_course_1) to Pair(R.id.widget_due_1, R.id.widget_divider_1),
-            Triple(R.id.widget_row_2, R.id.widget_title_2, R.id.widget_course_2) to Pair(R.id.widget_due_2, R.id.widget_divider_2),
-            Triple(R.id.widget_row_3, R.id.widget_title_3, R.id.widget_course_3) to Pair(R.id.widget_due_3, R.id.widget_divider_3),
-            Triple(R.id.widget_row_4, R.id.widget_title_4, R.id.widget_course_4) to Pair(R.id.widget_due_4, null),
-        )
+            for (i in rowIds.indices) {
+                views.setViewVisibility(rowIds[i], View.GONE)
+                views.setViewVisibility(dueIds[i], View.GONE)
+            }
+            for (id in dividerIds) views.setViewVisibility(id, View.GONE)
+            views.setViewVisibility(R.id.widget_empty, View.GONE)
 
-        rowIds.forEach { (row, due) ->
-            views.setViewVisibility(row.first, View.GONE)
-            views.setViewVisibility(due.first, View.GONE)
-            due.second?.let { views.setViewVisibility(it, View.GONE) }
-        }
-        views.setViewVisibility(R.id.widget_empty, View.GONE)
+            val widgetData = HomeWidgetPlugin.getData(context)
+            val json = widgetData.getString("widget_assignments", null)
 
-        if (json == null) {
-            views.setViewVisibility(R.id.widget_empty, View.VISIBLE)
-        } else {
-            val obj = JSONObject(json)
-            val assignments = obj.optJSONArray("assignments")
-
-            if (assignments == null || assignments.length() == 0) {
+            if (json == null) {
                 views.setViewVisibility(R.id.widget_empty, View.VISIBLE)
             } else {
-                val count = minOf(assignments.length(), rowIds.size)
-                for (i in 0 until count) {
-                    val a = assignments.getJSONObject(i)
-                    val (row, due) = rowIds[i]
+                val obj = JSONObject(json)
+                val assignments = obj.optJSONArray("assignments")
 
-                    views.setTextViewText(row.second, a.optString("title", ""))
-                    views.setTextViewText(row.third, a.optString("course_name", ""))
-                    views.setViewVisibility(row.first, View.VISIBLE)
+                if (assignments == null || assignments.length() == 0) {
+                    views.setViewVisibility(R.id.widget_empty, View.VISIBLE)
+                } else {
+                    val count = minOf(assignments.length(), rowIds.size)
+                    for (i in 0 until count) {
+                        val a = assignments.getJSONObject(i)
+                        views.setTextViewText(titleIds[i],  a.optString("title", ""))
+                        views.setTextViewText(courseIds[i], a.optString("course_name", ""))
+                        views.setViewVisibility(rowIds[i], View.VISIBLE)
 
-                    val dueDateMillis = a.optLong("due_millis", 0L)
-                    val (label, color) = formatDue(dueDateMillis)
-                    views.setTextViewText(due.first, label)
-                    views.setTextColor(due.first, color)
-                    views.setViewVisibility(due.first, View.VISIBLE)
+                        val (label, color) = formatDue(a.optLong("due_millis", 0L))
+                        views.setTextViewText(dueIds[i], label)
+                        views.setTextColor(dueIds[i], color)
+                        views.setViewVisibility(dueIds[i], View.VISIBLE)
 
-                    // 最後の行以外は仕切りを表示
-                    due.second?.let {
-                        if (i < count - 1) views.setViewVisibility(it, View.VISIBLE)
+                        if (i < count - 1 && i < dividerIds.size) {
+                            views.setViewVisibility(dividerIds[i], View.VISIBLE)
+                        }
                     }
                 }
             }
-        }
 
-        val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-        if (launchIntent != null) {
-            val pendingIntent = PendingIntent.getActivity(
-                context, 0, launchIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+            val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+            if (launchIntent != null) {
+                val pendingIntent = PendingIntent.getActivity(
+                    context, 0, launchIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+            }
+        } catch (e: Exception) {
+            views.setViewVisibility(R.id.widget_empty, View.VISIBLE)
         }
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
