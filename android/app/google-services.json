@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "184568296872",
+    "project_id": "core-phoenix-489602-b1",
+    "storage_bucket": "core-phoenix-489602-b1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:184568296872:android:92d0b7f0ee7bb1edf7199d",
+        "android_client_info": {
+          "package_name": "com.classroomremaked.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "184568296872-7079toktlo42fe5etcbke4mkue9l7ua7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZnQHcFrNXBqt5QGSXqHeczRo4luVt1Dw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "184568296872-7079toktlo42fe5etcbke4mkue9l7ua7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "184568296872-3pn4ib5rpbfjmbp765kvmp3s85m5558d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.classroomremaked.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:184568296872:android:f4165d0ff4276e45f7199d",
+        "android_client_info": {
+          "package_name": "com.classroomremaked.classroom_remaked"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "184568296872-7079toktlo42fe5etcbke4mkue9l7ua7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZnQHcFrNXBqt5QGSXqHeczRo4luVt1Dw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "184568296872-7079toktlo42fe5etcbke4mkue9l7ua7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "184568296872-3pn4ib5rpbfjmbp765kvmp3s85m5558d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.classroomremaked.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

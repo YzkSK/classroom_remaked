@@ -22,6 +22,9 @@ mixin _$Announcement {
   String get text => throw _privateConstructorUsedError;
   DateTime get creationTime => throw _privateConstructorUsedError;
   DateTime? get updateTime => throw _privateConstructorUsedError;
+  String? get title => throw _privateConstructorUsedError;
+  bool get isMaterial => throw _privateConstructorUsedError;
+  List<AssignmentMaterial> get materials => throw _privateConstructorUsedError;
 
   /// Create a copy of Announcement
   /// with the given fields replaced by the non-null parameter values.
@@ -43,6 +46,9 @@ abstract class $AnnouncementCopyWith<$Res> {
     String text,
     DateTime creationTime,
     DateTime? updateTime,
+    String? title,
+    bool isMaterial,
+    List<AssignmentMaterial> materials,
   });
 }
 
@@ -66,6 +72,9 @@ class _$AnnouncementCopyWithImpl<$Res, $Val extends Announcement>
     Object? text = null,
     Object? creationTime = null,
     Object? updateTime = freezed,
+    Object? title = freezed,
+    Object? isMaterial = null,
+    Object? materials = null,
   }) {
     return _then(
       _value.copyWith(
@@ -89,6 +98,18 @@ class _$AnnouncementCopyWithImpl<$Res, $Val extends Announcement>
                 ? _value.updateTime
                 : updateTime // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
+            title: freezed == title
+                ? _value.title
+                : title // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            isMaterial: null == isMaterial
+                ? _value.isMaterial
+                : isMaterial // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            materials: null == materials
+                ? _value.materials
+                : materials // ignore: cast_nullable_to_non_nullable
+                      as List<AssignmentMaterial>,
           )
           as $Val,
     );
@@ -110,6 +131,9 @@ abstract class _$$AnnouncementImplCopyWith<$Res>
     String text,
     DateTime creationTime,
     DateTime? updateTime,
+    String? title,
+    bool isMaterial,
+    List<AssignmentMaterial> materials,
   });
 }
 
@@ -132,6 +156,9 @@ class __$$AnnouncementImplCopyWithImpl<$Res>
     Object? text = null,
     Object? creationTime = null,
     Object? updateTime = freezed,
+    Object? title = freezed,
+    Object? isMaterial = null,
+    Object? materials = null,
   }) {
     return _then(
       _$AnnouncementImpl(
@@ -155,6 +182,18 @@ class __$$AnnouncementImplCopyWithImpl<$Res>
             ? _value.updateTime
             : updateTime // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
+        title: freezed == title
+            ? _value.title
+            : title // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        isMaterial: null == isMaterial
+            ? _value.isMaterial
+            : isMaterial // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        materials: null == materials
+            ? _value._materials
+            : materials // ignore: cast_nullable_to_non_nullable
+                  as List<AssignmentMaterial>,
       ),
     );
   }
@@ -169,7 +208,10 @@ class _$AnnouncementImpl implements _Announcement {
     required this.text,
     required this.creationTime,
     this.updateTime,
-  });
+    this.title,
+    this.isMaterial = false,
+    final List<AssignmentMaterial> materials = const [],
+  }) : _materials = materials;
 
   @override
   final String id;
@@ -181,10 +223,23 @@ class _$AnnouncementImpl implements _Announcement {
   final DateTime creationTime;
   @override
   final DateTime? updateTime;
+  @override
+  final String? title;
+  @override
+  @JsonKey()
+  final bool isMaterial;
+  final List<AssignmentMaterial> _materials;
+  @override
+  @JsonKey()
+  List<AssignmentMaterial> get materials {
+    if (_materials is EqualUnmodifiableListView) return _materials;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_materials);
+  }
 
   @override
   String toString() {
-    return 'Announcement(id: $id, courseId: $courseId, text: $text, creationTime: $creationTime, updateTime: $updateTime)';
+    return 'Announcement(id: $id, courseId: $courseId, text: $text, creationTime: $creationTime, updateTime: $updateTime, title: $title, isMaterial: $isMaterial, materials: $materials)';
   }
 
   @override
@@ -199,12 +254,28 @@ class _$AnnouncementImpl implements _Announcement {
             (identical(other.creationTime, creationTime) ||
                 other.creationTime == creationTime) &&
             (identical(other.updateTime, updateTime) ||
-                other.updateTime == updateTime));
+                other.updateTime == updateTime) &&
+            (identical(other.title, title) || other.title == title) &&
+            (identical(other.isMaterial, isMaterial) ||
+                other.isMaterial == isMaterial) &&
+            const DeepCollectionEquality().equals(
+              other._materials,
+              _materials,
+            ));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, courseId, text, creationTime, updateTime);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    courseId,
+    text,
+    creationTime,
+    updateTime,
+    title,
+    isMaterial,
+    const DeepCollectionEquality().hash(_materials),
+  );
 
   /// Create a copy of Announcement
   /// with the given fields replaced by the non-null parameter values.
@@ -222,6 +293,9 @@ abstract class _Announcement implements Announcement {
     required final String text,
     required final DateTime creationTime,
     final DateTime? updateTime,
+    final String? title,
+    final bool isMaterial,
+    final List<AssignmentMaterial> materials,
   }) = _$AnnouncementImpl;
 
   @override
@@ -234,6 +308,12 @@ abstract class _Announcement implements Announcement {
   DateTime get creationTime;
   @override
   DateTime? get updateTime;
+  @override
+  String? get title;
+  @override
+  bool get isMaterial;
+  @override
+  List<AssignmentMaterial> get materials;
 
   /// Create a copy of Announcement
   /// with the given fields replaced by the non-null parameter values.

@@ -1,22 +1,26 @@
 // lib/presentation/viewmodels/dashboard_viewmodel.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/di/providers.dart';
 import '../../domain/entities/assignment.dart';
 import '../../domain/entities/course.dart';
+
+part 'dashboard_viewmodel.freezed.dart';
 part 'dashboard_viewmodel.g.dart';
 
-class DashboardState {
-  const DashboardState({
-    required this.courses,
-    required this.orderedCourseIds,
-    required this.upcomingDeadlines,
-  });
+@freezed
+class DashboardState with _$DashboardState {
+  const DashboardState._();
 
-  final List<Course> courses;
-  final List<String> orderedCourseIds;
-  final List<Assignment> upcomingDeadlines;
+  const factory DashboardState({
+    required List<Course> courses,
+    required List<String> hiddenCourseIds,
+    required List<String> orderedCourseIds,
+    required List<Assignment> upcomingDeadlines,
+    @Default(false) bool showHidden,
+  }) = _DashboardState;
 
-  List<Course> get orderedCourses {
+  List<Course> get _orderedCourses {
     if (orderedCourseIds.isEmpty) return courses;
     final map = {for (final c in courses) c.id: c};
     final ordered = orderedCourseIds
@@ -28,16 +32,14 @@ class DashboardState {
     return [...ordered, ...rest];
   }
 
-  DashboardState copyWith({
-    List<Course>? courses,
-    List<String>? orderedCourseIds,
-    List<Assignment>? upcomingDeadlines,
-  }) =>
-      DashboardState(
-        courses: courses ?? this.courses,
-        orderedCourseIds: orderedCourseIds ?? this.orderedCourseIds,
-        upcomingDeadlines: upcomingDeadlines ?? this.upcomingDeadlines,
-      );
+  List<Course> get visibleCourses {
+    if (showHidden) return _orderedCourses;
+    return _orderedCourses
+        .where((c) => !hiddenCourseIds.contains(c.id))
+        .toList();
+  }
+
+  bool isHidden(String courseId) => hiddenCourseIds.contains(courseId);
 }
 
 @riverpod
@@ -47,6 +49,7 @@ class DashboardViewModel extends _$DashboardViewModel {
     final sync = ref.watch(classroomSyncServiceProvider);
     final repo = ref.watch(lmsRepositoryProvider);
     final orderDs = ref.watch(courseOrderDataSourceProvider);
+    final hiddenDs = ref.watch(hiddenItemsDataSourceProvider);
 
     await sync.fullSync();
 
@@ -59,9 +62,11 @@ class DashboardViewModel extends _$DashboardViewModel {
 
     await orderDs.initializeNewCourses(courses.map((c) => c.id).toList());
     final orderedIds = await orderDs.getOrderedIds();
+    final hiddenIds = await hiddenDs.getHiddenIds('course');
 
     return DashboardState(
       courses: courses,
+      hiddenCourseIds: hiddenIds.toList(),
       orderedCourseIds: orderedIds,
       upcomingDeadlines: deadlines,
     );
@@ -71,13 +76,39 @@ class DashboardViewModel extends _$DashboardViewModel {
     final current = state.valueOrNull;
     if (current == null) return;
 
-    final ids = List<String>.from(current.orderedCourses.map((c) => c.id));
+    final ids =
+        List<String>.from(current.visibleCourses.map((c) => c.id));
     if (newIndex > oldIndex) newIndex--;
     final id = ids.removeAt(oldIndex);
     ids.insert(newIndex, id);
 
     await ref.read(courseOrderDataSourceProvider).updateOrder(ids);
     state = AsyncData(current.copyWith(orderedCourseIds: ids));
+  }
+
+  Future<void> hideItem(String courseId) async {
+    await ref.read(hiddenItemsDataSourceProvider).hide(courseId, 'course');
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(
+      hiddenCourseIds: [...current.hiddenCourseIds, courseId],
+    ));
+  }
+
+  Future<void> unhideItem(String courseId) async {
+    await ref.read(hiddenItemsDataSourceProvider).unhide(courseId);
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(
+      hiddenCourseIds:
+          current.hiddenCourseIds.where((id) => id != courseId).toList(),
+    ));
+  }
+
+  void toggleShowHidden() {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(showHidden: !current.showHidden));
   }
 
   Future<void> refresh() async {
