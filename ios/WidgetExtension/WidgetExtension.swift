@@ -68,7 +68,6 @@ struct AssignmentTimelineProvider: TimelineProvider {
                 let courseName = dict["course_name"] as? String,
                 let isToday = dict["is_today"] as? Bool
             else { return nil }
-            // JSON numbers arrive as NSNumber; cast via Int64 via NSNumber
             let dueDateMillis = (dict["due_millis"] as? NSNumber)?.int64Value ?? 0
             return WidgetAssignment(
                 id: id,
@@ -146,11 +145,15 @@ struct AssignmentWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: AssignmentTimelineProvider()) { entry in
-            AssignmentWidgetView(entry: entry)
+            if #available(iOS 17.0, *) {
+                AssignmentWidgetView(entry: entry)
+                    .containerBackground(.background, for: .widget)
+            } else {
+                AssignmentWidgetView(entry: entry)
+            }
         }
         .configurationDisplayName("未提出の課題")
         .description("未提出・当日締切の課題を表示します")
         .supportedFamilies([.systemSmall, .systemMedium])
-        .contentMarginsDisabled()
     }
 }
