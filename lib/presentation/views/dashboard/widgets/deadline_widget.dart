@@ -1,6 +1,7 @@
 // lib/presentation/views/dashboard/widgets/deadline_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../viewmodels/dashboard_viewmodel.dart';
@@ -38,6 +39,7 @@ class DeadlineWidget extends ConsumerWidget {
                     .map((a) => AssignmentCard(
                           assignment: a,
                           variant: AssignmentCardVariant.tile,
+                          onTap: () => context.go('/assignments/${a.id}'),
                         ))
                     .toList(),
               ),

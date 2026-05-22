@@ -29,6 +29,13 @@ class BackgroundNotificationTask {
     final notifyBefore = Duration(hours: notifyBeforeHours);
 
     final rows = await db.select(db.assignments).get();
+
+    // 提出済み課題の通知ログ・スヌーズをクリーンアップ
+    for (final r in rows.where((r) => r.submissionState == 'turnedIn')) {
+      await logsDs.delete(r.id);
+      await snoozeDs.delete(r.id);
+    }
+
     final assignments = rows
         .where((r) =>
             r.state == 'published' &&
