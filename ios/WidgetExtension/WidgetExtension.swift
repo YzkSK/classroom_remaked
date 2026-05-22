@@ -49,7 +49,7 @@ struct WidgetEntry: TimelineEntry {
 
 struct AssignmentTimelineProvider: TimelineProvider {
     private let appGroupId = "group.com.classroomremaked.classroomRemaked"
-    private let dataKey = "flutter.widget_assignments"
+    private let dataKey = "widget_assignments"
 
     func placeholder(in context: Context) -> WidgetEntry {
         WidgetEntry(date: Date(), assignments: [])
