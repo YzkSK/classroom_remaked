@@ -47,12 +47,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('課題詳細')),
       body: ListView(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 16,
-          bottom: hasSubmit ? 96 : 16,
-        ),
+        padding: const EdgeInsets.all(16),
         children: [
           Text(assignment.title,
               style: ShadTheme.of(context).textTheme.h3),
@@ -112,18 +107,11 @@ class AssignmentDetailScreen extends ConsumerWidget {
             _SubmittedSection(assignment: assignment),
           ],
 
-          // ── 提出前：添付ファイル追加のみ（ボタンは下部固定） ─
-          if (hasSubmit) ...[
-            const SizedBox(height: 32),
-            const ShadSeparator.horizontal(),
-            const SizedBox(height: 16),
-            _SubmitAttachmentSection(assignment: assignment),
-          ],
         ],
       ),
-      // ── 提出ボタン（下部固定） ─────────────────────────
+      // ── 提出パネル（下部固定） ────────────────────────
       bottomNavigationBar: hasSubmit
-          ? _SubmitBottomBar(assignment: assignment)
+          ? _SubmitBottomPanel(assignment: assignment)
           : null,
     );
   }
@@ -230,9 +218,9 @@ final _submitAttachmentsProvider = StateProvider.autoDispose<
     List<({String name, String fileId})>>((ref) => []);
 final _submitUploadingProvider = StateProvider.autoDispose<bool>((ref) => false);
 
-/// 添付ファイル追加セクション（スクロール内）
-class _SubmitAttachmentSection extends ConsumerWidget {
-  const _SubmitAttachmentSection({required this.assignment});
+/// 添付ファイル管理 + 提出ボタン（下部固定パネル）
+class _SubmitBottomPanel extends ConsumerWidget {
+  const _SubmitBottomPanel({required this.assignment});
   final Assignment assignment;
 
   Future<void> _pickAndUpload(BuildContext context, WidgetRef ref) async {
@@ -246,7 +234,9 @@ class _SubmitAttachmentSection extends ConsumerWidget {
       for (final pf in result.files) {
         if (pf.path == null) continue;
         final uploaded = await service.uploadFile(File(pf.path!));
-        ref.read(_submitAttachmentsProvider.notifier).update((s) => [...s, uploaded]);
+        ref
+            .read(_submitAttachmentsProvider.notifier)
+            .update((s) => [...s, uploaded]);
       }
     } on Exception catch (e) {
       if (context.mounted) {
@@ -261,74 +251,6 @@ class _SubmitAttachmentSection extends ConsumerWidget {
       ref.read(_submitUploadingProvider.notifier).state = false;
     }
   }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final attachments = ref.watch(_submitAttachmentsProvider);
-    final isUploading = ref.watch(_submitUploadingProvider);
-    final isTurningIn = ref.watch(turnInViewModelProvider).isLoading;
-    final isLoading = isUploading || isTurningIn;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('提出', style: ShadTheme.of(context).textTheme.h4),
-        const SizedBox(height: 12),
-        if (attachments.isNotEmpty) ...[
-          ...attachments.map((att) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: ShadCard(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.insert_drive_file_outlined, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(att.name,
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
-                        ),
-                        GestureDetector(
-                          onTap: () => ref
-                              .read(_submitAttachmentsProvider.notifier)
-                              .update((s) => s.where((a) => a != att).toList()),
-                          child: const Icon(Icons.close, size: 18),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )),
-          const SizedBox(height: 8),
-        ],
-        ShadButton.outline(
-          width: double.infinity,
-          onPressed: isLoading ? null : () => _pickAndUpload(context, ref),
-          child: isUploading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.attach_file, size: 16),
-                    SizedBox(width: 6),
-                    Text('ファイルを添付'),
-                  ],
-                ),
-        ),
-      ],
-    );
-  }
-}
-
-/// 提出ボタン（下部固定バー）
-class _SubmitBottomBar extends ConsumerWidget {
-  const _SubmitBottomBar({required this.assignment});
-  final Assignment assignment;
 
   Future<void> _submit(BuildContext context, WidgetRef ref) async {
     final confirmed = await showShadDialog<bool>(
@@ -412,22 +334,89 @@ class _SubmitBottomBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isLoading = ref.watch(turnInViewModelProvider).isLoading ||
-        ref.watch(_submitUploadingProvider);
+    final attachments = ref.watch(_submitAttachmentsProvider);
+    final isUploading = ref.watch(_submitUploadingProvider);
+    final isTurningIn = ref.watch(turnInViewModelProvider).isLoading;
+    final isLoading = isUploading || isTurningIn;
 
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-        child: ShadButton(
-          width: double.infinity,
-          onPressed: isLoading ? null : () => _submit(context, ref),
-          child: isLoading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('提出する'),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (attachments.isNotEmpty) ...[
+              ...attachments.map((att) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: ShadCard(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.insert_drive_file_outlined,
+                                size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(att.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
+                            ),
+                            GestureDetector(
+                              onTap: () => ref
+                                  .read(_submitAttachmentsProvider.notifier)
+                                  .update(
+                                      (s) => s.where((a) => a != att).toList()),
+                              child: const Icon(Icons.close, size: 18),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )),
+              const SizedBox(height: 4),
+            ],
+            Row(
+              children: [
+                Expanded(
+                  child: ShadButton.outline(
+                    onPressed: isLoading
+                        ? null
+                        : () => _pickAndUpload(context, ref),
+                    child: isUploading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.attach_file, size: 16),
+                              SizedBox(width: 6),
+                              Text('添付'),
+                            ],
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: ShadButton(
+                    onPressed:
+                        isLoading ? null : () => _submit(context, ref),
+                    child: isTurningIn
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('提出する'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
