@@ -7,6 +7,8 @@ import 'package:workmanager/workmanager.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/background_notification_task.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/widget_data_service.dart';
+import 'data/datasources/local/app_database.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 
@@ -32,5 +34,11 @@ void main() async {
     frequency: const Duration(hours: 1),
     existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
   );
+  final db = AppDatabase();
+  try {
+    await const WidgetDataService().updateWidget(db);
+  } finally {
+    await db.close();
+  }
   runApp(const ProviderScope(child: App()));
 }
