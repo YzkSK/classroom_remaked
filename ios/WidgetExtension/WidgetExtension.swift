@@ -139,7 +139,6 @@ struct AssignmentWidgetView: View {
 
 // MARK: - Widget
 
-@main
 struct AssignmentWidget: Widget {
     let kind = "AssignmentWidget"
 
