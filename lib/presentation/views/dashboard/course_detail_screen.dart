@@ -67,7 +67,6 @@ class _AssignmentsTab extends ConsumerWidget {
         ? FakeFixtures.courseAssignments
         : all
             .where((a) => a.courseId == courseId)
-            .where((a) => !isOverdue(a))
             .toList()
           ..sort((a, b) {
             if (a.dueDate == null) return 1;
