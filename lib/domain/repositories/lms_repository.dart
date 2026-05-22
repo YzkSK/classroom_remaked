@@ -2,41 +2,8 @@
 import 'package:dartz/dartz.dart';
 import '../entities/assignment.dart';
 import '../entities/announcement.dart';
-import '../entities/comment.dart';
 import '../entities/course.dart';
 import '../errors/failures.dart';
-
-class SearchResult {
-  const SearchResult({
-    required this.id,
-    required this.courseId,
-    required this.title,
-    required this.snippet,
-    required this.type,
-  });
-
-  final String id;
-  final String courseId;
-  final String title;
-  final String snippet;
-  final SearchResultType type;
-}
-
-enum SearchResultType { assignment, announcement }
-
-class AssignmentSubmission {
-  const AssignmentSubmission({
-    required this.id,
-    required this.assignmentId,
-    required this.state,
-    this.submittedAt,
-  });
-
-  final String id;
-  final String assignmentId;
-  final SubmissionState state;
-  final DateTime? submittedAt;
-}
 
 abstract class LmsRepository {
   Future<Either<Failure, List<Course>>> getCourses();
@@ -45,14 +12,20 @@ abstract class LmsRepository {
   Future<Either<Failure, List<Assignment>>> getUpcomingDeadlines({
     required Duration within,
   });
-  Future<Either<Failure, List<SearchResult>>> search(String query);
-  Future<Either<Failure, AssignmentSubmission?>> getSubmission(
+  Future<Either<Failure, void>> turnIn(
     String courseId,
     String assignmentId,
+    String submissionId,
   );
-  Future<Either<Failure, List<Comment>>> getComments(
+  Future<Either<Failure, void>> addAttachment(
     String courseId,
-    String itemId, {
-    CommentVisibility? filterBy,
-  });
+    String courseWorkId,
+    String submissionId,
+    String driveFileId,
+  );
+  Future<Either<Failure, void>> reclaimSubmission(
+    String courseId,
+    String assignmentId,
+    String submissionId,
+  );
 }

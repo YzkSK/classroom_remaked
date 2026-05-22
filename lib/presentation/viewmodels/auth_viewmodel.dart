@@ -2,6 +2,7 @@
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/di/providers.dart';
+import '../../core/services/fcm_token_service.dart';
 part 'auth_viewmodel.g.dart';
 
 @riverpod
@@ -20,6 +21,12 @@ class AuthViewModel extends _$AuthViewModel {
   }
 
   Future<void> signOut() async {
+    // FCM トークン削除は失敗・タイムアウトしてもサインアウトを止めない
+    try {
+      await const FcmTokenService()
+          .unregister()
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {}
     final authService = ref.read(authServiceProvider);
     await authService.signOut();
     state = const AsyncData(null);

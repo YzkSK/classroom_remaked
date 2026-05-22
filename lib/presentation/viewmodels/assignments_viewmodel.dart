@@ -1,33 +1,46 @@
 // lib/presentation/viewmodels/assignments_viewmodel.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/di/providers.dart';
 import '../../domain/entities/assignment.dart';
+
+part 'assignments_viewmodel.freezed.dart';
 part 'assignments_viewmodel.g.dart';
 
-enum AssignmentsFilter { all, unsubmitted }
+bool isOverdue(Assignment a) =>
+    a.dueDate != null &&
+    a.dueDate!.isBefore(DateTime.now()) &&
+    a.submissionState != SubmissionState.turnedIn;
 
-class AssignmentsState {
-  const AssignmentsState({
-    required this.assignments,
-    this.filter = AssignmentsFilter.all,
-  });
+enum AssignmentsFilter { all, unsubmitted, overdue }
 
-  final List<Assignment> assignments;
-  final AssignmentsFilter filter;
+@freezed
+class AssignmentsState with _$AssignmentsState {
+  const AssignmentsState._();
 
-  List<Assignment> get filteredAssignments {
-    if (filter == AssignmentsFilter.all) return assignments;
-    return assignments
-        .where((a) => a.submissionState != SubmissionState.turnedIn)
-        .toList();
+  const factory AssignmentsState({
+    required List<Assignment> assignments,
+    required List<String> hiddenAssignmentIds,
+    @Default(AssignmentsFilter.all) AssignmentsFilter filter,
+  }) = _AssignmentsState;
+
+  List<Assignment> get visibleAssignments {
+    switch (filter) {
+      case AssignmentsFilter.all:
+        return assignments.where((a) => !isOverdue(a)).toList();
+      case AssignmentsFilter.unsubmitted:
+        return assignments
+            .where((a) => !isOverdue(a))
+            .where((a) => !hiddenAssignmentIds.contains(a.id))
+            .where((a) => a.submissionState != SubmissionState.turnedIn)
+            .toList();
+      case AssignmentsFilter.overdue:
+        return assignments.where(isOverdue).toList();
+    }
   }
 
-  AssignmentsState copyWith(
-          {List<Assignment>? assignments, AssignmentsFilter? filter}) =>
-      AssignmentsState(
-        assignments: assignments ?? this.assignments,
-        filter: filter ?? this.filter,
-      );
+  bool isHidden(String assignmentId) =>
+      hiddenAssignmentIds.contains(assignmentId);
 }
 
 @riverpod
@@ -35,6 +48,8 @@ class AssignmentsViewModel extends _$AssignmentsViewModel {
   @override
   Future<AssignmentsState> build() async {
     final repo = ref.watch(lmsRepositoryProvider);
+    final hiddenDs = ref.watch(hiddenItemsDataSourceProvider);
+
     final coursesResult = await repo.getCourses();
     final courses = coursesResult.getOrElse(() => []);
 
@@ -52,12 +67,74 @@ class AssignmentsViewModel extends _$AssignmentsViewModel {
         return a.dueDate!.compareTo(b.dueDate!);
       });
 
-    return AssignmentsState(assignments: all);
+    final hiddenIds = await hiddenDs.getHiddenIds('assignment');
+
+    return AssignmentsState(
+      assignments: all,
+      hiddenAssignmentIds: hiddenIds.toList(),
+    );
   }
 
   void setFilter(AssignmentsFilter filter) {
     final current = state.valueOrNull;
     if (current == null) return;
     state = AsyncData(current.copyWith(filter: filter));
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    await ref.read(classroomSyncServiceProvider).forceRefresh();
+    ref.invalidateSelf();
+  }
+
+  Future<void> hideItem(String assignmentId) async {
+    await ref
+        .read(hiddenItemsDataSourceProvider)
+        .hide(assignmentId, 'assignment');
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(
+      hiddenAssignmentIds: [...current.hiddenAssignmentIds, assignmentId],
+    ));
+  }
+
+  Future<void> unhideItem(String assignmentId) async {
+    await ref.read(hiddenItemsDataSourceProvider).unhide(assignmentId);
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(current.copyWith(
+      hiddenAssignmentIds:
+          current.hiddenAssignmentIds.where((id) => id != assignmentId).toList(),
+    ));
+  }
+
+  void markTurnedIn(String assignmentId,
+      {List<AssignmentMaterial> attachments = const []}) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    final updated = current.assignments
+        .map((a) => a.id == assignmentId
+            ? a.copyWith(
+                submissionState: SubmissionState.turnedIn,
+                submissionAttachments: attachments,
+              )
+            : a)
+        .toList();
+    state = AsyncData(current.copyWith(assignments: updated));
+  }
+
+  void markReclaimedByStudent(String assignmentId) {
+    _updateSubmissionState(assignmentId, SubmissionState.reclaimedByStudent);
+  }
+
+  void _updateSubmissionState(String assignmentId, SubmissionState newState) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    final updated = current.assignments
+        .map((a) => a.id == assignmentId
+            ? a.copyWith(submissionState: newState)
+            : a)
+        .toList();
+    state = AsyncData(current.copyWith(assignments: updated));
   }
 }

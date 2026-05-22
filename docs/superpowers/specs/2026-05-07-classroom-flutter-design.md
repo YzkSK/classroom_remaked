@@ -273,9 +273,8 @@ DashboardScreen
        └─ [お知らせタブ]
 
 SettingsScreen（設定アイコンから遷移）
-  ├─ 通知設定（通知タイミング・スヌーズ時間）
+  ├─ 通知設定（通知タイミング・スヌーズ間隔）
   ├─ 怠惰人間モード ON/OFF
-  ├─ 非表示リスト管理（復元）
   └─ サインアウト
 ```
 
@@ -319,7 +318,7 @@ class HiddenItemEntity {
 ```
 
 - 非表示アイテムはキャッシュには残す（API 無駄打ち防止）
-- 設定画面の「非表示リスト」から復元可能
+- 非表示リスト管理UIは実装しない（フィルターで非表示にできるだけ）
 
 ---
 
@@ -331,8 +330,8 @@ class HiddenItemEntity {
 // domain/entities/notification_settings.dart
 class NotificationSettings {
   final Duration notifyBefore;   // 締め切り何時間前に通知（最小: 24h・任意値・デフォルト: 24h）
-  final Duration snoozeDuration; // スヌーズ時間（30分 / 1時間 / 3時間）
-  final bool lazyModeEnabled;    // 怠惰人間モード
+  final int snoozeHours;         // 再通知間隔（時間単位・設定画面で自由入力・デフォルト: 1h）
+  final bool lazyModeEnabled;    // 怠惰人間モード（ONのとき snoozeHours は 1h 固定）
 }
 ```
 
@@ -349,15 +348,16 @@ GetUpcomingDeadlinesUseCase.execute(within: notifyBefore)
 Isar で「通知済み・スヌーズ中」を除外
   ↓
 flutter_local_notifications で通知発火
-  通知アクション: [今すぐ確認] [スヌーズ]
   ↓
-Isar にキャッシュ更新
+Isar に snoozeHours 後まで再通知抑制を記録
 ```
 
 ### スヌーズ機能
 
-- 通知の「スヌーズ」ボタンタップ → 設定したスヌーズ時間後に再通知
-- スヌーズ状態は `SnoozedNotificationEntity` として Isar に保存
+- 通知バーにスヌーズボタンは置かない
+- 通知を表示した直後、設定画面で指定した `snoozeHours` 後まで再通知を自動抑制
+- 怠惰人間モード ON 時は `snoozeHours` を 1h に固定
+- 抑制状態は `SnoozedNotificationEntity` として Isar に保存
 
 ```dart
 @Collection()
@@ -392,10 +392,10 @@ class SnoozedNotificationEntity {
 
 ### 実装ポイント
 
-- `CanSnoozeUseCase` が怠惰人間モードの可否を判定
-- `flutter_local_notifications` の通知アクションで、`lazyModeEnabled && !canSnooze` のとき  
-  スヌーズアクションを非表示にする（iOS: `UNNotificationAction`, Android: `AndroidNotificationAction`）
+- `CanDisableLazyModeUseCase` が怠惰モード解除条件を判定
+- 通知バーにスヌーズボタンは表示しない（スヌーズは自動）
 - 設定画面の ON/OFF スイッチは `ShadSwitch` を使用
+- 怠惰モード ON 時は設定画面のスヌーズ間隔入力を無効化（1h 固定表示）
 - モードを有効にするときに確認ダイアログを表示（`ShadDialog`）
 
 ---
@@ -508,7 +508,7 @@ main
 4. ページ内の機能がすべて揃ったら → ページブランチを **main へ** Squash merge
 
 - `main` への直接 push 禁止
-- 機能ブランチはマージ後に削除
+- ブランチはマージ後も削除しない（履歴参照のため残す）
 
 ### ブランチ命名規則
 

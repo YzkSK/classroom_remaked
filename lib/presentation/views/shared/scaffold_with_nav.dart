@@ -11,20 +11,35 @@ class ScaffoldWithNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: navigationShell.currentIndex,
-        onTap: (index) => navigationShell.goBranch(
-          index,
-          initialLocation: index == navigationShell.currentIndex,
-        ),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: (index) {
+          if (index == navigationShell.currentIndex) {
+            const roots = ['/dashboard', '/assignments', '/search', '/settings'];
+            context.go(roots[index]);
+          } else {
+            navigationShell.goBranch(index);
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
             label: 'ホーム',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_rounded),
+          NavigationDestination(
+            icon: Icon(Icons.assignment_outlined),
+            selectedIcon: Icon(Icons.assignment_rounded),
             label: '課題',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.search_rounded),
+            label: '検索',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings_rounded),
+            label: '設定',
           ),
         ],
       ),
