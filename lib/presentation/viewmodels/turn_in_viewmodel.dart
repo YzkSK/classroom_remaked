@@ -19,6 +19,9 @@ class TurnInViewModel extends _$TurnInViewModel {
     final repo = ref.read(lmsRepositoryProvider);
     final result =
         await repo.turnIn(courseId, assignmentId, submissionId);
+    if (result.isRight()) {
+      await _clearNotificationArtifacts(assignmentId);
+    }
     state = const AsyncData(null);
     return result;
   }
@@ -34,5 +37,10 @@ class TurnInViewModel extends _$TurnInViewModel {
         await repo.reclaimSubmission(courseId, assignmentId, submissionId);
     state = const AsyncData(null);
     return result;
+  }
+
+  Future<void> _clearNotificationArtifacts(String assignmentId) async {
+    await ref.read(notificationLogsDataSourceProvider).delete(assignmentId);
+    await ref.read(snoozedItemsDataSourceProvider).delete(assignmentId);
   }
 }
