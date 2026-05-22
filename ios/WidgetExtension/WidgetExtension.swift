@@ -143,8 +143,11 @@ struct AssignmentWidgetView: View {
                 Spacer()
             } else {
                 ForEach(entry.assignments) { a in
-                    AssignmentRowView(assignment: a)
-                        .padding(.vertical, 3)
+                    let url = URL(string: "classroomremaked://assignment?id=\(a.id)&homeWidget=true")!
+                    Link(destination: url) {
+                        AssignmentRowView(assignment: a)
+                            .padding(.vertical, 3)
+                    }
                     if a.id != entry.assignments.last?.id {
                         Divider()
                     }
@@ -153,7 +156,11 @@ struct AssignmentWidgetView: View {
             }
         }
         .padding(12)
-        .widgetURL(URL(string: "classroomremaked://assignments"))
+        .widgetURL(
+            entry.assignments.first.flatMap {
+                URL(string: "classroomremaked://assignment?id=\($0.id)&homeWidget=true")
+            } ?? URL(string: "classroomremaked://assignments?homeWidget=true")!
+        )
     }
 }
 

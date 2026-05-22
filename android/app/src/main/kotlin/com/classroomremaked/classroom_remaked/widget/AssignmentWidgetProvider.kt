@@ -4,7 +4,9 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
@@ -80,6 +82,22 @@ class AssignmentWidgetProvider : AppWidgetProvider() {
 
                         if (i < count - 1 && i < dividerIds.size) {
                             views.setViewVisibility(dividerIds[i], View.VISIBLE)
+                        }
+
+                        val assignmentId = a.optString("id", "")
+                        if (assignmentId.isNotEmpty()) {
+                            val uri = Uri.parse("classroomremaked://assignment?id=$assignmentId")
+                            val rowIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+                                data = uri
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            }
+                            if (rowIntent != null) {
+                                val rowPending = PendingIntent.getActivity(
+                                    context, i + 1, rowIntent,
+                                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                )
+                                views.setOnClickPendingIntent(rowIds[i], rowPending)
+                            }
                         }
                     }
                 }

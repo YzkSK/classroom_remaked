@@ -2,6 +2,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'core/router/app_router.dart';
@@ -59,6 +60,19 @@ class _AppState extends ConsumerState<App> {
         }
       }
     });
+
+    // ウィジェットタップ（バックグラウンドから復帰）
+    HomeWidget.widgetClicked.listen(_handleWidgetUri);
+    // ウィジェットタップ（Terminated状態から起動）
+    HomeWidget.initiallyLaunchedFromHomeWidget().then(_handleWidgetUri);
+  }
+
+  void _handleWidgetUri(Uri? uri) {
+    if (uri == null) return;
+    final id = uri.queryParameters['id'];
+    if (id != null && id.isNotEmpty) {
+      ref.read(pendingNotificationRouteProvider.notifier).set('/assignments/$id');
+    }
   }
 
   @override

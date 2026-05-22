@@ -76,6 +76,14 @@
 				<string>com.googleusercontent.apps.184568296872-3pn4ib5rpbfjmbp765kvmp3s85m5558d</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>classroomremaked</string>
+			</array>
+		</dict>
 	</array>
 	<key>GIDClientID</key>
 	<string>184568296872-3pn4ib5rpbfjmbp765kvmp3s85m5558d.apps.googleusercontent.com</string>
