@@ -11,17 +11,32 @@ struct WidgetAssignment: Identifiable {
     let dueDateMillis: Int64
     let isToday: Bool
 
+    var dueDate: Date {
+        Date(timeIntervalSince1970: Double(dueDateMillis) / 1000)
+    }
+
     var dueLabel: String {
-        let date = Date(timeIntervalSince1970: Double(dueDateMillis) / 1000)
-        if Calendar.current.isDateInToday(date) {
-            let fmt = DateFormatter()
-            fmt.dateFormat = "HH:mm"
-            return "今日 \(fmt.string(from: date))"
-        } else {
-            let fmt = DateFormatter()
-            fmt.dateFormat = "M/d"
-            return fmt.string(from: date)
+        let cal = Calendar.current
+        let date = dueDate
+        let timeFmt = DateFormatter()
+        timeFmt.dateFormat = "HH:mm"
+        if cal.isDateInToday(date) {
+            return "今日 \(timeFmt.string(from: date))"
         }
+        if cal.isDateInTomorrow(date) {
+            return "明日 \(timeFmt.string(from: date))"
+        }
+        let dateFmt = DateFormatter()
+        dateFmt.dateFormat = "M/d(E)"
+        dateFmt.locale = Locale(identifier: "ja_JP")
+        return dateFmt.string(from: date)
+    }
+
+    var dueColor: Color {
+        let cal = Calendar.current
+        if cal.isDateInToday(dueDate) { return .red }
+        if cal.isDateInTomorrow(dueDate) { return Color.orange }
+        return .secondary
     }
 }
 
@@ -88,12 +103,12 @@ struct AssignmentRowView: View {
     let assignment: WidgetAssignment
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 1) {
+        HStack(alignment: .center, spacing: 6) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(assignment.title)
                     .font(.system(size: 13, weight: assignment.isToday ? .semibold : .regular))
                     .lineLimit(1)
-                    .foregroundColor(assignment.isToday ? .red : .primary)
+                    .foregroundColor(.primary)
                 Text(assignment.courseName)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
@@ -101,8 +116,12 @@ struct AssignmentRowView: View {
             }
             Spacer()
             Text(assignment.dueLabel)
-                .font(.system(size: 11))
-                .foregroundColor(assignment.isToday ? .red : .secondary)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(assignment.dueColor)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(assignment.dueColor.opacity(0.12))
+                .cornerRadius(5)
         }
     }
 }
@@ -125,6 +144,7 @@ struct AssignmentWidgetView: View {
             } else {
                 ForEach(entry.assignments) { a in
                     AssignmentRowView(assignment: a)
+                        .padding(.vertical, 3)
                     if a.id != entry.assignments.last?.id {
                         Divider()
                     }
