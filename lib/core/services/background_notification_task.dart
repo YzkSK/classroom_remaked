@@ -7,6 +7,7 @@ import '../../data/datasources/local/snoozed_items_datasource.dart';
 import '../../data/datasources/local/user_preferences_datasource.dart';
 import '../../domain/entities/assignment.dart';
 import 'notification_service.dart';
+import 'widget_data_service.dart';
 
 const notificationTaskName = 'checkDeadlines';
 const notificationTaskUniqueName = 'notificationTask';
@@ -31,7 +32,7 @@ class BackgroundNotificationTask {
     final assignments = rows
         .where((r) =>
             r.state == 'published' &&
-            r.submissionState != 'TURNED_IN' &&
+            r.submissionState != 'turnedIn' &&
             r.dueDateMillis != null)
         .map((r) => Assignment(
               id: r.id,
@@ -66,6 +67,8 @@ class BackgroundNotificationTask {
       await logsDs.log(assignment.id);
       await snoozeDs.upsert(assignment.id, now.add(snooze));
     }
+
+    await const WidgetDataService().updateWidget(db);
 
     return true;
   }

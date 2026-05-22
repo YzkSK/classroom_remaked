@@ -40,12 +40,21 @@ GoRouter appRouter(AppRouterRef ref) {
       if (authState.isLoading) return '/splash';
 
       final isSignedIn = authState.valueOrNull != null;
+
+      // ウィジェットdeep link (cold start): classroomremaked://assignment?id=xxx
+      if (state.uri.scheme == 'classroomremaked') {
+        if (!isSignedIn) return '/sign-in';
+        final id = state.uri.queryParameters['id'];
+        if (id != null && id.isNotEmpty) return '/assignments/$id';
+        return '/assignments';
+      }
+
       final loc = state.matchedLocation;
 
       if (!isSignedIn && loc != '/sign-in') return '/sign-in';
       if (!isSignedIn) return null;
 
-      // 通知タップからの起動
+      // 通知・ウィジェットタップからの起動（background resume）
       if (pendingRoute != null) {
         ref.read(pendingNotificationRouteProvider.notifier).clear();
         return pendingRoute;
