@@ -1,4 +1,5 @@
 // lib/presentation/views/settings/settings_screen.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,11 +21,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   double? _notifyHoursDraft;
   double? _snoozeHoursDraft;
   bool _permissionGranted = true;
+  int _debugTapCount = 0;
+  Timer? _debugTapTimer;
 
   @override
   void initState() {
     super.initState();
     _checkPermission();
+  }
+
+  @override
+  void dispose() {
+    _debugTapTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onVersionTap() {
+    _debugTapTimer?.cancel();
+    _debugTapTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _debugTapCount = 0);
+    });
+    setState(() => _debugTapCount++);
+
+    if (_debugTapCount >= 7) {
+      setState(() => _debugTapCount = 0);
+      context.go('/settings/debug');
+    } else if (_debugTapCount >= 4) {
+      ShadToaster.of(context).show(
+        ShadToast(title: Text('あと${7 - _debugTapCount}回でデバッグモード')),
+      );
+    }
   }
 
   Future<void> _checkPermission() async {
@@ -229,14 +255,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: const Text('サインアウト'),
           ),
           const SizedBox(height: 8),
-          ShadButton.ghost(
-            width: double.infinity,
-            onPressed: () => context.go('/settings/debug'),
-            child: Text(
-              'デバッグ情報',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.outline,
-                fontSize: 12,
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: _onVersionTap,
+            child: Center(
+              child: Text(
+                'Classroom Remaked',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                  fontSize: 11,
+                ),
               ),
             ),
           ),
