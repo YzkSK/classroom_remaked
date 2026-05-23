@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import '../../../core/di/providers.dart';
 import '../../../data/datasources/local/app_database.dart';
 import '../../../data/datasources/local/error_log_datasource.dart';
 import '../../viewmodels/debug_viewmodel.dart';
@@ -14,6 +15,7 @@ class DebugScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(debugViewModelProvider);
     final notifier = ref.read(debugViewModelProvider.notifier);
+    final db = ref.read(appDatabaseProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -33,7 +35,15 @@ class DebugScreen extends ConsumerWidget {
           children: [
             _Section(
               title: 'データベース (schema v${state.schemaVersion})',
-              child: _DbTable(rowCounts: state.rowCounts),
+              child: _DbTable(
+                rowCounts: state.rowCounts,
+                onTapTable: (tableName) => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        _TableDetailPage(tableName: tableName, db: db),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             _Section(
@@ -50,6 +60,16 @@ class DebugScreen extends ConsumerWidget {
                 enabled: state.lazyModeEnabled,
                 blockingCount: state.lazyModeBlockingCount,
                 notifyBeforeHours: state.notifyBeforeHours,
+                onBlockingTap: state.lazyModeBlockingCount > 0
+                    ? () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => _BlockingAssignmentsPage(
+                              db: db,
+                              notifyBeforeHours: state.notifyBeforeHours,
+                            ),
+                          ),
+                        )
+                    : null,
               ),
             ),
             const SizedBox(height: 16),
@@ -145,8 +165,9 @@ class _Section extends StatelessWidget {
 // ── DB行数テーブル ──────────────────────────────────────────
 
 class _DbTable extends StatelessWidget {
-  const _DbTable({required this.rowCounts});
+  const _DbTable({required this.rowCounts, required this.onTapTable});
   final Map<String, int> rowCounts;
+  final void Function(String tableName) onTapTable;
 
   @override
   Widget build(BuildContext context) {
@@ -155,17 +176,30 @@ class _DbTable extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: rowCounts.entries
-              .map((e) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(e.key,
-                            style: const TextStyle(
-                                fontFamily: 'monospace', fontSize: 13)),
-                        Text('${e.value} 件',
-                            style: ShadTheme.of(context).textTheme.muted),
-                      ],
+              .map((e) => InkWell(
+                    onTap: () => onTapTable(e.key),
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Text(e.key,
+                                  style: const TextStyle(
+                                      fontFamily: 'monospace', fontSize: 13)),
+                              const SizedBox(width: 4),
+                              Icon(Icons.chevron_right,
+                                  size: 14,
+                                  color:
+                                      Theme.of(context).colorScheme.outline),
+                            ],
+                          ),
+                          Text('${e.value} 件',
+                              style: ShadTheme.of(context).textTheme.muted),
+                        ],
+                      ),
                     ),
                   ))
               .toList(),
@@ -224,10 +258,12 @@ class _LazyModeSection extends StatelessWidget {
     required this.enabled,
     required this.blockingCount,
     required this.notifyBeforeHours,
+    this.onBlockingTap,
   });
   final bool enabled;
   final int blockingCount;
   final int notifyBeforeHours;
+  final VoidCallback? onBlockingTap;
 
   @override
   Widget build(BuildContext context) {
@@ -249,12 +285,40 @@ class _LazyModeSection extends StatelessWidget {
               value: '$notifyBeforeHours 時間前',
             ),
             const SizedBox(height: 4),
-            _Row(
-              label: 'OFFブロック中の課題',
-              value: '$blockingCount 件',
-              valueColor: blockingCount > 0
-                  ? Theme.of(context).colorScheme.error
-                  : null,
+            InkWell(
+              onTap: onBlockingTap,
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('OFFブロック中の課題',
+                        style: ShadTheme.of(context).textTheme.muted),
+                    Row(
+                      children: [
+                        Text(
+                          '$blockingCount 件',
+                          style: TextStyle(
+                            color: blockingCount > 0
+                                ? Theme.of(context).colorScheme.error
+                                : null,
+                            fontWeight: blockingCount > 0
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        if (onBlockingTap != null) ...[
+                          const SizedBox(width: 2),
+                          Icon(Icons.chevron_right,
+                              size: 14,
+                              color: Theme.of(context).colorScheme.error),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -509,6 +573,306 @@ class _Row extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── DB テーブル詳細ページ ────────────────────────────────────
+
+class _TableDetailPage extends StatefulWidget {
+  const _TableDetailPage({required this.tableName, required this.db});
+  final String tableName;
+  final AppDatabase db;
+
+  @override
+  State<_TableDetailPage> createState() => _TableDetailPageState();
+}
+
+class _TableDetailPageState extends State<_TableDetailPage> {
+  late Future<List<Map<String, String>>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
+
+  Future<List<Map<String, String>>> _load() async {
+    final db = widget.db;
+    switch (widget.tableName) {
+      case 'courses':
+        final rows = await db.select(db.courses).get();
+        return rows
+            .map((r) => {
+                  'id': r.id,
+                  'name': r.name,
+                  'section': r.section ?? '-',
+                  'room': r.room ?? '-',
+                  'state': r.courseState,
+                })
+            .toList();
+
+      case 'assignments':
+        final rows = await db.select(db.assignments).get();
+        return rows
+            .map((r) => {
+                  'id': r.id,
+                  'title': r.title,
+                  'courseId': r.courseId,
+                  'dueDate': r.dueDateMillis != null
+                      ? DateFormat('yyyy-MM-dd HH:mm').format(
+                          DateTime.fromMillisecondsSinceEpoch(r.dueDateMillis!)
+                              .toLocal())
+                      : '-',
+                  'state': r.state,
+                  'submissionState': r.submissionState ?? '-',
+                  'submissionId': r.submissionId ?? '-',
+                })
+            .toList();
+
+      case 'announcements':
+        final rows = await db.select(db.announcements).get();
+        return rows
+            .map((r) => {
+                  'id': r.id,
+                  'courseId': r.courseId,
+                  'title': r.title ?? '-',
+                  'body': r.body.length > 80
+                      ? '${r.body.substring(0, 80)}…'
+                      : r.body,
+                  'isMaterial': r.isMaterial.toString(),
+                  'createdAt': DateFormat('yyyy-MM-dd HH:mm').format(
+                      DateTime.fromMillisecondsSinceEpoch(r.creationTimeMillis)
+                          .toLocal()),
+                })
+            .toList();
+
+      case 'notification_logs':
+        final rows = await db.select(db.notificationLogs).get();
+        return rows
+            .map((r) => {
+                  'assignmentId': r.assignmentId,
+                  'notifiedAt': DateFormat('yyyy-MM-dd HH:mm:ss')
+                      .format(r.notifiedAt.toLocal()),
+                })
+            .toList();
+
+      case 'snoozed_items':
+        final rows = await db.select(db.snoozedItems).get();
+        return rows
+            .map((r) => {
+                  'assignmentId': r.assignmentId,
+                  'snoozedUntil': DateFormat('yyyy-MM-dd HH:mm:ss')
+                      .format(r.snoozedUntil.toLocal()),
+                })
+            .toList();
+
+      case 'hidden_items':
+        final rows = await db.select(db.hiddenItems).get();
+        return rows
+            .map((r) => {
+                  'itemId': r.itemId,
+                  'type': r.type,
+                  'hiddenAt': DateFormat('yyyy-MM-dd HH:mm:ss')
+                      .format(r.hiddenAt.toLocal()),
+                })
+            .toList();
+
+      default:
+        return [];
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.tableName,
+            style: const TextStyle(fontFamily: 'monospace')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => setState(() => _future = _load()),
+          ),
+        ],
+      ),
+      body: FutureBuilder<List<Map<String, String>>>(
+        future: _future,
+        builder: (context, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snap.hasError) {
+            return Center(child: Text('${snap.error}'));
+          }
+          final rows = snap.data!;
+          if (rows.isEmpty) {
+            return Center(
+              child: Text('データなし',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: Theme.of(context).colorScheme.outline)),
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(12),
+            itemCount: rows.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, i) => _RowCard(index: i, fields: rows[i]),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RowCard extends StatelessWidget {
+  const _RowCard({required this.index, required this.fields});
+  final int index;
+  final Map<String, String> fields;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('#${index + 1}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.outline)),
+            const SizedBox(height: 6),
+            ...fields.entries.map(
+              (e) => Padding(
+                padding: const EdgeInsets.only(bottom: 3),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 110,
+                      child: Text(
+                        e.key,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        e.value,
+                        style: const TextStyle(
+                            fontSize: 12, fontFamily: 'monospace'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── ブロック中の課題詳細ページ ──────────────────────────────
+
+class _BlockingAssignmentsPage extends StatefulWidget {
+  const _BlockingAssignmentsPage(
+      {required this.db, required this.notifyBeforeHours});
+  final AppDatabase db;
+  final int notifyBeforeHours;
+
+  @override
+  State<_BlockingAssignmentsPage> createState() =>
+      _BlockingAssignmentsPageState();
+}
+
+class _BlockingAssignmentsPageState extends State<_BlockingAssignmentsPage> {
+  late Future<List<AssignmentRow>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
+
+  Future<List<AssignmentRow>> _load() async {
+    final cutoff =
+        DateTime.now().add(Duration(hours: widget.notifyBeforeHours));
+    final rows = await widget.db.select(widget.db.assignments).get();
+    return rows.where((r) {
+      if (r.submissionId == null) return false;
+      if (r.submissionState == 'turnedIn') return false;
+      if (r.dueDateMillis == null) return false;
+      return DateTime.fromMillisecondsSinceEpoch(r.dueDateMillis!)
+          .isBefore(cutoff);
+    }).toList()
+      ..sort((a, b) => a.dueDateMillis!.compareTo(b.dueDateMillis!));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('ブロック中の課題 (${widget.notifyBeforeHours}h以内)'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => setState(() => _future = _load()),
+          ),
+        ],
+      ),
+      body: FutureBuilder<List<AssignmentRow>>(
+        future: _future,
+        builder: (context, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snap.hasError) {
+            return Center(child: Text('${snap.error}'));
+          }
+          final rows = snap.data!;
+          if (rows.isEmpty) {
+            return Center(
+              child: Text('ブロック中の課題なし',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: Theme.of(context).colorScheme.outline)),
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(12),
+            itemCount: rows.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, i) {
+              final r = rows[i];
+              final due = r.dueDateMillis != null
+                  ? DateFormat('yyyy-MM-dd HH:mm').format(
+                      DateTime.fromMillisecondsSinceEpoch(r.dueDateMillis!)
+                          .toLocal())
+                  : '-';
+              return _RowCard(
+                index: i,
+                fields: {
+                  'id': r.id,
+                  'title': r.title,
+                  'courseId': r.courseId,
+                  'dueDate': due,
+                  'submissionState': r.submissionState ?? '-',
+                  'submissionId': r.submissionId ?? '-',
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
