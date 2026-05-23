@@ -1,12 +1,16 @@
 // lib/core/services/background_notification_task.dart
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:workmanager/workmanager.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/error_log_datasource.dart';
 import '../../data/datasources/local/notification_logs_datasource.dart';
 import '../../data/datasources/local/snoozed_items_datasource.dart';
 import '../../data/datasources/local/user_preferences_datasource.dart';
+import '../../data/repositories/google_classroom_repository.dart';
 import '../../domain/entities/assignment.dart';
+import '../../firebase_options.dart';
 import 'notification_service.dart';
 import 'widget_data_service.dart';
 
@@ -16,7 +20,23 @@ const notificationTaskUniqueName = 'notificationTask';
 class BackgroundNotificationTask {
   const BackgroundNotificationTask();
 
-  Future<bool> execute(AppDatabase db) async {
+  Future<bool> execute(AppDatabase db, {GoogleSignInAccount? account}) async {
+    final errorDs = ErrorLogDataSource(db);
+
+    // Step 1: Classroom API から同期して新着課題を通知
+    if (account != null) {
+      try {
+        await _syncAndNotifyNew(db, account, errorDs);
+      } catch (e, st) {
+        await errorDs.add(
+          source: 'BackgroundSync',
+          message: '$e',
+          stackTrace: st.toString(),
+        );
+      }
+    }
+
+    // Step 2: 締め切り通知（既存ロジック）
     final now = DateTime.now();
 
     final prefsDs = UserPreferencesDataSource(db);
@@ -70,7 +90,6 @@ class BackgroundNotificationTask {
     }
 
     const notifService = NotificationService();
-    final errorDs = ErrorLogDataSource(db);
     for (final assignment in candidates) {
       try {
         await notifService.show(assignment);
@@ -88,6 +107,52 @@ class BackgroundNotificationTask {
     await const WidgetDataService().updateWidget(db);
 
     return true;
+  }
+
+  Future<void> _syncAndNotifyNew(
+    AppDatabase db,
+    GoogleSignInAccount account,
+    ErrorLogDataSource errorDs,
+  ) async {
+    // 同期前のIDセットを記録
+    final knownIds =
+        (await db.select(db.assignments).get()).map((r) => r.id).toSet();
+
+    final repo = GoogleClassroomRepository(database: db, account: account);
+
+    // コースを同期
+    final coursesResult = await repo.refreshCourses();
+    final courses = coursesResult.getOrElse(() => []);
+    if (courses.isEmpty) return;
+
+    // コースIDとコース名のマップ
+    final courseNameMap = {for (final c in courses) c.id: c.name};
+
+    // 全コースの課題を同期
+    await Future.wait(courses.map((c) => repo.refreshAssignments(c.id)));
+
+    // 同期後のIDセットと差分を求める
+    final allRows = await db.select(db.assignments).get();
+    final newRows = allRows.where((r) => !knownIds.contains(r.id)).toList();
+
+    for (final row in newRows) {
+      // 提出不要・非公開・期限なし課題は除外
+      if (row.state != 'published') continue;
+      final courseName = courseNameMap[row.courseId] ?? row.courseId;
+      try {
+        await NotificationService.showNewAssignment(
+          assignmentId: row.id,
+          title: row.title,
+          courseName: courseName,
+        );
+      } catch (e, st) {
+        await errorDs.add(
+          source: 'BackgroundSync.showNewAssignment',
+          message: '新着通知送信失敗: ${row.title} — $e',
+          stackTrace: st.toString(),
+        );
+      }
+    }
   }
 
   static List<Assignment> filterCandidates({
@@ -123,10 +188,25 @@ class BackgroundNotificationTask {
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     await NotificationService.initialize();
+
+    // サイレントサインインで OAuth トークンを取得
+    GoogleSignInAccount? account;
+    try {
+      await GoogleSignIn.instance.initialize(
+        serverClientId:
+            '184568296872-7079toktlo42fe5etcbke4mkue9l7ua7.apps.googleusercontent.com',
+      );
+      final future = GoogleSignIn.instance.attemptLightweightAuthentication();
+      if (future != null) account = await future;
+    } catch (_) {
+      // サインインできなければ同期なしで締め切り通知のみ実行
+    }
+
     final db = await AppDatabase.openBackground();
     try {
-      return await const BackgroundNotificationTask().execute(db);
+      return await const BackgroundNotificationTask().execute(db, account: account);
     } finally {
       await db.close();
     }
