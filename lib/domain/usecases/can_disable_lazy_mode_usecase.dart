@@ -13,6 +13,7 @@ class CanDisableLazyModeUseCase {
       if (a.submissionId == null) return false; // 提出不可能な課題は除外
       if (a.submissionState == SubmissionState.turnedIn) return false;
       if (a.dueDate == null) return false;
+      if (!a.dueDate!.isAfter(now)) return false;
       return a.dueDate!.isBefore(cutoff);
     }).length;
   }

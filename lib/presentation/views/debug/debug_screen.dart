@@ -810,8 +810,8 @@ class _BlockingAssignmentsPageState extends State<_BlockingAssignmentsPage> {
       if (r.submissionId == null) return false;
       if (r.submissionState == 'turnedIn') return false;
       if (r.dueDateMillis == null) return false;
-      return DateTime.fromMillisecondsSinceEpoch(r.dueDateMillis!)
-          .isBefore(cutoff);
+      final due = DateTime.fromMillisecondsSinceEpoch(r.dueDateMillis!);
+      return due.isAfter(DateTime.now()) && due.isBefore(cutoff);
     }).toList()
       ..sort((a, b) => a.dueDateMillis!.compareTo(b.dueDateMillis!));
   }
