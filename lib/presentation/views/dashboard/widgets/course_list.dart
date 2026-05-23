@@ -169,35 +169,37 @@ class _CourseCard extends StatelessWidget {
       opacity: isHidden ? 0.4 : 1.0,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: GestureDetector(
-          onTap: () => context.go(
-            '/dashboard/courses/${course.id}?name=${Uri.encodeComponent(course.name)}',
-          ),
-          onLongPress: () => _showMenu(context),
-          child: ShadCard(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(course.name,
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
-                        if (course.section != null)
-                          Text(course.section!,
-                              style: ShadTheme.of(context).textTheme.muted,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                      ],
+        child: ReorderableDelayedDragStartListener(
+          index: index,
+          child: GestureDetector(
+            onTap: () => context.go(
+              '/dashboard/courses/${course.id}?name=${Uri.encodeComponent(course.name)}',
+            ),
+            child: ShadCard(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(course.name,
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          if (course.section != null)
+                            Text(course.section!,
+                                style: ShadTheme.of(context).textTheme.muted,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
                     ),
-                  ),
-                  ReorderableDragStartListener(
-                    index: index,
-                    child: const Icon(Icons.drag_handle_rounded),
-                  ),
-                ],
+                    IconButton(
+                      icon: const Icon(Icons.more_vert, size: 20),
+                      onPressed: () => _showMenu(context),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
