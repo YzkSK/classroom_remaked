@@ -65,6 +65,24 @@ class NotificationService {
     );
   }
 
+  static Future<void> showTest() async {
+    const androidDetails = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    await _plugin.show(
+      999,
+      'テスト通知',
+      'デバッグ画面から送信されたテスト通知です',
+      const NotificationDetails(
+        android: androidDetails,
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
   Future<void> show(Assignment assignment) async {
     final notifId = assignment.id.hashCode.abs() % 0x7FFFFFFF;
     final due = assignment.dueDate!;

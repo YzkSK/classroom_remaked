@@ -10,6 +10,7 @@ import '../../presentation/views/assignments/assignments_screen.dart';
 import '../../presentation/views/auth/sign_in_screen.dart';
 import '../../presentation/views/dashboard/course_detail_screen.dart';
 import '../../presentation/views/dashboard/dashboard_screen.dart';
+import '../../presentation/views/debug/debug_screen.dart';
 import '../../presentation/views/notification_setup/notification_setup_screen.dart';
 import '../../presentation/views/search/search_screen.dart';
 import '../../presentation/views/settings/settings_screen.dart';
@@ -123,6 +124,12 @@ GoRouter appRouter(AppRouterRef ref) {
             GoRoute(
               path: '/settings',
               builder: (_, __) => const SettingsScreen(),
+              routes: [
+                GoRoute(
+                  path: 'debug',
+                  builder: (_, __) => const DebugScreen(),
+                ),
+              ],
             ),
           ]),
         ],

@@ -1,6 +1,7 @@
 // lib/presentation/views/settings/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../viewmodels/assignments_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -226,6 +227,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onPressed: () =>
                 ref.read(authViewModelProvider.notifier).signOut(),
             child: const Text('サインアウト'),
+          ),
+          const SizedBox(height: 8),
+          ShadButton.ghost(
+            width: double.infinity,
+            onPressed: () => context.go('/settings/debug'),
+            child: Text(
+              'デバッグ情報',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.outline,
+                fontSize: 12,
+              ),
+            ),
           ),
         ],
       ),
