@@ -27,9 +27,20 @@ class DeadlineWidget extends ConsumerWidget {
               style: ShadTheme.of(context).textTheme.h4),
           const SizedBox(height: 8),
           if (!isLoading && deadlines.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text('締め切りが近い課題はありません'),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle_outline_rounded,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.outline),
+                  const SizedBox(width: 6),
+                  Text(
+                    '7日以内に締め切りの課題はありません',
+                    style: ShadTheme.of(context).textTheme.muted,
+                  ),
+                ],
+              ),
             )
           else
             Skeletonizer(

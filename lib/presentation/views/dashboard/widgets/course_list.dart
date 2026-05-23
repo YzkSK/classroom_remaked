@@ -129,6 +129,16 @@ class _CourseCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              leading: const Icon(Icons.open_in_new_rounded),
+              title: const Text('コース詳細を開く'),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.go(
+                  '/dashboard/courses/${course.id}?name=${Uri.encodeComponent(course.name)}',
+                );
+              },
+            ),
             if (isHidden)
               ListTile(
                 leading: const Icon(Icons.visibility),

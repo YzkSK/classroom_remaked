@@ -45,7 +45,9 @@ class AssignmentDetailScreen extends ConsumerWidget {
     final hasSubmitted = isSubmitted && assignment.submissionId != null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('課題詳細')),
+      appBar: AppBar(
+          title: Text(assignment.title,
+              maxLines: 1, overflow: TextOverflow.ellipsis)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -265,7 +267,7 @@ class _SubmitBottomPanel extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           titleTextAlign: TextAlign.center,
           title: const Text('課題を提出しますか？'),
-          description: const Text('提出後は取り消せません。'),
+          description: const Text('提出後も「提出を取り消す」から取り消せます。'),
           actions: [
             ShadButton.outline(
               onPressed: () => Navigator.of(ctx).pop(false),
