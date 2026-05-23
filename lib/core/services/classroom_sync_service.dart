@@ -52,7 +52,7 @@ class ClassroomSyncService {
 
     // UI をブロックしないようバックグラウンドで実行
     const FcmTokenService()
-        .register(userId: _userId, courseIds: courseIds)
+        .register(userId: _userId, courseIds: courseIds, errorLog: _errorLog)
         .catchError((e, st) {
       _errorLog?.add(
         source: 'FcmTokenService.register',

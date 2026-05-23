@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import '../../data/datasources/local/error_log_datasource.dart';
 
 class FcmTokenService {
   const FcmTokenService();
@@ -16,6 +17,7 @@ class FcmTokenService {
   Future<void> register({
     required String userId,
     required List<String> courseIds,
+    ErrorLogDataSource? errorLog,
   }) async {
     final settings = await _messaging.requestPermission(
       alert: true,
@@ -27,16 +29,19 @@ class FcmTokenService {
     final token = await _messaging.getToken();
     if (token == null) return;
 
-    try {
-      await _saveToken(token: token, userId: userId, courseIds: courseIds);
-    } catch (_) {
-      return;
-    }
+    // 例外はそのまま伝播させて呼び出し元でログに記録させる
+    await _saveToken(token: token, userId: userId, courseIds: courseIds);
 
     await _tokenRefreshSub?.cancel();
     _tokenRefreshSub = _messaging.onTokenRefresh.listen((newToken) {
       _saveToken(token: newToken, userId: userId, courseIds: courseIds)
-          .ignore();
+          .catchError((e, st) {
+        errorLog?.add(
+          source: 'FcmTokenService.onTokenRefresh',
+          message: '$e',
+          stackTrace: st.toString(),
+        );
+      });
     });
   }
 
