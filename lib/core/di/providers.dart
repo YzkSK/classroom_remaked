@@ -7,6 +7,7 @@ import '../services/classroom_sync_service.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/course_order_datasource.dart';
 import '../../data/datasources/local/hidden_items_datasource.dart';
+import '../../data/datasources/local/error_log_datasource.dart';
 import '../../data/datasources/local/notification_logs_datasource.dart';
 import '../../data/datasources/local/snoozed_items_datasource.dart';
 import '../../data/datasources/local/sync_state_datasource.dart';
@@ -90,4 +91,8 @@ DriveFileService driveFileService(DriveFileServiceRef ref) {
 Future<Uint8List> fileViewer(FileViewerRef ref, String fileId) {
   return ref.watch(driveFileServiceProvider).downloadPdf(fileId);
 }
+
+final errorLogDataSourceProvider = Provider<ErrorLogDataSource>(
+  (ref) => ErrorLogDataSource(ref.watch(appDatabaseProvider)),
+);
 

@@ -1,8 +1,11 @@
 // lib/presentation/viewmodels/debug_viewmodel.dart
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/di/providers.dart';
 import '../../core/services/notification_service.dart';
 import '../../data/datasources/local/app_database.dart';
+import '../../data/datasources/local/error_log_datasource.dart';
+import '../../data/datasources/local/user_preferences_datasource.dart';
 
 class DebugState {
   const DebugState({
@@ -10,12 +13,22 @@ class DebugState {
     required this.rowCounts,
     required this.lastSyncAt,
     required this.notificationLogs,
+    required this.lazyModeEnabled,
+    required this.lazyModeBlockingCount,
+    required this.notifyBeforeHours,
+    required this.fcmToken,
+    required this.errorLogs,
   });
 
   final int schemaVersion;
   final Map<String, int> rowCounts;
   final String? lastSyncAt;
   final List<NotificationLogRow> notificationLogs;
+  final bool lazyModeEnabled;
+  final int lazyModeBlockingCount;
+  final int notifyBeforeHours;
+  final String? fcmToken;
+  final List<ErrorLogEntry> errorLogs;
 }
 
 class DebugViewModel extends AsyncNotifier<DebugState> {
@@ -25,6 +38,8 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
   Future<DebugState> _load() async {
     final db = ref.read(appDatabaseProvider);
     final syncDs = ref.read(syncStateDataSourceProvider);
+    final prefsDs = UserPreferencesDataSource(db);
+    final errorDs = ErrorLogDataSource(db);
 
     final courses = await db.select(db.courses).get();
     final assignments = await db.select(db.assignments).get();
@@ -33,7 +48,28 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
       ..sort((a, b) => b.notifiedAt.compareTo(a.notifiedAt));
     final snoozed = await db.select(db.snoozedItems).get();
     final hidden = await db.select(db.hiddenItems).get();
+
     final lastSync = await syncDs.get('last_sync_at');
+    final lazyMode = await prefsDs.getLazyModeEnabled();
+    final notifyBeforeHours = await prefsDs.getNotifyBeforeHours();
+    final errorLogs = await errorDs.getAll();
+
+    // 怠惰モードのブロック対象数（CanDisableLazyModeUseCaseと同条件）
+    final cutoff = DateTime.now().add(Duration(hours: notifyBeforeHours));
+    final blockingCount = assignments.where((r) {
+      if (r.submissionId == null) return false;
+      if (r.submissionState == 'turnedIn') return false;
+      if (r.dueDateMillis == null) return false;
+      return DateTime.fromMillisecondsSinceEpoch(r.dueDateMillis!)
+          .isBefore(cutoff);
+    }).length;
+
+    String? fcmToken;
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+    } catch (_) {
+      fcmToken = null;
+    }
 
     return DebugState(
       schemaVersion: db.schemaVersion,
@@ -47,6 +83,11 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
       },
       lastSyncAt: lastSync,
       notificationLogs: logs,
+      lazyModeEnabled: lazyMode,
+      lazyModeBlockingCount: blockingCount,
+      notifyBeforeHours: notifyBeforeHours,
+      fcmToken: fcmToken,
+      errorLogs: errorLogs,
     );
   }
 
@@ -63,6 +104,11 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
   Future<void> clearNotificationLogs() async {
     final db = ref.read(appDatabaseProvider);
     await db.delete(db.notificationLogs).go();
+    await reload();
+  }
+
+  Future<void> clearErrorLogs() async {
+    await ErrorLogDataSource(ref.read(appDatabaseProvider)).clear();
     await reload();
   }
 

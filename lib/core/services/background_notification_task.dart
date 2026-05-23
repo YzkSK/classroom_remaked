@@ -2,6 +2,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:workmanager/workmanager.dart';
 import '../../data/datasources/local/app_database.dart';
+import '../../data/datasources/local/error_log_datasource.dart';
 import '../../data/datasources/local/notification_logs_datasource.dart';
 import '../../data/datasources/local/snoozed_items_datasource.dart';
 import '../../data/datasources/local/user_preferences_datasource.dart';
@@ -69,10 +70,19 @@ class BackgroundNotificationTask {
     }
 
     const notifService = NotificationService();
+    final errorDs = ErrorLogDataSource(db);
     for (final assignment in candidates) {
-      await notifService.show(assignment);
-      await logsDs.log(assignment.id);
-      await snoozeDs.upsert(assignment.id, now.add(snooze));
+      try {
+        await notifService.show(assignment);
+        await logsDs.log(assignment.id);
+        await snoozeDs.upsert(assignment.id, now.add(snooze));
+      } catch (e, st) {
+        await errorDs.add(
+          source: 'BackgroundNotificationTask',
+          message: '通知送信失敗: ${assignment.title} — $e',
+          stackTrace: st.toString(),
+        );
+      }
     }
 
     await const WidgetDataService().updateWidget(db);

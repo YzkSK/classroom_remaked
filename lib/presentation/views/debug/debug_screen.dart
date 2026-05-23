@@ -1,8 +1,10 @@
 // lib/presentation/views/debug/debug_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../data/datasources/local/app_database.dart';
+import '../../../data/datasources/local/error_log_datasource.dart';
 import '../../viewmodels/debug_viewmodel.dart';
 
 class DebugScreen extends ConsumerWidget {
@@ -43,11 +45,33 @@ class DebugScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             _Section(
+              title: '怠惰人間モード',
+              child: _LazyModeSection(
+                enabled: state.lazyModeEnabled,
+                blockingCount: state.lazyModeBlockingCount,
+                notifyBeforeHours: state.notifyBeforeHours,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _Section(
+              title: 'FCMトークン',
+              child: _FcmTokenSection(token: state.fcmToken),
+            ),
+            const SizedBox(height: 16),
+            _Section(
               title: '通知ログ (${state.notificationLogs.length}件)',
               child: _NotificationLogsSection(
                 logs: state.notificationLogs,
                 onClear: notifier.clearNotificationLogs,
                 onTest: notifier.sendTestNotification,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _Section(
+              title: 'エラーログ (${state.errorLogs.length}件)',
+              child: _ErrorLogsSection(
+                logs: state.errorLogs,
+                onClear: notifier.clearErrorLogs,
               ),
             ),
             const SizedBox(height: 16),
@@ -98,9 +122,10 @@ class DebugScreen extends ConsumerWidget {
   }
 }
 
+// ── 共通セクションヘッダー ──────────────────────────────────
+
 class _Section extends StatelessWidget {
   const _Section({required this.title, required this.child});
-
   final String title;
   final Widget child;
 
@@ -117,9 +142,10 @@ class _Section extends StatelessWidget {
   }
 }
 
+// ── DB行数テーブル ──────────────────────────────────────────
+
 class _DbTable extends StatelessWidget {
   const _DbTable({required this.rowCounts});
-
   final Map<String, int> rowCounts;
 
   @override
@@ -149,10 +175,11 @@ class _DbTable extends StatelessWidget {
   }
 }
 
+// ── 同期状態 ────────────────────────────────────────────────
+
 class _SyncSection extends StatelessWidget {
   const _SyncSection(
       {required this.lastSyncAt, required this.onForceRefresh});
-
   final String? lastSyncAt;
   final Future<void> Function() onForceRefresh;
 
@@ -190,13 +217,103 @@ class _SyncSection extends StatelessWidget {
   }
 }
 
+// ── 怠惰モード ──────────────────────────────────────────────
+
+class _LazyModeSection extends StatelessWidget {
+  const _LazyModeSection({
+    required this.enabled,
+    required this.blockingCount,
+    required this.notifyBeforeHours,
+  });
+  final bool enabled;
+  final int blockingCount;
+  final int notifyBeforeHours;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShadCard(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            _Row(
+              label: 'モード',
+              value: enabled ? 'ON' : 'OFF',
+              valueColor: enabled
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.outline,
+            ),
+            const SizedBox(height: 4),
+            _Row(
+              label: '通知タイミング',
+              value: '$notifyBeforeHours 時間前',
+            ),
+            const SizedBox(height: 4),
+            _Row(
+              label: 'OFFブロック中の課題',
+              value: '$blockingCount 件',
+              valueColor: blockingCount > 0
+                  ? Theme.of(context).colorScheme.error
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── FCMトークン ─────────────────────────────────────────────
+
+class _FcmTokenSection extends StatelessWidget {
+  const _FcmTokenSection({required this.token});
+  final String? token;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShadCard(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (token == null)
+              Text('取得できませんでした',
+                  style: ShadTheme.of(context).textTheme.muted)
+            else ...[
+              Text(
+                token!,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 10),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              ShadButton.outline(
+                width: double.infinity,
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: token!));
+                  ShadToaster.of(context).show(
+                    const ShadToast(title: Text('FCMトークンをコピーしました')),
+                  );
+                },
+                child: const Text('コピー'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── 通知ログ ────────────────────────────────────────────────
+
 class _NotificationLogsSection extends StatelessWidget {
   const _NotificationLogsSection({
     required this.logs,
     required this.onClear,
     required this.onTest,
   });
-
   final List<NotificationLogRow> logs;
   final Future<void> Function() onClear;
   final Future<void> Function() onTest;
@@ -214,8 +331,7 @@ class _NotificationLogsSection extends StatelessWidget {
                 : Column(
                     children: logs
                         .map((log) => Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 2),
+                              padding: const EdgeInsets.symmetric(vertical: 2),
                               child: Row(
                                 children: [
                                   Expanded(
@@ -231,9 +347,8 @@ class _NotificationLogsSection extends StatelessWidget {
                                   Text(
                                     DateFormat('MM/dd HH:mm')
                                         .format(log.notifiedAt.toLocal()),
-                                    style: ShadTheme.of(context)
-                                        .textTheme
-                                        .muted,
+                                    style:
+                                        ShadTheme.of(context).textTheme.muted,
                                   ),
                                 ],
                               ),
@@ -247,18 +362,151 @@ class _NotificationLogsSection extends StatelessWidget {
           children: [
             Expanded(
               child: ShadButton.outline(
-                onPressed: onClear,
-                child: const Text('ログをクリア'),
-              ),
+                  onPressed: onClear, child: const Text('ログをクリア')),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: ShadButton.outline(
-                onPressed: onTest,
-                child: const Text('テスト通知'),
-              ),
+                  onPressed: onTest, child: const Text('テスト通知')),
             ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── エラーログ ──────────────────────────────────────────────
+
+class _ErrorLogsSection extends StatelessWidget {
+  const _ErrorLogsSection({required this.logs, required this.onClear});
+  final List<ErrorLogEntry> logs;
+  final Future<void> Function() onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ShadCard(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: logs.isEmpty
+                ? Text('エラーなし',
+                    style: ShadTheme.of(context).textTheme.muted)
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: logs.map((e) => _ErrorLogTile(entry: e)).toList(),
+                  ),
+          ),
+        ),
+        if (logs.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          ShadButton.outline(
+            width: double.infinity,
+            onPressed: onClear,
+            child: const Text('エラーログをクリア'),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ErrorLogTile extends StatefulWidget {
+  const _ErrorLogTile({required this.entry});
+  final ErrorLogEntry entry;
+
+  @override
+  State<_ErrorLogTile> createState() => _ErrorLogTileState();
+}
+
+class _ErrorLogTileState extends State<_ErrorLogTile> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final e = widget.entry;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GestureDetector(
+        onTap: () => setState(() => _expanded = !_expanded),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.error_outline,
+                    size: 14,
+                    color: Theme.of(context).colorScheme.error),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '[${e.source}] ${e.message}',
+                        style: const TextStyle(fontSize: 11),
+                        maxLines: _expanded ? null : 2,
+                        overflow: _expanded ? null : TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        DateFormat('yyyy-MM-dd HH:mm:ss')
+                            .format(e.timestamp.toLocal()),
+                        style: ShadTheme.of(context)
+                            .textTheme
+                            .muted
+                            .copyWith(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (_expanded && e.stackTrace != null) ...[
+              const SizedBox(height: 4),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  e.stackTrace!,
+                  style: const TextStyle(
+                      fontSize: 9, fontFamily: 'monospace'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── 汎用行 ──────────────────────────────────────────────────
+
+class _Row extends StatelessWidget {
+  const _Row({required this.label, required this.value, this.valueColor});
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: ShadTheme.of(context).textTheme.muted),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontWeight:
+                valueColor != null ? FontWeight.w600 : FontWeight.normal,
+          ),
         ),
       ],
     );
