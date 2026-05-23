@@ -211,15 +211,23 @@ class _DbTable extends StatelessWidget {
 
 // ── 同期状態 ────────────────────────────────────────────────
 
-class _SyncSection extends StatelessWidget {
+class _SyncSection extends StatefulWidget {
   const _SyncSection(
       {required this.lastSyncAt, required this.onForceRefresh});
   final String? lastSyncAt;
   final Future<void> Function() onForceRefresh;
 
   @override
+  State<_SyncSection> createState() => _SyncSectionState();
+}
+
+class _SyncSectionState extends State<_SyncSection> {
+  bool _loading = false;
+
+  @override
   Widget build(BuildContext context) {
-    final dt = lastSyncAt != null ? DateTime.tryParse(lastSyncAt!) : null;
+    final dt =
+        widget.lastSyncAt != null ? DateTime.tryParse(widget.lastSyncAt!) : null;
     final label = dt != null
         ? DateFormat('yyyy-MM-dd HH:mm:ss').format(dt.toLocal())
         : 'なし';
@@ -241,8 +249,23 @@ class _SyncSection extends StatelessWidget {
             const SizedBox(height: 12),
             ShadButton.outline(
               width: double.infinity,
-              onPressed: onForceRefresh,
-              child: const Text('強制リフレッシュ'),
+              onPressed: _loading
+                  ? null
+                  : () async {
+                      setState(() => _loading = true);
+                      try {
+                        await widget.onForceRefresh();
+                      } finally {
+                        if (mounted) setState(() => _loading = false);
+                      }
+                    },
+              child: _loading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('強制リフレッシュ'),
             ),
           ],
         ),
