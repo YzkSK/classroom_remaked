@@ -77,6 +77,7 @@ ClassroomSyncService classroomSyncService(ClassroomSyncServiceRef ref) {
     syncState: ref.watch(syncStateDataSourceProvider),
     repository: ref.watch(googleClassroomRepositoryProvider),
     userId: account?.id ?? '',
+    errorLog: ref.watch(errorLogDataSourceProvider),
   );
 }
 

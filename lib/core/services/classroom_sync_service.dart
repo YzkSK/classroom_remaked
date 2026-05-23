@@ -1,4 +1,5 @@
 // lib/core/services/classroom_sync_service.dart
+import '../../data/datasources/local/error_log_datasource.dart';
 import '../../data/datasources/local/sync_state_datasource.dart';
 import '../../data/repositories/google_classroom_repository.dart';
 import 'fcm_token_service.dart';
@@ -8,13 +9,16 @@ class ClassroomSyncService {
     required SyncStateDataSource syncState,
     required GoogleClassroomRepository repository,
     required String userId,
+    ErrorLogDataSource? errorLog,
   })  : _syncState = syncState,
         _repo = repository,
-        _userId = userId;
+        _userId = userId,
+        _errorLog = errorLog;
 
   final SyncStateDataSource _syncState;
   final GoogleClassroomRepository _repo;
   final String _userId;
+  final ErrorLogDataSource? _errorLog;
 
   static const _cacheValidDuration = Duration(hours: 1);
 
@@ -49,7 +53,19 @@ class ClassroomSyncService {
     // UI をブロックしないようバックグラウンドで実行
     const FcmTokenService()
         .register(userId: _userId, courseIds: courseIds)
-        .ignore();
-    _repo.registerPubSubFeeds(courseIds).ignore();
+        .catchError((e, st) {
+      _errorLog?.add(
+        source: 'FcmTokenService.register',
+        message: '$e',
+        stackTrace: st.toString(),
+      );
+    });
+    _repo.registerPubSubFeeds(courseIds).catchError((e, st) {
+      _errorLog?.add(
+        source: 'PubSubRegistration',
+        message: '$e',
+        stackTrace: st.toString(),
+      );
+    });
   }
 }
