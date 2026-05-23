@@ -21,6 +21,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   double? _notifyHoursDraft;
   double? _snoozeHoursDraft;
   bool _permissionGranted = true;
+  bool _signingOut = false;
   int _debugTapCount = 0;
   Timer? _debugTapTimer;
 
@@ -250,9 +251,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
           ShadButton.outline(
             width: double.infinity,
-            onPressed: () =>
-                ref.read(authViewModelProvider.notifier).signOut(),
-            child: const Text('サインアウト'),
+            onPressed: _signingOut
+                ? null
+                : () async {
+                    setState(() => _signingOut = true);
+                    try {
+                      await ref.read(authViewModelProvider.notifier).signOut();
+                    } finally {
+                      if (mounted) setState(() => _signingOut = false);
+                    }
+                  },
+            child: _signingOut
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('サインアウト'),
           ),
           const SizedBox(height: 8),
           const SizedBox(height: 8),
