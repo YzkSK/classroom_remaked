@@ -150,12 +150,19 @@ class AppDatabase extends _$AppDatabase {
                 assignments.submissionAttachmentsJson as GeneratedColumn);
           }
           if (from < 6) {
-            await m.addColumn(announcements,
-                announcements.title as GeneratedColumn);
-            await m.addColumn(announcements,
-                announcements.isMaterial as GeneratedColumn);
-            await m.addColumn(announcements,
-                announcements.materialsJson as GeneratedColumn);
+            final existing = await customSelect(
+              "SELECT name FROM pragma_table_info('announcements')",
+            ).get();
+            final cols = existing.map((r) => r.read<String>('name')).toSet();
+            for (final col in [
+              announcements.title,
+              announcements.isMaterial,
+              announcements.materialsJson,
+            ]) {
+              if (!cols.contains(col.name)) {
+                await m.addColumn(announcements, col);
+              }
+            }
           }
         },
       );
