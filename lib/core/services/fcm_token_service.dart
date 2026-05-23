@@ -27,11 +27,16 @@ class FcmTokenService {
     final token = await _messaging.getToken();
     if (token == null) return;
 
-    await _saveToken(token: token, userId: userId, courseIds: courseIds);
+    try {
+      await _saveToken(token: token, userId: userId, courseIds: courseIds);
+    } catch (_) {
+      return;
+    }
 
     await _tokenRefreshSub?.cancel();
     _tokenRefreshSub = _messaging.onTokenRefresh.listen((newToken) {
-      _saveToken(token: newToken, userId: userId, courseIds: courseIds);
+      _saveToken(token: newToken, userId: userId, courseIds: courseIds)
+          .ignore();
     });
   }
 
@@ -55,6 +60,6 @@ class FcmTokenService {
       'platform': Platform.isIOS ? 'ios' : 'android',
       'courseIds': courseIds,
       'updatedAt': FieldValue.serverTimestamp(),
-    });
+    }).timeout(const Duration(seconds: 5));
   }
 }
