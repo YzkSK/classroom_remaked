@@ -98,7 +98,7 @@ class _AssignmentsTab extends ConsumerWidget {
               itemBuilder: (context, index) => AssignmentCard(
                 assignment: courseAssignments[index],
                 variant: AssignmentCardVariant.compact,
-                onTap: () => context.go(
+                onTap: () => context.push(
                     '/assignments/${courseAssignments[index].id}'),
               ),
             ),
