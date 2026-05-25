@@ -1,5 +1,4 @@
 // lib/presentation/viewmodels/debug_viewmodel.dart
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/di/providers.dart';
 import '../../core/services/notification_service.dart';
@@ -17,7 +16,6 @@ class DebugState {
     required this.lazyModeEnabled,
     required this.lazyModeBlockingCount,
     required this.notifyBeforeHours,
-    required this.fcmToken,
     required this.errorLogs,
   });
 
@@ -29,7 +27,6 @@ class DebugState {
   final bool lazyModeEnabled;
   final int lazyModeBlockingCount;
   final int notifyBeforeHours;
-  final String? fcmToken;
   final List<ErrorLogEntry> errorLogs;
 }
 
@@ -67,13 +64,6 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
       return due.isAfter(DateTime.now()) && due.isBefore(cutoff);
     }).length;
 
-    String? fcmToken;
-    try {
-      fcmToken = await FirebaseMessaging.instance.getToken();
-    } catch (_) {
-      fcmToken = null;
-    }
-
     return DebugState(
       schemaVersion: db.schemaVersion,
       rowCounts: {
@@ -90,7 +80,6 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
       lazyModeEnabled: lazyMode,
       lazyModeBlockingCount: blockingCount,
       notifyBeforeHours: notifyBeforeHours,
-      fcmToken: fcmToken,
       errorLogs: errorLogs,
     );
   }
