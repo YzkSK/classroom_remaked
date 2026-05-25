@@ -116,3 +116,11 @@ final teacherSubmissionCountsProvider =
       .getSubmissionCounts(courseId);
 });
 
+/// 教師向け：コースの受講生数
+final teacherStudentCountProvider =
+    FutureProvider.family<int, String>((ref, courseId) async {
+  return ref
+      .watch(googleClassroomRepositoryProvider)
+      .getStudentCount(courseId);
+});
+
