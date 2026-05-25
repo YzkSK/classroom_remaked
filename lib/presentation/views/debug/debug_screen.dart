@@ -1,6 +1,5 @@
 // lib/presentation/views/debug/debug_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../core/di/providers.dart';
@@ -72,11 +71,6 @@ class DebugScreen extends ConsumerWidget {
                         )
                     : null,
               ),
-            ),
-            const SizedBox(height: 16),
-            _Section(
-              title: 'FCMトークン',
-              child: _FcmTokenSection(token: state.fcmToken),
             ),
             const SizedBox(height: 16),
             _Section(
@@ -358,49 +352,6 @@ class _LazyModeSection extends StatelessWidget {
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── FCMトークン ─────────────────────────────────────────────
-
-class _FcmTokenSection extends StatelessWidget {
-  const _FcmTokenSection({required this.token});
-  final String? token;
-
-  @override
-  Widget build(BuildContext context) {
-    return ShadCard(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (token == null)
-              Text('取得できませんでした',
-                  style: ShadTheme.of(context).textTheme.muted)
-            else ...[
-              Text(
-                token!,
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 10),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
-              ShadButton.outline(
-                width: double.infinity,
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: token!));
-                  ShadToaster.of(context).show(
-                    const ShadToast(title: Text('FCMトークンをコピーしました')),
-                  );
-                },
-                child: const Text('コピー'),
-              ),
-            ],
           ],
         ),
       ),
