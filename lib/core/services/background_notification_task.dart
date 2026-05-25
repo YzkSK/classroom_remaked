@@ -51,6 +51,10 @@ class BackgroundNotificationTask {
 
     final rows = await db.select(db.assignments).get();
 
+    final courseRows = await db.select(db.courses).get();
+    final teacherCourseIds =
+        courseRows.where((c) => c.role == 'teacher').map((c) => c.id).toSet();
+
     // 提出済み課題の通知ログ・スヌーズをクリーンアップ
     for (final r in rows.where((r) => r.submissionState == 'turnedIn')) {
       await logsDs.delete(r.id);
@@ -61,7 +65,8 @@ class BackgroundNotificationTask {
         .where((r) =>
             r.state == 'published' &&
             r.submissionState != 'turnedIn' &&
-            r.dueDateMillis != null)
+            r.dueDateMillis != null &&
+            !teacherCourseIds.contains(r.courseId))
         .map((r) => Assignment(
               id: r.id,
               courseId: r.courseId,
