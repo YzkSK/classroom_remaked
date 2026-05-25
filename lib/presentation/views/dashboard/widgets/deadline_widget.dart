@@ -50,7 +50,7 @@ class DeadlineWidget extends ConsumerWidget {
                     .map((a) => AssignmentCard(
                           assignment: a,
                           variant: AssignmentCardVariant.tile,
-                          onTap: () => context.go('/assignments/${a.id}'),
+                          onTap: () => context.push('/assignments/${a.id}'),
                         ))
                     .toList(),
               ),
