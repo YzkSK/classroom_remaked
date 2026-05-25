@@ -12,6 +12,7 @@ class DebugState {
     required this.schemaVersion,
     required this.rowCounts,
     required this.lastSyncAt,
+    required this.lastBgSyncAt,
     required this.notificationLogs,
     required this.lazyModeEnabled,
     required this.lazyModeBlockingCount,
@@ -23,6 +24,7 @@ class DebugState {
   final int schemaVersion;
   final Map<String, int> rowCounts;
   final String? lastSyncAt;
+  final String? lastBgSyncAt;
   final List<NotificationLogRow> notificationLogs;
   final bool lazyModeEnabled;
   final int lazyModeBlockingCount;
@@ -50,6 +52,7 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
     final hidden = await db.select(db.hiddenItems).get();
 
     final lastSync = await syncDs.get('last_sync_at');
+    final lastBgSync = await syncDs.get('last_bg_sync_at');
     final lazyMode = await prefsDs.getLazyModeEnabled();
     final notifyBeforeHours = await prefsDs.getNotifyBeforeHours();
     final errorLogs = await errorDs.getAll();
@@ -82,6 +85,7 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
         'hidden_items': hidden.length,
       },
       lastSyncAt: lastSync,
+      lastBgSyncAt: lastBgSync,
       notificationLogs: logs,
       lazyModeEnabled: lazyMode,
       lazyModeBlockingCount: blockingCount,
