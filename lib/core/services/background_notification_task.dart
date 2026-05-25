@@ -119,9 +119,8 @@ class BackgroundNotificationTask {
     GoogleSignInAccount account,
     ErrorLogDataSource errorDs,
   ) async {
-    // 同期前のIDセットを記録
-    final knownIds =
-        (await db.select(db.assignments).get()).map((r) => r.id).toSet();
+    final prefsDs = UserPreferencesDataSource(db);
+    final notifiedIds = await prefsDs.getNewAssignmentNotifiedIds();
 
     final repo = GoogleClassroomRepository(database: db, account: account);
 
@@ -138,12 +137,14 @@ class BackgroundNotificationTask {
     // 全コースの課題を同期
     await Future.wait(courses.map((c) => repo.refreshAssignments(c.id)));
 
-    // 同期後のIDセットと差分を求める
+    // 通知済みIDに含まれない課題が新着
     final allRows = await db.select(db.assignments).get();
-    final newRows = allRows.where((r) => !knownIds.contains(r.id)).toList();
+    final newRows =
+        allRows.where((r) => !notifiedIds.contains(r.id)).toList();
 
+    final sentIds = <String>[];
     for (final row in newRows) {
-      // 提出不要・非公開・教師コースは除外
+      // 非公開・教師コースは除外
       if (row.state != 'published') continue;
       if (teacherCourseIds.contains(row.courseId)) continue;
       final courseName = courseNameMap[row.courseId] ?? row.courseId;
@@ -153,6 +154,7 @@ class BackgroundNotificationTask {
           title: row.title,
           courseName: courseName,
         );
+        sentIds.add(row.id);
       } catch (e, st) {
         await errorDs.add(
           source: 'BackgroundSync.showNewAssignment',
@@ -161,6 +163,10 @@ class BackgroundNotificationTask {
         );
       }
     }
+
+    // 通知済み（送信成功 + 除外済み）を全て記録して次回スキップ
+    final allIds = allRows.map((r) => r.id);
+    await prefsDs.addNewAssignmentNotifiedIds([...allIds, ...sentIds]);
   }
 
   static List<Assignment> filterCandidates({

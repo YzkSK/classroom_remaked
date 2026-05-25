@@ -1,4 +1,5 @@
 // lib/data/datasources/local/user_preferences_datasource.dart
+import 'dart:convert';
 import 'app_database.dart';
 
 class UserPreferencesDataSource {
@@ -55,4 +56,22 @@ class UserPreferencesDataSource {
 
   Future<void> setOnboardingDone(bool done) =>
       _set(_keyOnboardingDone, done.toString());
+
+  static const _keyNewAssignmentNotifiedIds = 'newAssignmentNotifiedIds';
+  static const _maxNotifiedIds = 500;
+
+  Future<Set<String>> getNewAssignmentNotifiedIds() async {
+    final v = await _get(_keyNewAssignmentNotifiedIds);
+    if (v == null) return {};
+    return (jsonDecode(v) as List).cast<String>().toSet();
+  }
+
+  Future<void> addNewAssignmentNotifiedIds(Iterable<String> ids) async {
+    final current = await getNewAssignmentNotifiedIds();
+    current.addAll(ids);
+    final trimmed = current.length > _maxNotifiedIds
+        ? current.toList().sublist(current.length - _maxNotifiedIds)
+        : current.toList();
+    await _set(_keyNewAssignmentNotifiedIds, jsonEncode(trimmed));
+  }
 }
