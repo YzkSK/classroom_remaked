@@ -130,8 +130,10 @@ class BackgroundNotificationTask {
     final courses = coursesResult.getOrElse(() => []);
     if (courses.isEmpty) return;
 
-    // コースIDとコース名のマップ
+    // コースIDとコース名のマップ（教師コースは通知不要）
     final courseNameMap = {for (final c in courses) c.id: c.name};
+    final teacherCourseIds =
+        courses.where((c) => c.role == 'teacher').map((c) => c.id).toSet();
 
     // 全コースの課題を同期
     await Future.wait(courses.map((c) => repo.refreshAssignments(c.id)));
@@ -141,8 +143,9 @@ class BackgroundNotificationTask {
     final newRows = allRows.where((r) => !knownIds.contains(r.id)).toList();
 
     for (final row in newRows) {
-      // 提出不要・非公開・期限なし課題は除外
+      // 提出不要・非公開・教師コースは除外
       if (row.state != 'published') continue;
+      if (teacherCourseIds.contains(row.courseId)) continue;
       final courseName = courseNameMap[row.courseId] ?? row.courseId;
       try {
         await NotificationService.showNewAssignment(
