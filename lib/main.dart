@@ -31,7 +31,7 @@ void main() async {
   await Workmanager().registerPeriodicTask(
     notificationTaskUniqueName,
     notificationTaskName,
-    frequency: const Duration(hours: 1),
+    frequency: const Duration(minutes: 15),
     existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
   );
   final db = AppDatabase();

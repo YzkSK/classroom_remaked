@@ -13,7 +13,7 @@ class ClassroomSyncService {
   final SyncStateDataSource _syncState;
   final GoogleClassroomRepository _repo;
 
-  static const _cacheValidDuration = Duration(hours: 1);
+  static const _cacheValidDuration = Duration(minutes: 15);
 
   /// 起動時・フォアグラウンド復帰時に呼ぶ。
   /// 最終同期から1時間以内ならキャッシュをそのまま使い API を呼ばない。
