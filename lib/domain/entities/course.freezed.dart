@@ -24,6 +24,7 @@ mixin _$Course {
   String? get room => throw _privateConstructorUsedError;
   String? get ownerId => throw _privateConstructorUsedError;
   String get courseState => throw _privateConstructorUsedError;
+  String get role => throw _privateConstructorUsedError;
 
   /// Create a copy of Course
   /// with the given fields replaced by the non-null parameter values.
@@ -44,6 +45,7 @@ abstract class $CourseCopyWith<$Res> {
     String? room,
     String? ownerId,
     String courseState,
+    String role,
   });
 }
 
@@ -69,6 +71,7 @@ class _$CourseCopyWithImpl<$Res, $Val extends Course>
     Object? room = freezed,
     Object? ownerId = freezed,
     Object? courseState = null,
+    Object? role = null,
   }) {
     return _then(
       _value.copyWith(
@@ -100,6 +103,10 @@ class _$CourseCopyWithImpl<$Res, $Val extends Course>
                 ? _value.courseState
                 : courseState // ignore: cast_nullable_to_non_nullable
                       as String,
+            role: null == role
+                ? _value.role
+                : role // ignore: cast_nullable_to_non_nullable
+                      as String,
           )
           as $Val,
     );
@@ -122,6 +129,7 @@ abstract class _$$CourseImplCopyWith<$Res> implements $CourseCopyWith<$Res> {
     String? room,
     String? ownerId,
     String courseState,
+    String role,
   });
 }
 
@@ -146,6 +154,7 @@ class __$$CourseImplCopyWithImpl<$Res>
     Object? room = freezed,
     Object? ownerId = freezed,
     Object? courseState = null,
+    Object? role = null,
   }) {
     return _then(
       _$CourseImpl(
@@ -177,6 +186,10 @@ class __$$CourseImplCopyWithImpl<$Res>
             ? _value.courseState
             : courseState // ignore: cast_nullable_to_non_nullable
                   as String,
+        role: null == role
+            ? _value.role
+            : role // ignore: cast_nullable_to_non_nullable
+                  as String,
       ),
     );
   }
@@ -193,6 +206,7 @@ class _$CourseImpl implements _Course {
     this.room,
     this.ownerId,
     this.courseState = 'ACTIVE',
+    this.role = 'student',
   });
 
   @override
@@ -210,10 +224,13 @@ class _$CourseImpl implements _Course {
   @override
   @JsonKey()
   final String courseState;
+  @override
+  @JsonKey()
+  final String role;
 
   @override
   String toString() {
-    return 'Course(id: $id, name: $name, description: $description, section: $section, room: $room, ownerId: $ownerId, courseState: $courseState)';
+    return 'Course(id: $id, name: $name, description: $description, section: $section, room: $room, ownerId: $ownerId, courseState: $courseState, role: $role)';
   }
 
   @override
@@ -229,7 +246,8 @@ class _$CourseImpl implements _Course {
             (identical(other.room, room) || other.room == room) &&
             (identical(other.ownerId, ownerId) || other.ownerId == ownerId) &&
             (identical(other.courseState, courseState) ||
-                other.courseState == courseState));
+                other.courseState == courseState) &&
+            (identical(other.role, role) || other.role == role));
   }
 
   @override
@@ -242,6 +260,7 @@ class _$CourseImpl implements _Course {
     room,
     ownerId,
     courseState,
+    role,
   );
 
   /// Create a copy of Course
@@ -262,6 +281,7 @@ abstract class _Course implements Course {
     final String? room,
     final String? ownerId,
     final String courseState,
+    final String role,
   }) = _$CourseImpl;
 
   @override
@@ -278,6 +298,8 @@ abstract class _Course implements Course {
   String? get ownerId;
   @override
   String get courseState;
+  @override
+  String get role;
 
   /// Create a copy of Course
   /// with the given fields replaced by the non-null parameter values.

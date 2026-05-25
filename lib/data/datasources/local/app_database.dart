@@ -16,6 +16,8 @@ class Courses extends Table {
   TextColumn get ownerId => text().nullable()();
   TextColumn get courseState =>
       text().withDefault(const Constant('ACTIVE'))();
+  TextColumn get role =>
+      text().withDefault(const Constant('student'))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -126,7 +128,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withConnection(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -162,6 +164,15 @@ class AppDatabase extends _$AppDatabase {
               if (!cols.contains(col.name)) {
                 await m.addColumn(announcements, col);
               }
+            }
+          }
+          if (from < 7) {
+            final existing = await customSelect(
+              "SELECT name FROM pragma_table_info('courses')",
+            ).get();
+            final cols = existing.map((r) => r.read<String>('name')).toSet();
+            if (!cols.contains('role')) {
+              await m.addColumn(courses, courses.role as GeneratedColumn);
             }
           }
         },

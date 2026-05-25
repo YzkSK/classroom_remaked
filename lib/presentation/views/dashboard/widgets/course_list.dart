@@ -184,8 +184,22 @@ class _CourseCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(course.name,
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(course.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                              if (course.role == 'teacher') ...[
+                                const SizedBox(width: 6),
+                                const ShadBadge.secondary(
+                                  child: Text('教師',
+                                      style: TextStyle(fontSize: 10)),
+                                ),
+                              ],
+                            ],
+                          ),
                           if (course.section != null)
                             Text(course.section!,
                                 style: ShadTheme.of(context).textTheme.muted,

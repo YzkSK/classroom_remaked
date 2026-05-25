@@ -97,3 +97,22 @@ final errorLogDataSourceProvider = Provider<ErrorLogDataSource>(
   (ref) => ErrorLogDataSource(ref.watch(appDatabaseProvider)),
 );
 
+/// コースの role を DB から取得する
+final courseRoleProvider =
+    FutureProvider.family<String, String>((ref, courseId) async {
+  final db = ref.watch(appDatabaseProvider);
+  final row = await (db.select(db.courses)
+        ..where((t) => t.id.equals(courseId)))
+      .getSingleOrNull();
+  return row?.role ?? 'student';
+});
+
+/// 教師向け：コース内の課題ごとの提出数
+/// Map<courseWorkId, submittedCount>
+final teacherSubmissionCountsProvider =
+    FutureProvider.family<Map<String, int>, String>((ref, courseId) async {
+  return ref
+      .watch(googleClassroomRepositoryProvider)
+      .getSubmissionCounts(courseId);
+});
+

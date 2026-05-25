@@ -80,6 +80,16 @@ class $CoursesTable extends Courses with TableInfo<$CoursesTable, CourseRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant('ACTIVE'),
   );
+  static const VerificationMeta _roleMeta = const VerificationMeta('role');
+  @override
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('student'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -89,6 +99,7 @@ class $CoursesTable extends Courses with TableInfo<$CoursesTable, CourseRow> {
     room,
     ownerId,
     courseState,
+    role,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -151,6 +162,12 @@ class $CoursesTable extends Courses with TableInfo<$CoursesTable, CourseRow> {
         ),
       );
     }
+    if (data.containsKey('role')) {
+      context.handle(
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
+    }
     return context;
   }
 
@@ -188,6 +205,10 @@ class $CoursesTable extends Courses with TableInfo<$CoursesTable, CourseRow> {
         DriftSqlType.string,
         data['${effectivePrefix}course_state'],
       )!,
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      )!,
     );
   }
 
@@ -205,6 +226,7 @@ class CourseRow extends DataClass implements Insertable<CourseRow> {
   final String? room;
   final String? ownerId;
   final String courseState;
+  final String role;
   const CourseRow({
     required this.id,
     required this.name,
@@ -213,6 +235,7 @@ class CourseRow extends DataClass implements Insertable<CourseRow> {
     this.room,
     this.ownerId,
     required this.courseState,
+    required this.role,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -232,6 +255,7 @@ class CourseRow extends DataClass implements Insertable<CourseRow> {
       map['owner_id'] = Variable<String>(ownerId);
     }
     map['course_state'] = Variable<String>(courseState);
+    map['role'] = Variable<String>(role);
     return map;
   }
 
@@ -250,6 +274,7 @@ class CourseRow extends DataClass implements Insertable<CourseRow> {
           ? const Value.absent()
           : Value(ownerId),
       courseState: Value(courseState),
+      role: Value(role),
     );
   }
 
@@ -266,6 +291,7 @@ class CourseRow extends DataClass implements Insertable<CourseRow> {
       room: serializer.fromJson<String?>(json['room']),
       ownerId: serializer.fromJson<String?>(json['ownerId']),
       courseState: serializer.fromJson<String>(json['courseState']),
+      role: serializer.fromJson<String>(json['role']),
     );
   }
   @override
@@ -279,6 +305,7 @@ class CourseRow extends DataClass implements Insertable<CourseRow> {
       'room': serializer.toJson<String?>(room),
       'ownerId': serializer.toJson<String?>(ownerId),
       'courseState': serializer.toJson<String>(courseState),
+      'role': serializer.toJson<String>(role),
     };
   }
 
@@ -290,6 +317,7 @@ class CourseRow extends DataClass implements Insertable<CourseRow> {
     Value<String?> room = const Value.absent(),
     Value<String?> ownerId = const Value.absent(),
     String? courseState,
+    String? role,
   }) => CourseRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -298,6 +326,7 @@ class CourseRow extends DataClass implements Insertable<CourseRow> {
     room: room.present ? room.value : this.room,
     ownerId: ownerId.present ? ownerId.value : this.ownerId,
     courseState: courseState ?? this.courseState,
+    role: role ?? this.role,
   );
   CourseRow copyWithCompanion(CoursesCompanion data) {
     return CourseRow(
@@ -312,6 +341,7 @@ class CourseRow extends DataClass implements Insertable<CourseRow> {
       courseState: data.courseState.present
           ? data.courseState.value
           : this.courseState,
+      role: data.role.present ? data.role.value : this.role,
     );
   }
 
@@ -324,14 +354,23 @@ class CourseRow extends DataClass implements Insertable<CourseRow> {
           ..write('section: $section, ')
           ..write('room: $room, ')
           ..write('ownerId: $ownerId, ')
-          ..write('courseState: $courseState')
+          ..write('courseState: $courseState, ')
+          ..write('role: $role')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, description, section, room, ownerId, courseState);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    description,
+    section,
+    room,
+    ownerId,
+    courseState,
+    role,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -342,7 +381,8 @@ class CourseRow extends DataClass implements Insertable<CourseRow> {
           other.section == this.section &&
           other.room == this.room &&
           other.ownerId == this.ownerId &&
-          other.courseState == this.courseState);
+          other.courseState == this.courseState &&
+          other.role == this.role);
 }
 
 class CoursesCompanion extends UpdateCompanion<CourseRow> {
@@ -353,6 +393,7 @@ class CoursesCompanion extends UpdateCompanion<CourseRow> {
   final Value<String?> room;
   final Value<String?> ownerId;
   final Value<String> courseState;
+  final Value<String> role;
   final Value<int> rowid;
   const CoursesCompanion({
     this.id = const Value.absent(),
@@ -362,6 +403,7 @@ class CoursesCompanion extends UpdateCompanion<CourseRow> {
     this.room = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.courseState = const Value.absent(),
+    this.role = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CoursesCompanion.insert({
@@ -372,6 +414,7 @@ class CoursesCompanion extends UpdateCompanion<CourseRow> {
     this.room = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.courseState = const Value.absent(),
+    this.role = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name);
@@ -383,6 +426,7 @@ class CoursesCompanion extends UpdateCompanion<CourseRow> {
     Expression<String>? room,
     Expression<String>? ownerId,
     Expression<String>? courseState,
+    Expression<String>? role,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -393,6 +437,7 @@ class CoursesCompanion extends UpdateCompanion<CourseRow> {
       if (room != null) 'room': room,
       if (ownerId != null) 'owner_id': ownerId,
       if (courseState != null) 'course_state': courseState,
+      if (role != null) 'role': role,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -405,6 +450,7 @@ class CoursesCompanion extends UpdateCompanion<CourseRow> {
     Value<String?>? room,
     Value<String?>? ownerId,
     Value<String>? courseState,
+    Value<String>? role,
     Value<int>? rowid,
   }) {
     return CoursesCompanion(
@@ -415,6 +461,7 @@ class CoursesCompanion extends UpdateCompanion<CourseRow> {
       room: room ?? this.room,
       ownerId: ownerId ?? this.ownerId,
       courseState: courseState ?? this.courseState,
+      role: role ?? this.role,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -443,6 +490,9 @@ class CoursesCompanion extends UpdateCompanion<CourseRow> {
     if (courseState.present) {
       map['course_state'] = Variable<String>(courseState.value);
     }
+    if (role.present) {
+      map['role'] = Variable<String>(role.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -459,6 +509,7 @@ class CoursesCompanion extends UpdateCompanion<CourseRow> {
           ..write('room: $room, ')
           ..write('ownerId: $ownerId, ')
           ..write('courseState: $courseState, ')
+          ..write('role: $role, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3053,6 +3104,7 @@ typedef $$CoursesTableCreateCompanionBuilder =
       Value<String?> room,
       Value<String?> ownerId,
       Value<String> courseState,
+      Value<String> role,
       Value<int> rowid,
     });
 typedef $$CoursesTableUpdateCompanionBuilder =
@@ -3064,6 +3116,7 @@ typedef $$CoursesTableUpdateCompanionBuilder =
       Value<String?> room,
       Value<String?> ownerId,
       Value<String> courseState,
+      Value<String> role,
       Value<int> rowid,
     });
 
@@ -3108,6 +3161,11 @@ class $$CoursesTableFilterComposer
 
   ColumnFilters<String> get courseState => $composableBuilder(
     column: $table.courseState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get role => $composableBuilder(
+    column: $table.role,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3155,6 +3213,11 @@ class $$CoursesTableOrderingComposer
     column: $table.courseState,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CoursesTableAnnotationComposer
@@ -3190,6 +3253,9 @@ class $$CoursesTableAnnotationComposer
     column: $table.courseState,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
 }
 
 class $$CoursesTableTableManager
@@ -3227,6 +3293,7 @@ class $$CoursesTableTableManager
                 Value<String?> room = const Value.absent(),
                 Value<String?> ownerId = const Value.absent(),
                 Value<String> courseState = const Value.absent(),
+                Value<String> role = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CoursesCompanion(
                 id: id,
@@ -3236,6 +3303,7 @@ class $$CoursesTableTableManager
                 room: room,
                 ownerId: ownerId,
                 courseState: courseState,
+                role: role,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3247,6 +3315,7 @@ class $$CoursesTableTableManager
                 Value<String?> room = const Value.absent(),
                 Value<String?> ownerId = const Value.absent(),
                 Value<String> courseState = const Value.absent(),
+                Value<String> role = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CoursesCompanion.insert(
                 id: id,
@@ -3256,6 +3325,7 @@ class $$CoursesTableTableManager
                 room: room,
                 ownerId: ownerId,
                 courseState: courseState,
+                role: role,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

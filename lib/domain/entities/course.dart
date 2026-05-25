@@ -12,5 +12,6 @@ class Course with _$Course {
     String? room,
     String? ownerId,
     @Default('ACTIVE') String courseState,
+    @Default('student') String role,
   }) = _Course;
 }
