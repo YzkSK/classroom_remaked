@@ -50,6 +50,7 @@ class DebugScreen extends ConsumerWidget {
               title: '同期',
               child: _SyncSection(
                 lastSyncAt: state.lastSyncAt,
+                lastBgSyncAt: state.lastBgSyncAt,
                 onForceRefresh: notifier.forceRefresh,
               ),
             ),
@@ -212,9 +213,13 @@ class _DbTable extends StatelessWidget {
 // ── 同期状態 ────────────────────────────────────────────────
 
 class _SyncSection extends StatefulWidget {
-  const _SyncSection(
-      {required this.lastSyncAt, required this.onForceRefresh});
+  const _SyncSection({
+    required this.lastSyncAt,
+    required this.lastBgSyncAt,
+    required this.onForceRefresh,
+  });
   final String? lastSyncAt;
+  final String? lastBgSyncAt;
   final Future<void> Function() onForceRefresh;
 
   @override
@@ -226,11 +231,12 @@ class _SyncSectionState extends State<_SyncSection> {
 
   @override
   Widget build(BuildContext context) {
-    final dt =
-        widget.lastSyncAt != null ? DateTime.tryParse(widget.lastSyncAt!) : null;
-    final label = dt != null
-        ? DateFormat('yyyy-MM-dd HH:mm:ss').format(dt.toLocal())
-        : 'なし';
+    String fmt(String? raw) {
+      final dt = raw != null ? DateTime.tryParse(raw) : null;
+      return dt != null
+          ? DateFormat('yyyy-MM-dd HH:mm:ss').format(dt.toLocal())
+          : 'なし';
+    }
 
     return ShadCard(
       child: Padding(
@@ -241,9 +247,18 @@ class _SyncSectionState extends State<_SyncSection> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('最終同期',
+                Text('最終同期（FG）',
                     style: ShadTheme.of(context).textTheme.muted),
-                Text(label),
+                Text(fmt(widget.lastSyncAt)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('最終同期（BG）',
+                    style: ShadTheme.of(context).textTheme.muted),
+                Text(fmt(widget.lastBgSyncAt)),
               ],
             ),
             const SizedBox(height: 12),

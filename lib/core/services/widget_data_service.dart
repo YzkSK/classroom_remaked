@@ -47,10 +47,14 @@ class WidgetDataService {
   }) {
     final endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
     final courseNames = {for (final c in courseRows) c.id: c.name};
+    final teacherCourseIds =
+        courseRows.where((c) => c.role == 'teacher').map((c) => c.id).toSet();
 
     final filtered = assignmentRows
         .where((r) =>
-            r.submissionState != 'turnedIn' && r.dueDateMillis != null)
+            r.submissionState != 'turnedIn' &&
+            r.dueDateMillis != null &&
+            !teacherCourseIds.contains(r.courseId))
         .map((r) {
           final due = DateTime.fromMillisecondsSinceEpoch(r.dueDateMillis!);
           return MapEntry(r, due);

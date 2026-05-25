@@ -7,6 +7,7 @@ import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/error_log_datasource.dart';
 import '../../data/datasources/local/notification_logs_datasource.dart';
 import '../../data/datasources/local/snoozed_items_datasource.dart';
+import '../../data/datasources/local/sync_state_datasource.dart';
 import '../../data/datasources/local/user_preferences_datasource.dart';
 import '../../data/repositories/google_classroom_repository.dart';
 import '../../domain/entities/assignment.dart';
@@ -110,6 +111,9 @@ class BackgroundNotificationTask {
     }
 
     await const WidgetDataService().updateWidget(db);
+
+    await SyncStateDataSource(db)
+        .set('last_bg_sync_at', DateTime.now().toIso8601String());
 
     return true;
   }

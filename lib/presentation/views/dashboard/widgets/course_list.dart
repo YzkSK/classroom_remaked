@@ -184,27 +184,37 @@ class _CourseCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(course.name,
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 4),
                           Row(
                             children: [
-                              Expanded(
-                                child: Text(course.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis),
-                              ),
-                              if (course.role == 'teacher') ...[
-                                const SizedBox(width: 6),
-                                const ShadBadge.secondary(
+                              if (course.role == 'teacher')
+                                const ShadBadge(
                                   child: Text('教師',
                                       style: TextStyle(fontSize: 10)),
+                                )
+                              else
+                                ShadBadge.secondary(
+                                  child: Text('生徒',
+                                      style: TextStyle(
+                                          fontSize: 10,
+                                          color: ShadTheme.of(context)
+                                              .colorScheme
+                                              .mutedForeground)),
+                                ),
+                              if (course.section != null) ...[
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(course.section!,
+                                      style:
+                                          ShadTheme.of(context).textTheme.muted,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis),
                                 ),
                               ],
                             ],
                           ),
-                          if (course.section != null)
-                            Text(course.section!,
-                                style: ShadTheme.of(context).textTheme.muted,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     ),
