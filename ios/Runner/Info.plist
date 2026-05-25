@@ -87,5 +87,14 @@
 	</array>
 	<key>GIDClientID</key>
 	<string>184568296872-3pn4ib5rpbfjmbp765kvmp3s85m5558d.apps.googleusercontent.com</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.classroomremaked.classroomRemaked.notificationTask</string>
+	</array>
 </dict>
 </plist>

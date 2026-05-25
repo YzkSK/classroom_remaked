@@ -26,9 +26,18 @@ class CourseDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final roleAsync = ref.watch(courseRoleProvider(courseId));
+
+    if (roleAsync.isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: Text(courseName)),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final isTeacher = roleAsync.valueOrNull == 'teacher';
 
     return DefaultTabController(
+      key: ValueKey(isTeacher),
       length: isTeacher ? 3 : 2,
       child: Scaffold(
         appBar: AppBar(
@@ -256,6 +265,19 @@ class _TeacherSubmissionsTabState
 
     if (assignmentsAsync.hasError) {
       return Center(child: Text('エラー: ${assignmentsAsync.error}'));
+    }
+
+    if (countsAsync.hasError || studentCountAsync.hasError) {
+      final err = countsAsync.error ?? studentCountAsync.error;
+      return RefreshIndicator(
+        onRefresh: _refresh,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Center(child: Text('提出状況の取得に失敗しました\n$err')),
+          ],
+        ),
+      );
     }
 
     final allAssignments = assignmentsAsync.valueOrNull?.assignments ?? [];
