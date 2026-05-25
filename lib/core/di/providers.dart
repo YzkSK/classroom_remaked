@@ -111,6 +111,7 @@ final courseRoleProvider =
 /// Map<courseWorkId, submittedCount>
 final teacherSubmissionCountsProvider =
     FutureProvider.family<Map<String, int>, String>((ref, courseId) async {
+  ref.keepAlive();
   return ref
       .watch(googleClassroomRepositoryProvider)
       .getSubmissionCounts(courseId);
@@ -119,6 +120,7 @@ final teacherSubmissionCountsProvider =
 /// 教師向け：コースの受講生数
 final teacherStudentCountProvider =
     FutureProvider.family<int, String>((ref, courseId) async {
+  ref.keepAlive();
   return ref
       .watch(googleClassroomRepositoryProvider)
       .getStudentCount(courseId);
