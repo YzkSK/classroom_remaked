@@ -25,15 +25,19 @@ class CourseDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final roleAsync = ref.watch(courseRoleProvider(courseId));
+    final isTeacher = roleAsync.valueOrNull == 'teacher';
+
     return DefaultTabController(
-      length: 2,
+      length: isTeacher ? 3 : 2,
       child: Scaffold(
         appBar: AppBar(
           title: Text(courseName),
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: '課題'),
-              Tab(text: 'お知らせ'),
+              const Tab(text: '課題'),
+              const Tab(text: 'お知らせ'),
+              if (isTeacher) const Tab(text: '提出状況'),
             ],
           ),
         ),
@@ -41,6 +45,7 @@ class CourseDetailScreen extends ConsumerWidget {
           children: [
             _AssignmentsTab(courseId: courseId),
             _AnnouncementsTab(courseId: courseId),
+            if (isTeacher) _TeacherSubmissionsTab(courseId: courseId),
           ],
         ),
       ),
@@ -217,6 +222,83 @@ class _MaterialCard extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _TeacherSubmissionsTab extends ConsumerWidget {
+  const _TeacherSubmissionsTab({required this.courseId});
+  final String courseId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final assignmentsAsync = ref.watch(assignmentsViewModelProvider);
+    final countsAsync = ref.watch(teacherSubmissionCountsProvider(courseId));
+
+    if (assignmentsAsync.hasError) {
+      return Center(child: Text('エラー: ${assignmentsAsync.error}'));
+    }
+
+    final allAssignments = assignmentsAsync.valueOrNull?.assignments ?? [];
+    final courseAssignments = allAssignments
+        .where((a) => a.courseId == courseId)
+        .toList()
+      ..sort((a, b) {
+        if (a.dueDate == null) return 1;
+        if (b.dueDate == null) return -1;
+        return a.dueDate!.compareTo(b.dueDate!);
+      });
+
+    final counts = countsAsync.valueOrNull ?? {};
+    final isLoading = assignmentsAsync.isLoading || countsAsync.isLoading;
+
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (courseAssignments.isEmpty) {
+      return const Center(child: Text('課題はありません'));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: courseAssignments.length,
+      itemBuilder: (context, index) {
+        final a = courseAssignments[index];
+        final count = counts[a.id] ?? 0;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: ShadCard(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(a.title,
+                            maxLines: 2, overflow: TextOverflow.ellipsis),
+                        if (a.dueDate != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            '締切: ${DateFormat('yyyy/M/d HH:mm').format(a.dueDate!)}',
+                            style: ShadTheme.of(context).textTheme.muted,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ShadBadge.secondary(
+                    child: Text('$count 件提出'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

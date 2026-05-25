@@ -27,7 +27,7 @@ class AssignmentsState with _$AssignmentsState {
   List<Assignment> get visibleAssignments {
     switch (filter) {
       case AssignmentsFilter.all:
-        return assignments.where((a) => !isOverdue(a)).toList();
+        return assignments;
       case AssignmentsFilter.unsubmitted:
         return assignments
             .where((a) => !isOverdue(a))

@@ -35,7 +35,24 @@ class AssignmentsScreen extends ConsumerWidget {
     AsyncValue<AssignmentsState> async,
   ) {
     if (async.hasError) {
-      return Center(child: Text('エラー: ${async.error}'));
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.sync_problem_outlined,
+                size: 56, color: Theme.of(context).colorScheme.outline),
+            const SizedBox(height: 16),
+            const Text('同期に失敗しました'),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () =>
+                  ref.read(assignmentsViewModelProvider.notifier).refresh(),
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('再試行'),
+            ),
+          ],
+        ),
+      );
     }
     final isLoading = async.isLoading;
     final assignments =
@@ -180,9 +197,7 @@ class _AssignmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dismissible(
         key: ValueKey('dismiss_${assignment.id}'),
-        direction: isHidden
-            ? DismissDirection.startToEnd
-            : DismissDirection.endToStart,
+        direction: DismissDirection.horizontal,
         dismissThresholds: const {
           DismissDirection.endToStart: 0.25,
           DismissDirection.startToEnd: 0.25,
@@ -201,25 +216,29 @@ class _AssignmentCard extends StatelessWidget {
               color: Theme.of(context).colorScheme.onErrorContainer),
         ),
         confirmDismiss: (direction) async {
-          if (direction == DismissDirection.startToEnd && isHidden) {
-            onUnhide();
-            if (context.mounted) {
-              ShadToaster.of(context).show(
-                const ShadToast(title: Text('非表示を解除しました')),
-              );
+          if (direction == DismissDirection.startToEnd) {
+            if (isHidden) {
+              onUnhide();
+              if (context.mounted) {
+                ShadToaster.of(context).show(
+                  const ShadToast(title: Text('非表示を解除しました')),
+                );
+              }
             }
-          } else if (direction == DismissDirection.endToStart && !isHidden) {
-            onHide();
-            if (context.mounted) {
-              ShadToaster.of(context).show(
-                ShadToast(
-                  title: const Text('課題を非表示にしました'),
-                  action: ShadButton.outline(
-                    onPressed: onUndoHide,
-                    child: const Text('元に戻す'),
+          } else if (direction == DismissDirection.endToStart) {
+            if (!isHidden) {
+              onHide();
+              if (context.mounted) {
+                ShadToaster.of(context).show(
+                  ShadToast(
+                    title: const Text('課題を非表示にしました'),
+                    action: ShadButton.outline(
+                      onPressed: onUndoHide,
+                      child: const Text('元に戻す'),
+                    ),
                   ),
-                ),
-              );
+                );
+              }
             }
           }
           return false;

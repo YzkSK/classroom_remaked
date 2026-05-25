@@ -129,6 +129,16 @@ class _CourseCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              leading: const Icon(Icons.open_in_new_rounded),
+              title: const Text('コース詳細を開く'),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.go(
+                  '/dashboard/courses/${course.id}?name=${Uri.encodeComponent(course.name)}',
+                );
+              },
+            ),
             if (isHidden)
               ListTile(
                 leading: const Icon(Icons.visibility),
@@ -159,35 +169,51 @@ class _CourseCard extends StatelessWidget {
       opacity: isHidden ? 0.4 : 1.0,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: GestureDetector(
-          onTap: () => context.go(
-            '/dashboard/courses/${course.id}?name=${Uri.encodeComponent(course.name)}',
-          ),
-          onLongPress: () => _showMenu(context),
-          child: ShadCard(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(course.name,
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
-                        if (course.section != null)
-                          Text(course.section!,
-                              style: ShadTheme.of(context).textTheme.muted,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                      ],
+        child: ReorderableDelayedDragStartListener(
+          index: index,
+          child: GestureDetector(
+            onTap: () => context.go(
+              '/dashboard/courses/${course.id}?name=${Uri.encodeComponent(course.name)}',
+            ),
+            child: ShadCard(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(course.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                              if (course.role == 'teacher') ...[
+                                const SizedBox(width: 6),
+                                const ShadBadge.secondary(
+                                  child: Text('教師',
+                                      style: TextStyle(fontSize: 10)),
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (course.section != null)
+                            Text(course.section!,
+                                style: ShadTheme.of(context).textTheme.muted,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
                     ),
-                  ),
-                  ReorderableDragStartListener(
-                    index: index,
-                    child: const Icon(Icons.drag_handle_rounded),
-                  ),
-                ],
+                    IconButton(
+                      icon: const Icon(Icons.more_vert, size: 20),
+                      onPressed: () => _showMenu(context),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

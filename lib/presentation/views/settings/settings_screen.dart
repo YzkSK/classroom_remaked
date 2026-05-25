@@ -1,7 +1,8 @@
 // lib/presentation/views/settings/settings_screen.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../viewmodels/assignments_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -17,60 +18,45 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  late TextEditingController _hoursController;
-  late TextEditingController _snoozeController;
-  late FocusNode _hoursFocusNode;
-  late FocusNode _snoozeFocusNode;
+  double? _notifyHoursDraft;
+  double? _snoozeHoursDraft;
   bool _permissionGranted = true;
+  bool _signingOut = false;
+  int _debugTapCount = 0;
+  Timer? _debugTapTimer;
 
   @override
   void initState() {
     super.initState();
-    _hoursController = TextEditingController();
-    _snoozeController = TextEditingController();
-    _hoursFocusNode = FocusNode()..addListener(_onHoursFocusChange);
-    _snoozeFocusNode = FocusNode()..addListener(_onSnoozeFocusChange);
     _checkPermission();
   }
 
   @override
   void dispose() {
-    _hoursController.dispose();
-    _snoozeController.dispose();
-    _hoursFocusNode.dispose();
-    _snoozeFocusNode.dispose();
+    _debugTapTimer?.cancel();
     super.dispose();
   }
 
-  void _onHoursFocusChange() {
-    if (!_hoursFocusNode.hasFocus) _onEditingComplete();
-  }
+  void _onVersionTap() {
+    _debugTapTimer?.cancel();
+    _debugTapTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _debugTapCount = 0);
+    });
+    setState(() => _debugTapCount++);
 
-  void _onSnoozeFocusChange() {
-    if (!_snoozeFocusNode.hasFocus) {
-      final h = int.tryParse(_snoozeController.text) ?? 1;
-      final clamped = h < 1 ? 1 : h;
-      _snoozeController.text = clamped.toString();
-      ref.read(settingsViewModelProvider.notifier).setSnoozeHours(clamped);
+    if (_debugTapCount >= 7) {
+      setState(() => _debugTapCount = 0);
+      context.go('/settings/debug');
+    } else if (_debugTapCount >= 4) {
+      ShadToaster.of(context).show(
+        ShadToast(title: Text('あと${7 - _debugTapCount}回でデバッグモード')),
+      );
     }
   }
 
   Future<void> _checkPermission() async {
     final granted = await const NotificationService().isPermissionGranted();
     if (mounted) setState(() => _permissionGranted = granted);
-  }
-
-  void _onEditingComplete() {
-    final hours = int.tryParse(_hoursController.text) ?? 0;
-    if (hours < 24) {
-      _hoursController.text = '24';
-      ShadToaster.of(context).show(
-        const ShadToast(title: Text('最低24時間以上を設定してください')),
-      );
-      ref.read(settingsViewModelProvider.notifier).setNotifyBeforeHours(24);
-    } else {
-      ref.read(settingsViewModelProvider.notifier).setNotifyBeforeHours(hours);
-    }
   }
 
   Future<void> _onLazyModeToggle(bool value) async {
@@ -136,12 +122,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settingsAsync = ref.watch(settingsViewModelProvider);
     final settings = settingsAsync.valueOrNull;
 
-    if (settings != null && _hoursController.text.isEmpty) {
-      _hoursController.text = settings.notifyBeforeHours.toString();
-    }
-    if (settings != null && _snoozeController.text.isEmpty) {
-      _snoozeController.text = settings.snoozeHours.toString();
-    }
+    final notifier = ref.read(settingsViewModelProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
@@ -172,53 +153,75 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 16),
           ],
           Text('通知タイミング', style: ShadTheme.of(context).textTheme.h4),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text('締め切りの', style: ShadTheme.of(context).textTheme.muted),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 72,
-                child: ShadInput(
-                  controller: _hoursController,
-                  focusNode: _hoursFocusNode,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  onEditingComplete: _onEditingComplete,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text('時間前に通知', style: ShadTheme.of(context).textTheme.muted),
-            ],
+          const SizedBox(height: 4),
+          Text(
+            '締め切りの ${_notifyHoursDraft?.round() ?? settings?.notifyBeforeHours ?? 24} 時間前',
+            style: ShadTheme.of(context).textTheme.muted,
+          ),
+          Slider(
+            value: _notifyHoursDraft ??
+                settings?.notifyBeforeHours.toDouble() ?? 24.0,
+            min: 24,
+            max: 168,
+            divisions: 6,
+            label:
+                '${_notifyHoursDraft?.round() ?? settings?.notifyBeforeHours ?? 24}時間前',
+            onChanged: settings != null
+                ? (v) => setState(() => _notifyHoursDraft = v)
+                : null,
+            onChangeEnd: settings != null
+                ? (v) {
+                    final h = v.round();
+                    setState(() => _notifyHoursDraft = null);
+                    notifier.setNotifyBeforeHours(h);
+                  }
+                : null,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('24時間前', style: ShadTheme.of(context).textTheme.muted),
+                Text('1週間前', style: ShadTheme.of(context).textTheme.muted),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           Text('スヌーズ間隔', style: ShadTheme.of(context).textTheme.h4),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text('通知の', style: ShadTheme.of(context).textTheme.muted),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 72,
-                child: ShadInput(
-                  controller: _snoozeController,
-                  focusNode: _snoozeFocusNode,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  enabled: !(settings?.lazyModeEnabled ?? false),
-                  onEditingComplete: () {
-                    final h = int.tryParse(_snoozeController.text) ?? 1;
-                    final clamped = h < 1 ? 1 : h;
-                    _snoozeController.text = clamped.toString();
-                    ref
-                        .read(settingsViewModelProvider.notifier)
-                        .setSnoozeHours(clamped);
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text('時間後に再通知', style: ShadTheme.of(context).textTheme.muted),
-            ],
+          const SizedBox(height: 4),
+          Text(
+            '${_snoozeHoursDraft?.round() ?? settings?.snoozeHours ?? 1} 時間後に再通知',
+            style: ShadTheme.of(context).textTheme.muted,
+          ),
+          Slider(
+            value: _snoozeHoursDraft ??
+                settings?.snoozeHours.toDouble() ?? 1.0,
+            min: 1,
+            max: 12,
+            divisions: 11,
+            label:
+                '${_snoozeHoursDraft?.round() ?? settings?.snoozeHours ?? 1}時間後',
+            onChanged: (settings != null && !(settings.lazyModeEnabled))
+                ? (v) => setState(() => _snoozeHoursDraft = v)
+                : null,
+            onChangeEnd: (settings != null && !(settings.lazyModeEnabled))
+                ? (v) {
+                    final h = v.round();
+                    setState(() => _snoozeHoursDraft = null);
+                    notifier.setSnoozeHours(h);
+                  }
+                : null,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('1時間後', style: ShadTheme.of(context).textTheme.muted),
+                Text('12時間後', style: ShadTheme.of(context).textTheme.muted),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           Row(
@@ -230,6 +233,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Text('怠惰人間モード',
                       style: ShadTheme.of(context).textTheme.p),
                   Text('ONのときスヌーズは1時間固定',
+                      style: ShadTheme.of(context).textTheme.muted),
+                  Text('OFFにするには期限内の課題をすべて提出',
                       style: ShadTheme.of(context).textTheme.muted),
                 ],
               ),
@@ -246,9 +251,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
           ShadButton.outline(
             width: double.infinity,
-            onPressed: () =>
-                ref.read(authViewModelProvider.notifier).signOut(),
-            child: const Text('サインアウト'),
+            onPressed: _signingOut
+                ? null
+                : () async {
+                    setState(() => _signingOut = true);
+                    try {
+                      await ref.read(authViewModelProvider.notifier).signOut();
+                    } finally {
+                      if (mounted) setState(() => _signingOut = false);
+                    }
+                  },
+            child: _signingOut
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('サインアウト'),
+          ),
+          const SizedBox(height: 8),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: _onVersionTap,
+            child: Center(
+              child: Text(
+                'Classroom Remaked',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                  fontSize: 11,
+                ),
+              ),
+            ),
           ),
         ],
       ),

@@ -5,6 +5,8 @@ import '../../domain/entities/assignment.dart';
 
 const _channelId = 'deadlines';
 const _channelName = '締め切り通知';
+const _newAssignmentChannelId = 'new_assignments';
+const _newAssignmentChannelName = '新着課題';
 
 class NotificationService {
   const NotificationService();
@@ -62,6 +64,47 @@ class NotificationService {
         android: androidDetails,
         iOS: DarwinNotificationDetails(),
       ),
+    );
+  }
+
+  static Future<void> showTest() async {
+    const androidDetails = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    await _plugin.show(
+      999,
+      'テスト通知',
+      'デバッグ画面から送信されたテスト通知です',
+      const NotificationDetails(
+        android: androidDetails,
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
+  static Future<void> showNewAssignment({
+    required String assignmentId,
+    required String title,
+    required String courseName,
+  }) async {
+    const androidDetails = AndroidNotificationDetails(
+      _newAssignmentChannelId,
+      _newAssignmentChannelName,
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+    );
+    await _plugin.show(
+      assignmentId.hashCode.abs() % 0x7FFFFFFF,
+      title,
+      courseName,
+      const NotificationDetails(
+        android: androidDetails,
+        iOS: DarwinNotificationDetails(),
+      ),
+      payload: assignmentId,
     );
   }
 

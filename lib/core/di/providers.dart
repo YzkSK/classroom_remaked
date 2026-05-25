@@ -7,6 +7,7 @@ import '../services/classroom_sync_service.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/course_order_datasource.dart';
 import '../../data/datasources/local/hidden_items_datasource.dart';
+import '../../data/datasources/local/error_log_datasource.dart';
 import '../../data/datasources/local/notification_logs_datasource.dart';
 import '../../data/datasources/local/snoozed_items_datasource.dart';
 import '../../data/datasources/local/sync_state_datasource.dart';
@@ -76,6 +77,7 @@ ClassroomSyncService classroomSyncService(ClassroomSyncServiceRef ref) {
     syncState: ref.watch(syncStateDataSourceProvider),
     repository: ref.watch(googleClassroomRepositoryProvider),
     userId: account?.id ?? '',
+    errorLog: ref.watch(errorLogDataSourceProvider),
   );
 }
 
@@ -90,4 +92,27 @@ DriveFileService driveFileService(DriveFileServiceRef ref) {
 Future<Uint8List> fileViewer(FileViewerRef ref, String fileId) {
   return ref.watch(driveFileServiceProvider).downloadPdf(fileId);
 }
+
+final errorLogDataSourceProvider = Provider<ErrorLogDataSource>(
+  (ref) => ErrorLogDataSource(ref.watch(appDatabaseProvider)),
+);
+
+/// コースの role を DB から取得する
+final courseRoleProvider =
+    FutureProvider.family<String, String>((ref, courseId) async {
+  final db = ref.watch(appDatabaseProvider);
+  final row = await (db.select(db.courses)
+        ..where((t) => t.id.equals(courseId)))
+      .getSingleOrNull();
+  return row?.role ?? 'student';
+});
+
+/// 教師向け：コース内の課題ごとの提出数
+/// Map<courseWorkId, submittedCount>
+final teacherSubmissionCountsProvider =
+    FutureProvider.family<Map<String, int>, String>((ref, courseId) async {
+  return ref
+      .watch(googleClassroomRepositoryProvider)
+      .getSubmissionCounts(courseId);
+});
 

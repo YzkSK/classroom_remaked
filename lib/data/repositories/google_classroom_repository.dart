@@ -182,6 +182,23 @@ class GoogleClassroomRepository implements LmsRepository {
 
   Future<Either<Failure, List<Course>>> _fetchAndCacheCourses() async {
     try {
+      // 教師コースの ID セットを先に取得
+      final teacherIds = <String>{};
+      String? teacherPageToken;
+      do {
+        final res = await _api.courses.list(
+          teacherId: 'me',
+          courseStates: ['ACTIVE'],
+          pageSize: 50,
+          pageToken: teacherPageToken,
+        );
+        for (final c in res.courses ?? []) {
+          if (c.id != null) teacherIds.add(c.id!);
+        }
+        teacherPageToken = res.nextPageToken;
+      } while (teacherPageToken != null);
+
+      // 全コース（教師 + 生徒）を取得
       final all = <classroom.Course>[];
       String? pageToken;
       do {
@@ -194,7 +211,10 @@ class GoogleClassroomRepository implements LmsRepository {
         pageToken = res.nextPageToken;
       } while (pageToken != null);
 
-      final domains = all.map(_courseToDomain).toList();
+      final domains = all
+          .map((c) => _courseToDomain(c,
+              role: teacherIds.contains(c.id) ? 'teacher' : 'student'))
+          .toList();
       await _db.batch((batch) {
         batch.insertAll(
           _db.courses,
@@ -206,6 +226,29 @@ class GoogleClassroomRepository implements LmsRepository {
     } on Exception catch (e) {
       return Left(ApiFailure(e.toString()));
     }
+  }
+
+  /// 教師向け：コース内の全課題の提出数を返す。
+  /// Map<courseWorkId, submittedCount> (TURNED_IN + RETURNED を集計)
+  Future<Map<String, int>> getSubmissionCounts(String courseId) async {
+    final counts = <String, int>{};
+    String? pageToken;
+    do {
+      final res = await _api.courses.courseWork.studentSubmissions.list(
+        courseId,
+        '-',
+        pageSize: 500,
+        pageToken: pageToken,
+      );
+      for (final sub in res.studentSubmissions ?? []) {
+        if (sub.courseWorkId != null &&
+            (sub.state == 'TURNED_IN' || sub.state == 'RETURNED')) {
+          counts[sub.courseWorkId!] = (counts[sub.courseWorkId!] ?? 0) + 1;
+        }
+      }
+      pageToken = res.nextPageToken;
+    } while (pageToken != null);
+    return counts;
   }
 
   Future<Either<Failure, List<Assignment>>> _fetchAndCacheAssignments(
@@ -323,7 +366,8 @@ class GoogleClassroomRepository implements LmsRepository {
 
   // ────────────────────── Converters: Course ──────────────────────
 
-  Course _courseToDomain(classroom.Course c) => Course(
+  Course _courseToDomain(classroom.Course c, {String role = 'student'}) =>
+      Course(
         id: c.id!,
         name: c.name ?? '',
         description: c.description,
@@ -331,6 +375,7 @@ class GoogleClassroomRepository implements LmsRepository {
         room: c.room,
         ownerId: c.ownerId,
         courseState: c.courseState ?? 'ACTIVE',
+        role: role,
       );
 
   CoursesCompanion _courseToCompanion(Course c) => CoursesCompanion.insert(
@@ -341,6 +386,7 @@ class GoogleClassroomRepository implements LmsRepository {
         room: Value(c.room),
         ownerId: Value(c.ownerId),
         courseState: Value(c.courseState),
+        role: Value(c.role),
       );
 
   Course _courseRowToDomain(CourseRow r) => Course(
@@ -351,6 +397,7 @@ class GoogleClassroomRepository implements LmsRepository {
         room: r.room,
         ownerId: r.ownerId,
         courseState: r.courseState,
+        role: r.role,
       );
 
   // ────────────────────── Converters: Assignment ──────────────────────

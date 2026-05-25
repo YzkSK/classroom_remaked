@@ -6,7 +6,7 @@ part of 'turn_in_viewmodel.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$turnInViewModelHash() => r'b862d90c86b0635c027a7842ae29cbbabfa18dcf';
+String _$turnInViewModelHash() => r'6198f09a585100177b28450584b4a98df93735e6';
 
 /// See also [TurnInViewModel].
 @ProviderFor(TurnInViewModel)
