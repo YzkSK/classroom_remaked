@@ -226,15 +226,33 @@ class _MaterialCard extends ConsumerWidget {
   }
 }
 
-class _TeacherSubmissionsTab extends ConsumerWidget {
+class _TeacherSubmissionsTab extends ConsumerStatefulWidget {
   const _TeacherSubmissionsTab({required this.courseId});
   final String courseId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_TeacherSubmissionsTab> createState() =>
+      _TeacherSubmissionsTabState();
+}
+
+class _TeacherSubmissionsTabState
+    extends ConsumerState<_TeacherSubmissionsTab> {
+  Future<void> _refresh() async {
+    ref.invalidate(teacherSubmissionCountsProvider(widget.courseId));
+    ref.invalidate(teacherStudentCountProvider(widget.courseId));
+    await Future.wait([
+      ref.read(teacherSubmissionCountsProvider(widget.courseId).future),
+      ref.read(teacherStudentCountProvider(widget.courseId).future),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final assignmentsAsync = ref.watch(assignmentsViewModelProvider);
-    final countsAsync = ref.watch(teacherSubmissionCountsProvider(courseId));
-    final studentCountAsync = ref.watch(teacherStudentCountProvider(courseId));
+    final countsAsync =
+        ref.watch(teacherSubmissionCountsProvider(widget.courseId));
+    final studentCountAsync =
+        ref.watch(teacherStudentCountProvider(widget.courseId));
 
     if (assignmentsAsync.hasError) {
       return Center(child: Text('エラー: ${assignmentsAsync.error}'));
@@ -242,7 +260,7 @@ class _TeacherSubmissionsTab extends ConsumerWidget {
 
     final allAssignments = assignmentsAsync.valueOrNull?.assignments ?? [];
     final courseAssignments = allAssignments
-        .where((a) => a.courseId == courseId)
+        .where((a) => a.courseId == widget.courseId)
         .toList()
       ..sort((a, b) {
         if (a.dueDate == null) return 1;
@@ -259,51 +277,60 @@ class _TeacherSubmissionsTab extends ConsumerWidget {
     }
 
     if (courseAssignments.isEmpty) {
-      return const Center(child: Text('課題はありません'));
+      return RefreshIndicator(
+        onRefresh: _refresh,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: const [Center(child: Text('課題はありません'))],
+        ),
+      );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: courseAssignments.length,
-      itemBuilder: (context, index) {
-        final a = courseAssignments[index];
-        final count = counts[a.id] ?? 0;
-        final label = studentCount != null
-            ? '$count / $studentCount 件提出'
-            : '$count 件提出';
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: ShadCard(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(a.title,
-                            maxLines: 2, overflow: TextOverflow.ellipsis),
-                        if (a.dueDate != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            '締切: ${DateFormat('yyyy/M/d HH:mm').format(a.dueDate!)}',
-                            style: ShadTheme.of(context).textTheme.muted,
-                          ),
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: courseAssignments.length,
+        itemBuilder: (context, index) {
+          final a = courseAssignments[index];
+          final count = counts[a.id] ?? 0;
+          final label = studentCount != null
+              ? '$count / $studentCount 件提出'
+              : '$count 件提出';
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: ShadCard(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(a.title,
+                              maxLines: 2, overflow: TextOverflow.ellipsis),
+                          if (a.dueDate != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              '締切: ${DateFormat('yyyy/M/d HH:mm').format(a.dueDate!)}',
+                              style: ShadTheme.of(context).textTheme.muted,
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  ShadBadge.secondary(
-                    child: Text(label),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    ShadBadge.secondary(
+                      child: Text(label),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
