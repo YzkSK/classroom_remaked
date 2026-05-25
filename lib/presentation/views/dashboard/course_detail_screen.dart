@@ -234,6 +234,7 @@ class _TeacherSubmissionsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final assignmentsAsync = ref.watch(assignmentsViewModelProvider);
     final countsAsync = ref.watch(teacherSubmissionCountsProvider(courseId));
+    final studentCountAsync = ref.watch(teacherStudentCountProvider(courseId));
 
     if (assignmentsAsync.hasError) {
       return Center(child: Text('エラー: ${assignmentsAsync.error}'));
@@ -250,6 +251,7 @@ class _TeacherSubmissionsTab extends ConsumerWidget {
       });
 
     final counts = countsAsync.valueOrNull ?? {};
+    final studentCount = studentCountAsync.valueOrNull;
     final isLoading = assignmentsAsync.isLoading || countsAsync.isLoading;
 
     if (isLoading) {
@@ -266,6 +268,9 @@ class _TeacherSubmissionsTab extends ConsumerWidget {
       itemBuilder: (context, index) {
         final a = courseAssignments[index];
         final count = counts[a.id] ?? 0;
+        final label = studentCount != null
+            ? '$count / $studentCount 件提出'
+            : '$count 件提出';
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: ShadCard(
@@ -291,7 +296,7 @@ class _TeacherSubmissionsTab extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   ShadBadge.secondary(
-                    child: Text('$count 件提出'),
+                    child: Text(label),
                   ),
                 ],
               ),

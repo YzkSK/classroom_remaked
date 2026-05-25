@@ -251,6 +251,22 @@ class GoogleClassroomRepository implements LmsRepository {
     return counts;
   }
 
+  /// 教師向け：コースの受講生数を返す。
+  Future<int> getStudentCount(String courseId) async {
+    var count = 0;
+    String? pageToken;
+    do {
+      final res = await _api.courses.students.list(
+        courseId,
+        pageSize: 200,
+        pageToken: pageToken,
+      );
+      count += (res.students ?? []).length;
+      pageToken = res.nextPageToken;
+    } while (pageToken != null);
+    return count;
+  }
+
   Future<Either<Failure, List<Assignment>>> _fetchAndCacheAssignments(
       String courseId) async {
     try {
