@@ -50,3 +50,7 @@ app.*.map.json
 # Firebase Functions
 functions/lib/
 functions/node_modules/
+
+# macOS iCloud Drive の同期競合で生成される重複ファイル
+* [0-9]
+* [0-9].*

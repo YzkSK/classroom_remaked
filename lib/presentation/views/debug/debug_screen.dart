@@ -74,6 +74,11 @@ class DebugScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             _Section(
+              title: 'プッシュ通知',
+              child: _PushPollSection(notifier: notifier),
+            ),
+            const SizedBox(height: 16),
+            _Section(
               title: '通知ログ (${state.notificationLogs.length}件)',
               child: _NotificationLogsSection(
                 logs: state.notificationLogs,
@@ -134,6 +139,85 @@ class DebugScreen extends ConsumerWidget {
       ),
     );
     if (confirmed == true) await notifier.clearAllData();
+  }
+}
+
+// ── プッシュ通知ポーリング ────────────────────────────────────
+
+class _PushPollSection extends StatefulWidget {
+  const _PushPollSection({required this.notifier});
+  final DebugViewModel notifier;
+
+  @override
+  State<_PushPollSection> createState() => _PushPollSectionState();
+}
+
+class _PushPollSectionState extends State<_PushPollSection> {
+  bool _asTeacher = false;
+  bool _loading = false;
+  String? _result;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShadCard(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('教師コースで実行',
+                    style: ShadTheme.of(context).textTheme.muted),
+                ShadSwitch(
+                  value: _asTeacher,
+                  onChanged: (v) => setState(() => _asTeacher = v),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ShadButton.outline(
+              width: double.infinity,
+              onPressed: _loading
+                  ? null
+                  : () async {
+                      setState(() {
+                        _loading = true;
+                        _result = null;
+                      });
+                      try {
+                        await widget.notifier
+                            .pollNow(asTeacher: _asTeacher);
+                        if (mounted) setState(() => _result = '成功');
+                      } catch (e) {
+                        if (mounted) setState(() => _result = '$e');
+                      } finally {
+                        if (mounted) setState(() => _loading = false);
+                      }
+                    },
+              child: _loading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('今すぐポーリング'),
+            ),
+            if (_result != null) ...[
+              const SizedBox(height: 8),
+              Text(_result!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _result == '成功'
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.error,
+                  )),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 

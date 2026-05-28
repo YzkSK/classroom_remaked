@@ -80,12 +80,13 @@ class BackgroundNotificationTask {
     final snoozedUntilMap = await snoozeDs.getActiveSnoozed(now);
     final expiredSnoozeIds = await snoozeDs.getExpiredIds(now);
 
+    const schedulingBuffer = Duration(minutes: 20);
     final candidates = filterCandidates(
       assignments: assignments,
       notifiedIds: notifiedIds,
       snoozedUntilMap: snoozedUntilMap,
       expiredSnoozeIds: expiredSnoozeIds,
-      notifyBefore: notifyBefore,
+      notifyBefore: notifyBefore + schedulingBuffer,
       now: now,
     );
 
@@ -97,14 +98,17 @@ class BackgroundNotificationTask {
 
     const notifService = NotificationService();
     for (final assignment in candidates) {
+      final notifyAt = assignment.dueDate!.subtract(notifyBefore);
       try {
-        await notifService.show(assignment);
+        await notifService.scheduleDeadline(assignment, notifyAt);
         await logsDs.log(assignment.id);
-        await snoozeDs.upsert(assignment.id, now.add(snooze));
+        final effectiveNotifyAt =
+            notifyAt.isAfter(now) ? notifyAt : now.add(const Duration(seconds: 10));
+        await snoozeDs.upsert(assignment.id, effectiveNotifyAt.add(snooze));
       } catch (e, st) {
         await errorDs.add(
           source: 'BackgroundNotificationTask',
-          message: '通知送信失敗: ${assignment.title} — $e',
+          message: '通知スケジュール失敗: ${assignment.title} — $e',
           stackTrace: st.toString(),
         );
       }

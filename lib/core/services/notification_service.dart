@@ -1,6 +1,8 @@
 // lib/core/services/notification_service.dart
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_10y.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
 import '../../domain/entities/assignment.dart';
 
 const _channelId = 'deadlines';
@@ -14,6 +16,7 @@ class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
 
   static Future<void> initialize() async {
+    tz_data.initializeTimeZones();
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings();
@@ -128,6 +131,37 @@ class NotificationService {
         android: androidDetails,
         iOS: DarwinNotificationDetails(),
       ),
+      payload: assignment.id,
+    );
+  }
+
+  Future<void> scheduleDeadline(
+      Assignment assignment, DateTime notifyAt) async {
+    final notifId = assignment.id.hashCode.abs() % 0x7FFFFFFF;
+    final due = assignment.dueDate!;
+    final hoursLeft = due.difference(notifyAt).inHours;
+    final effectiveAt = notifyAt.isAfter(DateTime.now())
+        ? notifyAt
+        : DateTime.now().add(const Duration(seconds: 10));
+
+    await _plugin.cancel(notifId);
+    await _plugin.zonedSchedule(
+      notifId,
+      '締め切りまで$hoursLeft時間',
+      assignment.title,
+      tz.TZDateTime.from(effectiveAt, tz.getLocation('Asia/Tokyo')),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
       payload: assignment.id,
     );
   }

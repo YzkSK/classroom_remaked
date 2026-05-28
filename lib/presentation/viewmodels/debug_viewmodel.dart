@@ -120,6 +120,9 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
   }
 
   Future<void> sendTestNotification() => NotificationService.showTest();
+
+  Future<void> pollNow({required bool asTeacher}) =>
+      ref.read(backendServiceProvider).debugPollNow(asTeacher: asTeacher);
 }
 
 final debugViewModelProvider =

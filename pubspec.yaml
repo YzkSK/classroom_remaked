@@ -70,6 +70,8 @@ dependencies:
   firebase_core: ^4.9.0
   firebase_auth: ^6.5.1
   firebase_messaging: ^16.2.2
+  cloud_functions: ^6.3.1
+  timezone: ^0.9.4
   file_picker: ^11.0.2
   mime: ^2.0.0
 
