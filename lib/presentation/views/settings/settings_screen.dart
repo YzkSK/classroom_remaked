@@ -1,6 +1,8 @@
 // lib/presentation/views/settings/settings_screen.dart
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -17,10 +19,13 @@ class SettingsScreen extends ConsumerStatefulWidget {
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
+const _batteryChannel = MethodChannel('com.classroomremaked/battery');
+
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   double? _notifyHoursDraft;
   double? _snoozeHoursDraft;
   bool _permissionGranted = true;
+  bool _batteryOptimized = false;
   bool _signingOut = false;
   int _debugTapCount = 0;
   Timer? _debugTapTimer;
@@ -29,6 +34,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void initState() {
     super.initState();
     _checkPermission();
+    _checkBatteryOptimization();
   }
 
   @override
@@ -57,6 +63,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _checkPermission() async {
     final granted = await const NotificationService().isPermissionGranted();
     if (mounted) setState(() => _permissionGranted = granted);
+  }
+
+  Future<void> _checkBatteryOptimization() async {
+    if (!Platform.isAndroid) return;
+    try {
+      final result = await _batteryChannel
+          .invokeMethod<bool>('isIgnoringBatteryOptimizations');
+      if (mounted) setState(() => _batteryOptimized = !(result ?? true));
+    } catch (_) {}
+  }
+
+  Future<void> _requestBatteryExemption() async {
+    try {
+      await _batteryChannel
+          .invokeMethod('requestIgnoreBatteryOptimizations');
+      await _checkBatteryOptimization();
+    } catch (_) {}
   }
 
   Future<void> _onLazyModeToggle(bool value) async {
@@ -145,6 +168,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         await _checkPermission();
                       },
                       child: const Text('許可する'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (Platform.isAndroid && _batteryOptimized) ...[
+            ShadCard(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(Icons.battery_alert,
+                        color: Theme.of(context).colorScheme.tertiary),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                        child: Text('バッテリー最適化が有効です\n通知が届かない場合があります')),
+                    ShadButton.outline(
+                      onPressed: _requestBatteryExemption,
+                      child: const Text('解除'),
                     ),
                   ],
                 ),

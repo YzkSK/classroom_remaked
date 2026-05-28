@@ -62,6 +62,12 @@ class AuthService {
     return account;
   }
 
+  Future<String?> fetchServerAuthCode(GoogleSignInAccount account) async {
+    final serverAuth =
+        await account.authorizationClient.authorizeServer(scopes);
+    return serverAuth?.serverAuthCode;
+  }
+
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
     await GoogleSignIn.instance.signOut();

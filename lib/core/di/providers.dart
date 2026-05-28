@@ -2,6 +2,7 @@
 import 'dart:typed_data';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../services/auth_service.dart';
+import '../services/backend_service.dart';
 import '../services/drive_file_service.dart';
 import '../services/classroom_sync_service.dart';
 import '../../data/datasources/local/app_database.dart';
@@ -94,6 +95,10 @@ Future<Uint8List> fileViewer(FileViewerRef ref, String fileId) {
 
 final errorLogDataSourceProvider = Provider<ErrorLogDataSource>(
   (ref) => ErrorLogDataSource(ref.watch(appDatabaseProvider)),
+);
+
+final backendServiceProvider = Provider<BackendService>(
+  (ref) => BackendService(ErrorLogDataSource(ref.watch(appDatabaseProvider))),
 );
 
 /// コースの role を DB から取得する
