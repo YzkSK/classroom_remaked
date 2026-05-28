@@ -135,6 +135,21 @@ class NotificationService {
     );
   }
 
+  static Future<bool> canScheduleExactAlarms() async {
+    return await _plugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.canScheduleExactNotifications() ??
+        true;
+  }
+
+  static Future<void> requestExactAlarmsPermission() async {
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestExactAlarmsPermission();
+  }
+
   Future<void> scheduleDeadline(
       Assignment assignment, DateTime notifyAt) async {
     final notifId = assignment.id.hashCode.abs() % 0x7FFFFFFF;
@@ -143,6 +158,11 @@ class NotificationService {
     final effectiveAt = notifyAt.isAfter(DateTime.now())
         ? notifyAt
         : DateTime.now().add(const Duration(seconds: 10));
+
+    final canExact = await canScheduleExactAlarms();
+    final scheduleMode = canExact
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
 
     await _plugin.cancel(notifId);
     await _plugin.zonedSchedule(
@@ -159,7 +179,7 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: scheduleMode,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       payload: assignment.id,

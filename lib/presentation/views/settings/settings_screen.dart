@@ -26,6 +26,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   double? _snoozeHoursDraft;
   bool _permissionGranted = true;
   bool _batteryOptimized = false;
+  bool _exactAlarmsGranted = true;
   bool _signingOut = false;
   int _debugTapCount = 0;
   Timer? _debugTapTimer;
@@ -35,6 +36,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.initState();
     _checkPermission();
     _checkBatteryOptimization();
+    _checkExactAlarms();
   }
 
   @override
@@ -72,6 +74,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           .invokeMethod<bool>('isIgnoringBatteryOptimizations');
       if (mounted) setState(() => _batteryOptimized = !(result ?? true));
     } catch (_) {}
+  }
+
+  Future<void> _checkExactAlarms() async {
+    if (!Platform.isAndroid) return;
+    final granted = await NotificationService.canScheduleExactAlarms();
+    if (mounted) setState(() => _exactAlarmsGranted = granted);
+  }
+
+  Future<void> _requestExactAlarms() async {
+    await NotificationService.requestExactAlarmsPermission();
+    await _checkExactAlarms();
   }
 
   Future<void> _requestBatteryExemption() async {
@@ -167,6 +180,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         await const NotificationService().requestPermission();
                         await _checkPermission();
                       },
+                      child: const Text('許可する'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (Platform.isAndroid && !_exactAlarmsGranted) ...[
+            ShadCard(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(Icons.alarm_off,
+                        color: Theme.of(context).colorScheme.tertiary),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                        child: Text('正確な通知タイミングが許可されていません\n通知が最大15分遅れる場合があります')),
+                    ShadButton.outline(
+                      onPressed: _requestExactAlarms,
                       child: const Text('許可する'),
                     ),
                   ],
