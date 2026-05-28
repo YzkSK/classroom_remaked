@@ -40,6 +40,7 @@ void main() {
           room: null,
           ownerId: null,
           courseState: 'ACTIVE',
+          role: 'student',
         );
 
     test('未提出の将来課題のみ返す', () {
