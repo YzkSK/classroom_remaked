@@ -463,8 +463,10 @@ class _NotificationLogsSection extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: logs.isEmpty
-                ? Text('ログなし',
-                    style: ShadTheme.of(context).textTheme.muted)
+                ? SizedBox(
+                    width: double.infinity,
+                    child: Text('ログなし',
+                        style: ShadTheme.of(context).textTheme.muted))
                 : Column(
                     children: logs
                         .map((log) => Padding(
@@ -528,8 +530,10 @@ class _ErrorLogsSection extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: logs.isEmpty
-                ? Text('エラーなし',
-                    style: ShadTheme.of(context).textTheme.muted)
+                ? SizedBox(
+                    width: double.infinity,
+                    child: Text('エラーなし',
+                        style: ShadTheme.of(context).textTheme.muted))
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: logs.map((e) => _ErrorLogTile(entry: e)).toList(),
