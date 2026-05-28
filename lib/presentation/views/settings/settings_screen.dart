@@ -21,7 +21,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 const _batteryChannel = MethodChannel('com.classroomremaked/battery');
 
-class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen>
+    with WidgetsBindingObserver {
   double? _notifyHoursDraft;
   double? _snoozeHoursDraft;
   bool _permissionGranted = true;
@@ -34,6 +35,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkPermission();
     _checkBatteryOptimization();
     _checkExactAlarms();
@@ -41,8 +43,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _debugTapTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkBatteryOptimization();
+      _checkExactAlarms();
+    }
   }
 
   void _onVersionTap() {
