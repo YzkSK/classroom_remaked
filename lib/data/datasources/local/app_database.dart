@@ -97,6 +97,7 @@ class UserPreferences extends Table {
 class NotificationLogs extends Table {
   TextColumn get assignmentId => text()();
   DateTimeColumn get notifiedAt => dateTime()();
+  DateTimeColumn get scheduledFor => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {assignmentId};
@@ -128,7 +129,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withConnection(super.e);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -174,6 +175,10 @@ class AppDatabase extends _$AppDatabase {
             if (!cols.contains('role')) {
               await m.addColumn(courses, courses.role as GeneratedColumn);
             }
+          }
+          if (from < 8) {
+            await m.addColumn(
+                notificationLogs, notificationLogs.scheduledFor as GeneratedColumn);
           }
         },
       );
