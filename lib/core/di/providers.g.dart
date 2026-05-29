@@ -197,7 +197,7 @@ final lmsRepositoryProvider = AutoDisposeProvider<LmsRepository>.internal(
 // ignore: unused_element
 typedef LmsRepositoryRef = AutoDisposeProviderRef<LmsRepository>;
 String _$classroomSyncServiceHash() =>
-    r'a9eb6b6b0be6156a4595fbfb5d27a5046c954e03';
+    r'e36dc211fecc21b82a3b1ac3347a4eef88367ac3';
 
 /// See also [classroomSyncService].
 @ProviderFor(classroomSyncService)
