@@ -4,7 +4,6 @@ import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/di/providers.dart';
 import '../../core/services/background_notification_task.dart';
-import 'auth_viewmodel.dart';
 import '../../core/services/notification_service.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/error_log_datasource.dart';
@@ -168,8 +167,7 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
 
   Future<void> runNotificationTaskNow() async {
     final db = ref.read(appDatabaseProvider);
-    final account = ref.read(authViewModelProvider).valueOrNull;
-    await const BackgroundNotificationTask().execute(db, account: account);
+    await const BackgroundNotificationTask().debugForceRescheduleAll(db);
     await reload();
   }
 
