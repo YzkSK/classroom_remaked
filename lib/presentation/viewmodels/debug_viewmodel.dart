@@ -3,6 +3,8 @@ import 'dart:io' show Platform;
 import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/di/providers.dart';
+import '../../core/services/background_notification_task.dart';
+import 'auth_viewmodel.dart';
 import '../../core/services/notification_service.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/error_log_datasource.dart';
@@ -27,6 +29,7 @@ class DebugState {
     required this.lastSyncAt,
     required this.lastBgSyncAt,
     required this.notificationLogs,
+    required this.assignmentTitleMap,
     required this.lazyModeEnabled,
     required this.lazyModeBlockingCount,
     required this.notifyBeforeHours,
@@ -39,6 +42,7 @@ class DebugState {
   final String? lastSyncAt;
   final String? lastBgSyncAt;
   final List<NotificationLogRow> notificationLogs;
+  final Map<String, String> assignmentTitleMap;
   final bool lazyModeEnabled;
   final int lazyModeBlockingCount;
   final int notifyBeforeHours;
@@ -107,6 +111,9 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
       lastSyncAt: lastSync,
       lastBgSyncAt: lastBgSync,
       notificationLogs: logs,
+      assignmentTitleMap: {
+        for (final r in assignments) r.id: r.title,
+      },
       lazyModeEnabled: lazyMode,
       lazyModeBlockingCount: blockingCount,
       notifyBeforeHours: notifyBeforeHours,
@@ -158,6 +165,13 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
 
   Future<DateTime> sendTestScheduledNotification() =>
       NotificationService.scheduleDeadlineTest();
+
+  Future<void> runNotificationTaskNow() async {
+    final db = ref.read(appDatabaseProvider);
+    final account = ref.read(authViewModelProvider).valueOrNull;
+    await const BackgroundNotificationTask().execute(db, account: account);
+    await reload();
+  }
 
   Future<void> pollNow({required bool asTeacher}) =>
       ref.read(backendServiceProvider).debugPollNow(asTeacher: asTeacher);
