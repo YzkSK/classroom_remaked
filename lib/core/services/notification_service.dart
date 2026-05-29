@@ -182,10 +182,10 @@ class NotificationService {
       Assignment assignment, DateTime notifyAt) async {
     final notifId = assignment.id.hashCode.abs() % 0x7FFFFFFF;
     final due = assignment.dueDate!;
-    final hoursLeft = due.difference(notifyAt).inHours;
     final effectiveAt = notifyAt.isAfter(DateTime.now())
         ? notifyAt
         : DateTime.now().add(const Duration(seconds: 10));
+    final hoursLeft = due.difference(effectiveAt).inHours;
 
     final canExact = await canScheduleExactAlarms();
     final scheduleMode = canExact
