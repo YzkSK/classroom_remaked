@@ -647,7 +647,11 @@ class _NotificationLogsSectionState extends State<_NotificationLogsSection> {
               child: ShadButton.outline(
                   onPressed: widget.onTest, child: const Text('即時通知')),
             ),
-            const SizedBox(width: 8),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
             Expanded(
               child: ShadButton.outline(
                 onPressed: () async {
@@ -658,7 +662,7 @@ class _NotificationLogsSectionState extends State<_NotificationLogsSection> {
                   final fireAt = await widget.onTestScheduled();
                   if (mounted) setState(() => _scheduledTestFireAt = fireAt);
                 },
-                child: const Text('15秒後'),
+                child: const Text('15秒後テスト'),
               ),
             ),
             const SizedBox(width: 8),
@@ -670,7 +674,7 @@ class _NotificationLogsSectionState extends State<_NotificationLogsSection> {
                         final fired = await _checkTestFired();
                         if (mounted) setState(() => _testFired = fired);
                       },
-                child: const Text('確認'),
+                child: const Text('発火確認'),
               ),
             ),
           ],
