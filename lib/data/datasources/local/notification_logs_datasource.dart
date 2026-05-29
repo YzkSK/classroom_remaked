@@ -1,4 +1,5 @@
 // lib/data/datasources/local/notification_logs_datasource.dart
+import 'package:drift/drift.dart';
 import 'app_database.dart';
 
 class NotificationLogsDataSource {
@@ -6,11 +7,12 @@ class NotificationLogsDataSource {
 
   final AppDatabase _db;
 
-  Future<void> log(String assignmentId) async {
+  Future<void> log(String assignmentId, {DateTime? scheduledFor}) async {
     await _db.into(_db.notificationLogs).insertOnConflictUpdate(
       NotificationLogsCompanion.insert(
         assignmentId: assignmentId,
         notifiedAt: DateTime.now(),
+        scheduledFor: Value(scheduledFor),
       ),
     );
   }

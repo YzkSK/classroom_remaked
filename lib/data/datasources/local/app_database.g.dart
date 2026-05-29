@@ -2630,8 +2630,23 @@ class $NotificationLogsTable extends NotificationLogs
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _scheduledForMeta = const VerificationMeta(
+    'scheduledFor',
+  );
   @override
-  List<GeneratedColumn> get $columns => [assignmentId, notifiedAt];
+  late final GeneratedColumn<DateTime> scheduledFor = GeneratedColumn<DateTime>(
+    'scheduled_for',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    assignmentId,
+    notifiedAt,
+    scheduledFor,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2663,6 +2678,15 @@ class $NotificationLogsTable extends NotificationLogs
     } else if (isInserting) {
       context.missing(_notifiedAtMeta);
     }
+    if (data.containsKey('scheduled_for')) {
+      context.handle(
+        _scheduledForMeta,
+        scheduledFor.isAcceptableOrUnknown(
+          data['scheduled_for']!,
+          _scheduledForMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2680,6 +2704,10 @@ class $NotificationLogsTable extends NotificationLogs
         DriftSqlType.dateTime,
         data['${effectivePrefix}notified_at'],
       )!,
+      scheduledFor: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}scheduled_for'],
+      ),
     );
   }
 
@@ -2693,15 +2721,20 @@ class NotificationLogRow extends DataClass
     implements Insertable<NotificationLogRow> {
   final String assignmentId;
   final DateTime notifiedAt;
+  final DateTime? scheduledFor;
   const NotificationLogRow({
     required this.assignmentId,
     required this.notifiedAt,
+    this.scheduledFor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['assignment_id'] = Variable<String>(assignmentId);
     map['notified_at'] = Variable<DateTime>(notifiedAt);
+    if (!nullToAbsent || scheduledFor != null) {
+      map['scheduled_for'] = Variable<DateTime>(scheduledFor);
+    }
     return map;
   }
 
@@ -2709,6 +2742,9 @@ class NotificationLogRow extends DataClass
     return NotificationLogsCompanion(
       assignmentId: Value(assignmentId),
       notifiedAt: Value(notifiedAt),
+      scheduledFor: scheduledFor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scheduledFor),
     );
   }
 
@@ -2720,6 +2756,7 @@ class NotificationLogRow extends DataClass
     return NotificationLogRow(
       assignmentId: serializer.fromJson<String>(json['assignmentId']),
       notifiedAt: serializer.fromJson<DateTime>(json['notifiedAt']),
+      scheduledFor: serializer.fromJson<DateTime?>(json['scheduledFor']),
     );
   }
   @override
@@ -2728,14 +2765,19 @@ class NotificationLogRow extends DataClass
     return <String, dynamic>{
       'assignmentId': serializer.toJson<String>(assignmentId),
       'notifiedAt': serializer.toJson<DateTime>(notifiedAt),
+      'scheduledFor': serializer.toJson<DateTime?>(scheduledFor),
     };
   }
 
-  NotificationLogRow copyWith({String? assignmentId, DateTime? notifiedAt}) =>
-      NotificationLogRow(
-        assignmentId: assignmentId ?? this.assignmentId,
-        notifiedAt: notifiedAt ?? this.notifiedAt,
-      );
+  NotificationLogRow copyWith({
+    String? assignmentId,
+    DateTime? notifiedAt,
+    Value<DateTime?> scheduledFor = const Value.absent(),
+  }) => NotificationLogRow(
+    assignmentId: assignmentId ?? this.assignmentId,
+    notifiedAt: notifiedAt ?? this.notifiedAt,
+    scheduledFor: scheduledFor.present ? scheduledFor.value : this.scheduledFor,
+  );
   NotificationLogRow copyWithCompanion(NotificationLogsCompanion data) {
     return NotificationLogRow(
       assignmentId: data.assignmentId.present
@@ -2744,6 +2786,9 @@ class NotificationLogRow extends DataClass
       notifiedAt: data.notifiedAt.present
           ? data.notifiedAt.value
           : this.notifiedAt,
+      scheduledFor: data.scheduledFor.present
+          ? data.scheduledFor.value
+          : this.scheduledFor,
     );
   }
 
@@ -2751,44 +2796,51 @@ class NotificationLogRow extends DataClass
   String toString() {
     return (StringBuffer('NotificationLogRow(')
           ..write('assignmentId: $assignmentId, ')
-          ..write('notifiedAt: $notifiedAt')
+          ..write('notifiedAt: $notifiedAt, ')
+          ..write('scheduledFor: $scheduledFor')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(assignmentId, notifiedAt);
+  int get hashCode => Object.hash(assignmentId, notifiedAt, scheduledFor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is NotificationLogRow &&
           other.assignmentId == this.assignmentId &&
-          other.notifiedAt == this.notifiedAt);
+          other.notifiedAt == this.notifiedAt &&
+          other.scheduledFor == this.scheduledFor);
 }
 
 class NotificationLogsCompanion extends UpdateCompanion<NotificationLogRow> {
   final Value<String> assignmentId;
   final Value<DateTime> notifiedAt;
+  final Value<DateTime?> scheduledFor;
   final Value<int> rowid;
   const NotificationLogsCompanion({
     this.assignmentId = const Value.absent(),
     this.notifiedAt = const Value.absent(),
+    this.scheduledFor = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   NotificationLogsCompanion.insert({
     required String assignmentId,
     required DateTime notifiedAt,
+    this.scheduledFor = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : assignmentId = Value(assignmentId),
        notifiedAt = Value(notifiedAt);
   static Insertable<NotificationLogRow> custom({
     Expression<String>? assignmentId,
     Expression<DateTime>? notifiedAt,
+    Expression<DateTime>? scheduledFor,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (assignmentId != null) 'assignment_id': assignmentId,
       if (notifiedAt != null) 'notified_at': notifiedAt,
+      if (scheduledFor != null) 'scheduled_for': scheduledFor,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2796,11 +2848,13 @@ class NotificationLogsCompanion extends UpdateCompanion<NotificationLogRow> {
   NotificationLogsCompanion copyWith({
     Value<String>? assignmentId,
     Value<DateTime>? notifiedAt,
+    Value<DateTime?>? scheduledFor,
     Value<int>? rowid,
   }) {
     return NotificationLogsCompanion(
       assignmentId: assignmentId ?? this.assignmentId,
       notifiedAt: notifiedAt ?? this.notifiedAt,
+      scheduledFor: scheduledFor ?? this.scheduledFor,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2814,6 +2868,9 @@ class NotificationLogsCompanion extends UpdateCompanion<NotificationLogRow> {
     if (notifiedAt.present) {
       map['notified_at'] = Variable<DateTime>(notifiedAt.value);
     }
+    if (scheduledFor.present) {
+      map['scheduled_for'] = Variable<DateTime>(scheduledFor.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2825,6 +2882,7 @@ class NotificationLogsCompanion extends UpdateCompanion<NotificationLogRow> {
     return (StringBuffer('NotificationLogsCompanion(')
           ..write('assignmentId: $assignmentId, ')
           ..write('notifiedAt: $notifiedAt, ')
+          ..write('scheduledFor: $scheduledFor, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4519,12 +4577,14 @@ typedef $$NotificationLogsTableCreateCompanionBuilder =
     NotificationLogsCompanion Function({
       required String assignmentId,
       required DateTime notifiedAt,
+      Value<DateTime?> scheduledFor,
       Value<int> rowid,
     });
 typedef $$NotificationLogsTableUpdateCompanionBuilder =
     NotificationLogsCompanion Function({
       Value<String> assignmentId,
       Value<DateTime> notifiedAt,
+      Value<DateTime?> scheduledFor,
       Value<int> rowid,
     });
 
@@ -4544,6 +4604,11 @@ class $$NotificationLogsTableFilterComposer
 
   ColumnFilters<DateTime> get notifiedAt => $composableBuilder(
     column: $table.notifiedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get scheduledFor => $composableBuilder(
+    column: $table.scheduledFor,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4566,6 +4631,11 @@ class $$NotificationLogsTableOrderingComposer
     column: $table.notifiedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get scheduledFor => $composableBuilder(
+    column: $table.scheduledFor,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$NotificationLogsTableAnnotationComposer
@@ -4584,6 +4654,11 @@ class $$NotificationLogsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get notifiedAt => $composableBuilder(
     column: $table.notifiedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get scheduledFor => $composableBuilder(
+    column: $table.scheduledFor,
     builder: (column) => column,
   );
 }
@@ -4627,20 +4702,24 @@ class $$NotificationLogsTableTableManager
               ({
                 Value<String> assignmentId = const Value.absent(),
                 Value<DateTime> notifiedAt = const Value.absent(),
+                Value<DateTime?> scheduledFor = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => NotificationLogsCompanion(
                 assignmentId: assignmentId,
                 notifiedAt: notifiedAt,
+                scheduledFor: scheduledFor,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
                 required String assignmentId,
                 required DateTime notifiedAt,
+                Value<DateTime?> scheduledFor = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => NotificationLogsCompanion.insert(
                 assignmentId: assignmentId,
                 notifiedAt: notifiedAt,
+                scheduledFor: scheduledFor,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

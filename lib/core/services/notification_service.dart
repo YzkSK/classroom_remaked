@@ -88,6 +88,34 @@ class NotificationService {
     );
   }
 
+  static Future<DateTime> scheduleDeadlineTest() async {
+    final fireAt = DateTime.now().add(const Duration(seconds: 15));
+    final canExact = await canScheduleExactAlarms();
+    final mode = canExact
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
+    await _plugin.cancel(998);
+    await _plugin.zonedSchedule(
+      998,
+      'スケジュール通知テスト',
+      '${canExact ? 'Exact' : 'Inexact'} — 15秒後',
+      tz.TZDateTime.from(fireAt, tz.getLocation('Asia/Tokyo')),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: mode,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
+    return fireAt;
+  }
+
   static Future<void> showNewAssignment({
     required String assignmentId,
     required String title,

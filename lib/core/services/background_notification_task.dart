@@ -101,9 +101,9 @@ class BackgroundNotificationTask {
       final notifyAt = assignment.dueDate!.subtract(notifyBefore);
       try {
         await notifService.scheduleDeadline(assignment, notifyAt);
-        await logsDs.log(assignment.id);
         final effectiveNotifyAt =
             notifyAt.isAfter(now) ? notifyAt : now.add(const Duration(seconds: 10));
+        await logsDs.log(assignment.id, scheduledFor: effectiveNotifyAt);
         await snoozeDs.upsert(assignment.id, effectiveNotifyAt.add(snooze));
       } catch (e, st) {
         await errorDs.add(

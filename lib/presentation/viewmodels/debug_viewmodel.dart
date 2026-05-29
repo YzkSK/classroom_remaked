@@ -1,10 +1,24 @@
 // lib/presentation/viewmodels/debug_viewmodel.dart
+import 'dart:io' show Platform;
+import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/di/providers.dart';
 import '../../core/services/notification_service.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/error_log_datasource.dart';
 import '../../data/datasources/local/user_preferences_datasource.dart';
+
+class PermissionStatus {
+  const PermissionStatus({
+    required this.notificationGranted,
+    required this.exactAlarmsGranted,
+    required this.batteryOptimizationExempt,
+  });
+
+  final bool notificationGranted;
+  final bool exactAlarmsGranted;
+  final bool batteryOptimizationExempt;
+}
 
 class DebugState {
   const DebugState({
@@ -17,6 +31,7 @@ class DebugState {
     required this.lazyModeBlockingCount,
     required this.notifyBeforeHours,
     required this.errorLogs,
+    required this.permissions,
   });
 
   final int schemaVersion;
@@ -28,7 +43,10 @@ class DebugState {
   final int lazyModeBlockingCount;
   final int notifyBeforeHours;
   final List<ErrorLogEntry> errorLogs;
+  final PermissionStatus permissions;
 }
+
+const _batteryChannel = MethodChannel('com.classroomremaked/battery');
 
 class DebugViewModel extends AsyncNotifier<DebugState> {
   @override
@@ -54,7 +72,19 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
     final notifyBeforeHours = await prefsDs.getNotifyBeforeHours();
     final errorLogs = await errorDs.getAll();
 
-    // 怠惰モードのブロック対象数（CanDisableLazyModeUseCaseと同条件）
+    // 権限ステータス
+    final notifGranted = await const NotificationService().isPermissionGranted();
+    final exactAlarms = await NotificationService.canScheduleExactAlarms();
+    var batteryExempt = true;
+    if (Platform.isAndroid) {
+      try {
+        final result = await _batteryChannel
+            .invokeMethod<bool>('isIgnoringBatteryOptimizations');
+        batteryExempt = result ?? true;
+      } catch (_) {}
+    }
+
+    // 怠惰モードのブロック対象数
     final cutoff = DateTime.now().add(Duration(hours: notifyBeforeHours));
     final blockingCount = assignments.where((r) {
       if (r.submissionId == null) return false;
@@ -81,6 +111,11 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
       lazyModeBlockingCount: blockingCount,
       notifyBeforeHours: notifyBeforeHours,
       errorLogs: errorLogs,
+      permissions: PermissionStatus(
+        notificationGranted: notifGranted,
+        exactAlarmsGranted: exactAlarms,
+        batteryOptimizationExempt: batteryExempt,
+      ),
     );
   }
 
@@ -120,6 +155,9 @@ class DebugViewModel extends AsyncNotifier<DebugState> {
   }
 
   Future<void> sendTestNotification() => NotificationService.showTest();
+
+  Future<DateTime> sendTestScheduledNotification() =>
+      NotificationService.scheduleDeadlineTest();
 
   Future<void> pollNow({required bool asTeacher}) =>
       ref.read(backendServiceProvider).debugPollNow(asTeacher: asTeacher);
