@@ -1,5 +1,6 @@
 // lib/presentation/views/debug/debug_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../core/di/providers.dart';
@@ -525,6 +526,15 @@ class _NotificationLogsSection extends StatefulWidget {
 
 class _NotificationLogsSectionState extends State<_NotificationLogsSection> {
   DateTime? _scheduledTestFireAt;
+  bool? _testFired;
+
+  Future<bool> _checkTestFired() async {
+    final active = await FlutterLocalNotificationsPlugin()
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.getActiveNotifications();
+    return active?.any((n) => n.id == 998) ?? false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -589,11 +599,40 @@ class _NotificationLogsSectionState extends State<_NotificationLogsSection> {
         ),
         if (_scheduledTestFireAt != null) ...[
           const SizedBox(height: 4),
-          Text(
-            'スケジュール済み: ${DateFormat('HH:mm:ss').format(_scheduledTestFireAt!.toLocal())} に発火予定',
-            style: TextStyle(
-                fontSize: 11,
-                color: Theme.of(context).colorScheme.primary),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '発火予定: ${DateFormat('HH:mm:ss').format(_scheduledTestFireAt!.toLocal())}',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.primary),
+                ),
+              ),
+              if (_testFired != null)
+                Row(
+                  children: [
+                    Icon(
+                      _testFired! ? Icons.check_circle : Icons.cancel,
+                      size: 14,
+                      color: _testFired!
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.error,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _testFired! ? '発火確認' : '未発火',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _testFired!
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
           ),
         ],
         const SizedBox(height: 8),
@@ -612,10 +651,26 @@ class _NotificationLogsSectionState extends State<_NotificationLogsSection> {
             Expanded(
               child: ShadButton.outline(
                 onPressed: () async {
+                  setState(() {
+                    _testFired = null;
+                    _scheduledTestFireAt = null;
+                  });
                   final fireAt = await widget.onTestScheduled();
                   if (mounted) setState(() => _scheduledTestFireAt = fireAt);
                 },
                 child: const Text('15秒後'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ShadButton.outline(
+                onPressed: _scheduledTestFireAt == null
+                    ? null
+                    : () async {
+                        final fired = await _checkTestFired();
+                        if (mounted) setState(() => _testFired = fired);
+                      },
+                child: const Text('確認'),
               ),
             ),
           ],
