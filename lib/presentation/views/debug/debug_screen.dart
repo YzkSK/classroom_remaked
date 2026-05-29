@@ -87,9 +87,11 @@ class DebugScreen extends ConsumerWidget {
               title: '通知ログ (${state.notificationLogs.length}件)',
               child: _NotificationLogsSection(
                 logs: state.notificationLogs,
+                assignmentTitleMap: state.assignmentTitleMap,
                 onClear: notifier.clearNotificationLogs,
                 onTest: notifier.sendTestNotification,
                 onTestScheduled: notifier.sendTestScheduledNotification,
+                onRunNow: notifier.runNotificationTaskNow,
               ),
             ),
             const SizedBox(height: 16),
@@ -509,14 +511,18 @@ class _LazyModeSection extends StatelessWidget {
 class _NotificationLogsSection extends StatefulWidget {
   const _NotificationLogsSection({
     required this.logs,
+    required this.assignmentTitleMap,
     required this.onClear,
     required this.onTest,
     required this.onTestScheduled,
+    required this.onRunNow,
   });
   final List<NotificationLogRow> logs;
+  final Map<String, String> assignmentTitleMap;
   final Future<void> Function() onClear;
   final Future<void> Function() onTest;
   final Future<DateTime> Function() onTestScheduled;
+  final Future<void> Function() onRunNow;
 
   @override
   State<_NotificationLogsSection> createState() =>
@@ -525,9 +531,11 @@ class _NotificationLogsSection extends StatefulWidget {
 
 class _NotificationLogsSectionState extends State<_NotificationLogsSection> {
   DateTime? _scheduledTestFireAt;
+  bool _runningNow = false;
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
     return Column(
       children: [
         ShadCard(
@@ -539,51 +547,69 @@ class _NotificationLogsSectionState extends State<_NotificationLogsSection> {
                     child: Text('ログなし',
                         style: ShadTheme.of(context).textTheme.muted))
                 : Column(
-                    children: widget.logs
-                        .map((log) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
+                    children: widget.logs.map((log) {
+                      final title = widget.assignmentTitleMap[log.assignmentId];
+                      final fired = log.scheduledFor?.isBefore(now) ?? false;
+                      final hoursLeft = log.scheduledFor != null
+                          ? log.scheduledFor!.difference(now).inHours
+                          : null;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (title != null)
+                              Text(
+                                title,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            Text(
+                              log.assignmentId,
+                              style: ShadTheme.of(context)
+                                  .textTheme
+                                  .muted
+                                  .copyWith(
+                                      fontSize: 10,
+                                      fontFamily: 'monospace'),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Text(
+                                  '登録: ${DateFormat('MM/dd HH:mm:ss').format(log.notifiedAt.toLocal())}',
+                                  style: ShadTheme.of(context)
+                                      .textTheme
+                                      .muted
+                                      .copyWith(fontSize: 10),
+                                ),
+                                if (log.scheduledFor != null) ...[
+                                  const SizedBox(width: 8),
                                   Text(
-                                    log.assignmentId,
-                                    style: const TextStyle(
-                                        fontSize: 11, fontFamily: 'monospace'),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '登録: ${DateFormat('MM/dd HH:mm:ss').format(log.notifiedAt.toLocal())}',
-                                        style: ShadTheme.of(context)
-                                            .textTheme
-                                            .muted
-                                            .copyWith(fontSize: 10),
-                                      ),
-                                      if (log.scheduledFor != null) ...[
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          '発火: ${DateFormat('MM/dd HH:mm:ss').format(log.scheduledFor!.toLocal())}',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: log.scheduledFor!
-                                                    .isBefore(DateTime.now())
-                                                ? Theme.of(context)
-                                                    .colorScheme
-                                                    .outline
-                                                : Theme.of(context)
-                                                    .colorScheme
-                                                    .primary,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
+                                    fired
+                                        ? '発火済: ${DateFormat('MM/dd HH:mm:ss').format(log.scheduledFor!.toLocal())}'
+                                        : '発火予定: ${DateFormat('MM/dd HH:mm:ss').format(log.scheduledFor!.toLocal())} (あと${hoursLeft}h)',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: fired
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .outline
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                    ),
                                   ),
                                 ],
-                              ),
-                            ))
-                        .toList(),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   ),
           ),
         ),
@@ -611,14 +637,40 @@ class _NotificationLogsSectionState extends State<_NotificationLogsSection> {
           ],
         ),
         const SizedBox(height: 8),
-        ShadButton.outline(
-          width: double.infinity,
-          onPressed: () async {
-            setState(() => _scheduledTestFireAt = null);
-            final fireAt = await widget.onTestScheduled();
-            if (mounted) setState(() => _scheduledTestFireAt = fireAt);
-          },
-          child: const Text('15秒後テスト'),
+        Row(
+          children: [
+            Expanded(
+              child: ShadButton.outline(
+                onPressed: () async {
+                  setState(() => _scheduledTestFireAt = null);
+                  final fireAt = await widget.onTestScheduled();
+                  if (mounted) setState(() => _scheduledTestFireAt = fireAt);
+                },
+                child: const Text('15秒後テスト'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ShadButton.outline(
+                onPressed: _runningNow
+                    ? null
+                    : () async {
+                        setState(() => _runningNow = true);
+                        try {
+                          await widget.onRunNow();
+                        } finally {
+                          if (mounted) setState(() => _runningNow = false);
+                        }
+                      },
+                child: _runningNow
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('今すぐスケジュール'),
+              ),
+            ),
+          ],
         ),
       ],
     );
