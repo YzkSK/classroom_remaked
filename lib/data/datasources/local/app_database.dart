@@ -177,8 +177,14 @@ class AppDatabase extends _$AppDatabase {
             }
           }
           if (from < 8) {
-            await m.addColumn(
-                notificationLogs, notificationLogs.scheduledFor as GeneratedColumn);
+            final existing = await customSelect(
+              "SELECT name FROM pragma_table_info('notification_logs')",
+            ).get();
+            final cols = existing.map((r) => r.read<String>('name')).toSet();
+            if (!cols.contains('scheduled_for')) {
+              await m.addColumn(
+                  notificationLogs, notificationLogs.scheduledFor as GeneratedColumn);
+            }
           }
         },
       );
