@@ -180,6 +180,59 @@ class BackgroundNotificationTask {
     await prefsDs.addNewAssignmentNotifiedIds([...allIds, ...sentIds]);
   }
 
+  /// デバッグ用: スヌーズ・通知済み状態を無視して24時間以内の全課題を強制スケジュール
+  Future<void> debugForceRescheduleAll(AppDatabase db) async {
+    final now = DateTime.now();
+    final prefsDs = UserPreferencesDataSource(db);
+    final logsDs = NotificationLogsDataSource(db);
+    final snoozeDs = SnoozedItemsDataSource(db);
+    final errorDs = ErrorLogDataSource(db);
+
+    final notifyBeforeHours = await prefsDs.getNotifyBeforeHours();
+    final notifyBefore = Duration(hours: notifyBeforeHours);
+    final cutoff = now.add(notifyBefore + const Duration(minutes: 20));
+
+    final rows = await db.select(db.assignments).get();
+    final courseRows = await db.select(db.courses).get();
+    final teacherCourseIds =
+        courseRows.where((c) => c.role == 'teacher').map((c) => c.id).toSet();
+
+    final targets = rows.where((r) {
+      if (r.state != 'published') return false;
+      if (r.submissionState == 'turnedIn') return false;
+      if (r.dueDateMillis == null) return false;
+      if (teacherCourseIds.contains(r.courseId)) return false;
+      final due = DateTime.fromMillisecondsSinceEpoch(r.dueDateMillis!);
+      return due.isAfter(now) && due.isBefore(cutoff);
+    }).toList();
+
+    const notifService = NotificationService();
+    for (final row in targets) {
+      final assignment = Assignment(
+        id: row.id,
+        courseId: row.courseId,
+        title: row.title,
+        dueDate: DateTime.fromMillisecondsSinceEpoch(row.dueDateMillis!),
+      );
+      final notifyAt = assignment.dueDate!.subtract(notifyBefore);
+      try {
+        await notifService.scheduleDeadline(assignment, notifyAt);
+        final effectiveAt = notifyAt.isAfter(now)
+            ? notifyAt
+            : now.add(const Duration(seconds: 10));
+        await logsDs.log(assignment.id, scheduledFor: effectiveAt);
+        await snoozeDs.upsert(
+            assignment.id, effectiveAt.add(const Duration(hours: 1)));
+      } catch (e, st) {
+        await errorDs.add(
+          source: 'debugForceRescheduleAll',
+          message: '強制スケジュール失敗: ${assignment.title} — $e',
+          stackTrace: st.toString(),
+        );
+      }
+    }
+  }
+
   static List<Assignment> filterCandidates({
     required List<Assignment> assignments,
     required Set<String> notifiedIds,
