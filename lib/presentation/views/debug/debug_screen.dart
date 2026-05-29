@@ -611,14 +611,15 @@ class _NotificationLogsSectionState extends State<_NotificationLogsSection> {
           ],
         ),
         const SizedBox(height: 8),
-        ShadButton.outline(
-          width: double.infinity,
-          onPressed: () async {
-            setState(() => _scheduledTestFireAt = null);
-            final fireAt = await widget.onTestScheduled();
-            if (mounted) setState(() => _scheduledTestFireAt = fireAt);
-          },
-          child: const Text('15秒後テスト'),
+        Expanded(
+          child: ShadButton.outline(
+            onPressed: () async {
+              setState(() => _scheduledTestFireAt = null);
+              final fireAt = await widget.onTestScheduled();
+              if (mounted) setState(() => _scheduledTestFireAt = fireAt);
+            },
+            child: const Text('15秒後テスト'),
+          ),
         ),
       ],
     );
