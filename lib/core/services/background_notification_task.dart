@@ -150,11 +150,14 @@ class BackgroundNotificationTask {
     final newRows =
         allRows.where((r) => !notifiedIds.contains(r.id)).toList();
 
+    final now = DateTime.now().millisecondsSinceEpoch;
     final sentIds = <String>[];
     for (final row in newRows) {
-      // 非公開・教師コースは除外
+      // 非公開・教師コース・提出済み・期限切れは除外
       if (row.state != 'published') continue;
       if (teacherCourseIds.contains(row.courseId)) continue;
+      if (row.submissionState == 'turnedIn') continue;
+      if (row.dueDateMillis != null && row.dueDateMillis! < now) continue;
       final courseName = courseNameMap[row.courseId] ?? row.courseId;
       try {
         await NotificationService.showNewAssignment(
