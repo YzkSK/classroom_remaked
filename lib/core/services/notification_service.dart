@@ -182,9 +182,10 @@ class NotificationService {
       Assignment assignment, DateTime notifyAt) async {
     final notifId = assignment.id.hashCode.abs() % 0x7FFFFFFF;
     final due = assignment.dueDate!;
-    final effectiveAt = notifyAt.isAfter(DateTime.now())
-        ? notifyAt
-        : DateTime.now().add(const Duration(seconds: 10));
+    // タイトルを発火時刻ではなくスケジュール時の現在時刻で決定する。
+    // 将来時刻にセットすると Doze 遅延配信で残り時間が狂うため、
+    // 常に now + 10s で即発火させる。
+    final effectiveAt = DateTime.now().add(const Duration(seconds: 10));
     final hoursLeft = due.difference(effectiveAt).inHours;
 
     final canExact = await canScheduleExactAlarms();
