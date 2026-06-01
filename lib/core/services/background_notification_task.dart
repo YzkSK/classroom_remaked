@@ -101,8 +101,7 @@ class BackgroundNotificationTask {
       final notifyAt = assignment.dueDate!.subtract(notifyBefore);
       try {
         await notifService.scheduleDeadline(assignment, notifyAt);
-        final effectiveNotifyAt =
-            notifyAt.isAfter(now) ? notifyAt : now.add(const Duration(seconds: 10));
+        final effectiveNotifyAt = now.add(const Duration(seconds: 10));
         await logsDs.log(assignment.id, scheduledFor: effectiveNotifyAt);
         await snoozeDs.upsert(assignment.id,
             _nextSnoozeTime(assignment.dueDate!, effectiveNotifyAt, snooze));
@@ -218,9 +217,7 @@ class BackgroundNotificationTask {
       final notifyAt = assignment.dueDate!.subtract(notifyBefore);
       try {
         await notifService.scheduleDeadline(assignment, notifyAt);
-        final effectiveAt = notifyAt.isAfter(now)
-            ? notifyAt
-            : now.add(const Duration(seconds: 10));
+        final effectiveAt = now.add(const Duration(seconds: 10));
         await logsDs.log(assignment.id, scheduledFor: effectiveAt);
         await snoozeDs.upsert(assignment.id,
             _nextSnoozeTime(assignment.dueDate!, effectiveAt, const Duration(hours: 1)));
