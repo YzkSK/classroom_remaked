@@ -104,7 +104,8 @@ class BackgroundNotificationTask {
         final effectiveNotifyAt =
             notifyAt.isAfter(now) ? notifyAt : now.add(const Duration(seconds: 10));
         await logsDs.log(assignment.id, scheduledFor: effectiveNotifyAt);
-        await snoozeDs.upsert(assignment.id, effectiveNotifyAt.add(snooze));
+        await snoozeDs.upsert(assignment.id,
+            _nextSnoozeTime(assignment.dueDate!, effectiveNotifyAt, snooze));
       } catch (e, st) {
         await errorDs.add(
           source: 'BackgroundNotificationTask',
@@ -221,8 +222,8 @@ class BackgroundNotificationTask {
             ? notifyAt
             : now.add(const Duration(seconds: 10));
         await logsDs.log(assignment.id, scheduledFor: effectiveAt);
-        await snoozeDs.upsert(
-            assignment.id, effectiveAt.add(const Duration(hours: 1)));
+        await snoozeDs.upsert(assignment.id,
+            _nextSnoozeTime(assignment.dueDate!, effectiveAt, const Duration(hours: 1)));
       } catch (e, st) {
         await errorDs.add(
           source: 'debugForceRescheduleAll',
@@ -231,6 +232,18 @@ class BackgroundNotificationTask {
         );
       }
     }
+  }
+
+  /// 次のスヌーズ解除時刻を計算する。
+  /// 残り時間が整数時間になるよう dueDate に合わせて整列させる。
+  /// 例: 発火15:17・残り8h → 次スヌーズ = dueDate - 7h = 16:59
+  static DateTime _nextSnoozeTime(
+      DateTime due, DateTime effectiveAt, Duration fallback) {
+    final hoursLeft = due.difference(effectiveAt).inHours;
+    if (hoursLeft > 1) {
+      return due.subtract(Duration(hours: hoursLeft - 1));
+    }
+    return effectiveAt.add(fallback);
   }
 
   static List<Assignment> filterCandidates({
